@@ -19,7 +19,7 @@ struct Expression
 
 class Oprand
 {
-	string oprandName;
+	std::string oprandName;
 	bool isAttribute;
 };
 

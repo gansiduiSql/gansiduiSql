@@ -21,8 +21,8 @@ public:
 	void dropIndex(const std::string& indexName);
 	void insertValues(const std::list<std::string>& values);
 	void deleteValues(const std::string& tableName);
-	void selectValues(const std::list<std::string> &attributeName, const std::string tableName);
-	void selectValues(const std::list<std::string> &attributeName, const std::string tableName, std::list<Expression> &expressions);
+	void selectValues(const std::list<std::string>& attributeName, const std::string tableName);
+	void selectValues(const std::list<std::string>& attributeName, const std::string tableName, std::list<Expression>& expressions);
 	CatalogManager* getCatalogManagerPtr();
 };
 
