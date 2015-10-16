@@ -11,8 +11,6 @@ class BufferManager
 public:
 	BufferManager();
 	~BufferManager();
-	
-	
 };
 
 #endif
