@@ -3,7 +3,12 @@
 
 class CatalogManager
 {
-
+public:
+	CatalogManager();
+	~CatalogManager();
+	void createTable(const Table& table);
+	void deleteTable(const string& tableName);
+	Table getTable(const string& tableName);
 };
 
 #endif

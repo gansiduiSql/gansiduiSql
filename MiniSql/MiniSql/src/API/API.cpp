@@ -2,42 +2,42 @@
 
 using namespace std;
 
-void API::createTable(const list<Data>& tableList)
+void API::createTableCmd(const Table& table)
 {
 
 }
 
-void API::dropTable(const string& tableName)
+void API::dropTableCmd(const string& tableName)
 {
 
 }
 
-void API::createIndex(const string& indexName, const string& tableName, const string& attributeName)
+void API::createIndexCmd(const string& indexName, const string& tableName, const string& attributeName)
 {
 
 }
 
-void API::dropIndex(const string& indexName)
+void API::dropIndexCmd(const string& indexName)
 {
 
 }
 
-void API::insertValues(const list<string>& values)
+void API::insertValuesCmd(const list<string>& values)
 {
 
 }
 
-void API::deleteValues(const string& tableName)
+void API::deleteValuesCmd(const string& tableName)
 {
 
 }
 
-void API::selectValues(const list<string> &attributeName, const string tableName)
+void API::selectValuesCmd(const list<string> &attributeName, const string tableName)
 {
 
 }
 
-void API::selectValues(const list<string> &attributeName, const string tableName, list<Expression> &expressions)
+void API::selectValuesCmd(const list<string> &attributeName, const string tableName, list<Expression> &expressions)
 {
 
 }

@@ -10,6 +10,7 @@ public:
 	BufferManager();
 	~BufferManager();
 	BYTE* fecthARecord(const ADDRESS& address);
+	void writeARecord(BYTE* record, int recordLength, const ADDRESS& address);
 	void writeABlock(const ADDRESS& address);
 	void setBlockPinned(int blockIndex);
 private:

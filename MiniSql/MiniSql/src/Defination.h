@@ -1,4 +1,5 @@
 #include <string>
+#include <vector>
 
 #define BLOCKNUM 10
 typedef unsigned char BYTE;
@@ -36,6 +37,17 @@ enum TYPE
 	INT,
 	CHAR,
 	FLOAT
+};
+
+class Table
+{
+public:
+	Table();
+	~Table();
+private:
+	std::string tableName;
+	int primaryKeyIndex;
+	std::vector<Data> tableVec;
 };
 
 class Data

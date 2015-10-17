@@ -3,6 +3,7 @@
 
 #include <string>
 #include <list>
+#include <vector>
 #include "..\Defination.h"
 #include "..\CatalogManager\CatalogManager.h"
 #include "..\RecordManager\RecordManager.h"
@@ -15,14 +16,14 @@ private:
 	RecordManager rm;
 	IndexManager im;
 public:
-	void createTable(const std::list<Data>& tableList);
-	void dropTable(const std::string& tableName);
-	void createIndex(const std::string& indexName, const std::string& tableName, const std::string& attributeName);
-	void dropIndex(const std::string& indexName);
-	void insertValues(const std::list<std::string>& values);
-	void deleteValues(const std::string& tableName);
-	void selectValues(const std::list<std::string>& attributeName, const std::string tableName);
-	void selectValues(const std::list<std::string>& attributeName, const std::string tableName, std::list<Expression>& expressions);
+	void createTableCmd(const Table& table);
+	void dropTableCmd(const std::string& tableName);
+	void createIndexCmd(const std::string& indexName, const std::string& tableName, const std::string& attributeName);
+	void dropIndexCmd(const std::string& indexName);
+	void insertValuesCmd(const std::list<std::string>& values);
+	void deleteValuesCmd(const std::string& tableName);
+	void selectValuesCmd(const std::list<std::string>& attributeName, const std::string tableName);
+	void selectValuesCmd(const std::list<std::string>& attributeName, const std::string tableName, std::list<Expression>& expressions);
 	CatalogManager* getCatalogManagerPtr();
 };
 
