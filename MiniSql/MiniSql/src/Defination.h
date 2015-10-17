@@ -3,11 +3,8 @@
 
 #define BLOCKNUM 10
 typedef unsigned char BYTE;
-
-typedef struct{
-	long long blockNum;
-	long long blockOffset;
-}ADDRESS;
+typedef int ADDRESS;
+typedef std::vector<std::vector<std::string>> RECORDBUFFER;
 
 enum OPERATOR
 {
@@ -25,6 +22,17 @@ struct Expression
 	Oprand rigthOprand;
 	OPERATOR op;
 };
+
+/*class Expression
+{
+public:
+	bool isTrue();
+private:
+	string attributeName;
+	string value;
+	TYPE 
+
+};*/
 
 class Oprand
 {
@@ -79,4 +87,5 @@ private:
 	bool dirtyBit;
 	bool isPinned;
 	ADDRESS tag;
+	string fileName;
 };

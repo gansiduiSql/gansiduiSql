@@ -9,16 +9,18 @@ class BufferManager
 public:
 	BufferManager();
 	~BufferManager();
-	BYTE* fecthARecord(const ADDRESS& address);
-	void writeARecord(BYTE* record, int recordLength, const ADDRESS& address);
-	void writeABlock(const ADDRESS& address);
+	BYTE* fecthARecord(const ADDRESS& ADDRESS);
+	void writeARecord(BYTE* record, int recordLength, const ADDRESS& ADDRESS);
+	void writeABlock(const ADDRESS& ADDRESS);
 	void setBlockPinned(int blockIndex);
 private:
+	FILE *openedFilePtr;
+	std::string openedFileName;
 	Block blocks[BLOCKNUM];
 	std::queue<int> substitutionQue;
 	void substitute(int blockIndex);
 	int hit(ADDRESS tag);
-	int fetchABlock(const ADDRESS& address);
+	int fetchABlock(const ADDRESS& ADDRESS);
 };
 
 #endif
