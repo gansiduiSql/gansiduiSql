@@ -1,5 +1,13 @@
 #include <string>
 
+#define BLOCKNUM 10
+typedef unsigned char BYTE;
+
+typedef struct{
+	long long blockNum;
+	long long blockOffset;
+}ADDRESS;
+
 enum OPERATOR
 {
 	GREATER,
@@ -41,4 +49,22 @@ private:
 public:
 	Data(std::string attribute, TYPE type, int length, bool isUnique, bool isPrimary);
 	~Data();
+};
+
+class Block
+{
+public:
+	Block();
+	~Block();
+	void setBlockData(BYTE* data);
+	BYTE* getBlockData();
+	void setDirtyBit(bool isDirty);
+	bool getDirtyBit();
+	void setPinnedBit(bool pinnnedBit);
+	bool getPinnnedBit();
+private:
+	BYTE blockData[4096];
+	bool dirtyBit;
+	bool isPinned;
+	ADDRESS tag;
 };

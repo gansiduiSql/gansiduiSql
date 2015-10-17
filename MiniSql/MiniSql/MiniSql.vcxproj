@@ -77,6 +77,7 @@
     <ClCompile Include="src\API\API.cpp" />
     <ClCompile Include="src\BufferManager\BufferManager.cpp" />
     <ClCompile Include="src\CatalogManager\CatalogManager.cpp" />
+    <ClCompile Include="src\Defination.cpp" />
     <ClCompile Include="src\IndexManager\IndexManager.cpp" />
     <ClCompile Include="src\InterpreterManager\Interpreter.cpp" />
     <ClCompile Include="src\RecordManager\RecorderManager.cpp" />
