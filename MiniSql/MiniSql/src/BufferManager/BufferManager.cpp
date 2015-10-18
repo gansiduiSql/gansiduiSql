@@ -106,7 +106,7 @@ int BufferManager::fetchABlock(const string& fileName, const ADDRESS& tag)
 		openedFilePtr = fopen(fileName.c_str(), "rb");
 
 	//read the corresponding file data into a 4K buffer
-	BYTE buffer[4096];
+	BYTE buffer[BLOCKSIZE];
 	fseek(openedFilePtr, tag*BLOCKSIZE, 0);
 	fread(buffer, BLOCKSIZE, 1, openedFilePtr);
 	//substitute the block
@@ -117,7 +117,8 @@ int BufferManager::fetchABlock(const string& fileName, const ADDRESS& tag)
 
 /*fetch a record from the buffer if not hit, fecth it from the file into the buffer first
 *@param name	the name of the file without suffix name
-*@param 
+*@param address	the address of the record in the file
+*@return the header address of the record in the block
 */
 BYTE* BufferManager::fetchARecord(const string& name, const ADDRESS& address)
 {
@@ -133,10 +134,16 @@ BYTE* BufferManager::fetchARecord(const string& name, const ADDRESS& address)
 	}
 	
 	int blockOffset = address - (address / BLOCKSIZE) * BLOCKSIZE;
+	substitutionQue.moveTail(blockIndex);
 
 	return blocks[blockIndex].getBlockData() + blockOffset;
 }
 
+/*write a record if it in buffer, write it into buffer otherwise fecth it from the file and write it
+*@param record		the header address of the writing record
+*@param recordLength	the length of the writing record
+*@param address		the address that writing into the file
+*/
 void BufferManager::writeARecord(BYTE* record, int recordLength, const string& name, const ADDRESS& address)
 {
 	int blockIndex;
@@ -150,6 +157,10 @@ void BufferManager::writeARecord(BYTE* record, int recordLength, const string& n
 	blocks[blockIndex].setDirtyBit(true);
 }
 
+/*write a block into the file
+*using write back strategy that when a block will be substituted and it is dirty, write it back to the file
+*@param blockIndex		the block that you want to write back
+*/
 void BufferManager::writeABlock(const int& blockIndex)
 {
 	string fileName = blocks[blockIndex].getFileName();
@@ -159,6 +170,10 @@ void BufferManager::writeABlock(const int& blockIndex)
 	fclose(fp);
 }
 
+
+/*set the block pinnned
+*@param blockIndex		the block that you want to set it pinned
+*/
 void BufferManager::setBlockPinned(int blockIndex)
 {
 	blocks[blockIndex].setPinnedBit(true);
