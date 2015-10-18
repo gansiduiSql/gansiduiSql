@@ -1,6 +1,6 @@
 #ifndef _INDEXMANAGER_H_
 #define _INDEXMANAGER_H_
-#include <string>
+#include "../Defination.h"
 
 class IndexManager
 {

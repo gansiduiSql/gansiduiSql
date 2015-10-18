@@ -44,17 +44,29 @@ void CatalogManager::deleteTableCatalog(const std::string& tableName)
 }
 Table CatalogManager::getTable(const std::string& tableName)
 {
-	BYTE* buffer = bm->fetchARecord(tableName, 0);
+	BYTE* buffer = bm->fetchARecord(tableName + "log", 0);
 	if (buffer == NULL)
 		throw runtime_error("The table does not exist!");
 
 	Table rTable;
 	rTable.setTableName(tableName);
 	
+	BYTE* tPtr = buffer;
+	while (*(tPtr++) == 0);
+
 	vector<Data> tableVec;
 	Data tmpData;
-	while(1)
-
+	int i = 0;
+	while (!isEnd(tPtr))
+	{
+		tPtr=readData(tmpData,tPtr);
+		if (tmpData.isPrimary())
+		{
+			rTable.setPrimaryKeyIndex(i);
+		}
+		tableVec.push_back(tmpData);
+		i++;
+	}
 
 }
 std::string	CatalogManager::getIndexName(const std::string& attribute, const std::string& fileName);

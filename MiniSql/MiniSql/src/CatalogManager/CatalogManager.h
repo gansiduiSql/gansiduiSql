@@ -1,7 +1,7 @@
 #ifndef _CATALOGMANAGER_H_
 #define _CATALOGMANAGER_H_
 
-#include "Definition.h"
+#include "../Definition.h"
 #include <string>
 
 class CatalogManager

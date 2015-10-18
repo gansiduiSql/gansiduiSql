@@ -1,9 +1,5 @@
 #ifndef _BPLUSTREE_H_
 #define _BPLUSTREE_H_
-#define LEFT 0xba
-#define RIGHT 0xbb
-#define POINTERNUM 187
-#define KEYNUM 186
 #include <string>
 #include <iostream>
 
@@ -14,29 +10,30 @@ class Record;
 class BPlusTreeLeaf;
 typedef BPlusTreeNode* BPlusPointer;
 typedef BPlusTreeLeaf* BPlusLeaf;
-typedef string* RecordPointer;
+typedef int RecordPointer;
+
+enum{
+        LEFT,RIGHT
+};
 
 class BPlusTreeNode
 {
 protected:
-    //const int KEYNUM;									 //Number of keyvalues in the Node
-    //const int POINTERNUM;                          //Number of pointers in the Node
+    const int KEYNUM;									 //Number of keyvalues in the Node
+    const int POINTERNUM;                          //Number of pointers in the Node
     BPlusPointer ptrToParent;						 //The pointer that points to the parent node
-    //ElementType* keyValue;						 //Pointer that points to an array that stores the key value
-    ElementType keyValue[KEYNUM];
+    ElementType* keyValue;						 //Pointer that points to an array that stores the key value
     int ELEMENTCOUNT;                               //Count of the element in the node
     bool isFull(){return ELEMENTCOUNT==KEYNUM; }
     bool containsKey(ElementType s);      //If the node contains s, returns true, else, returns false
-    int leastValueBiggerThan(ElementType s); //returns -1 if not found, returns index if found
+    int firstValueBiggerThan(ElementType s); //returns -1 if not found, returns index if found
 
 private:
-    //BPlusPointer* ptrToChild;                       //Pointer that points to an array that stores the pointer to childrens
-    BPlusPointer ptrToChild[POINTERNUM];
+    BPlusPointer* ptrToChild;                       //Pointer that points to an array that stores the pointer to childrens
     void alterParentNode();                       //after spliting nodes on insertion, alter the parent node of its child
 
 public:
-    //BPlusTreeNode(int keyNumber);                                                                                    //constructer, allocate space for a node that contains keyNumber elements
-    BPlusTreeNode();
+    BPlusTreeNode(int keyNumber);                                                                                    //constructer, allocate space for a node that contains keyNumber elements
     virtual ~BPlusTreeNode();                                                                                                  //virtual distructor, delete dynamic allocated ptrToChild and keyValue
     virtual BPlusPointer addKey(RecordPointer p, ElementType s);                          //recursively add key until to the left
     virtual BPlusPointer removeKey(ElementType s);                                                     //recursively remove key until to the left
@@ -58,18 +55,17 @@ public:
     BPlusPointer getPtrToChild(int index);                                                  //get the keyvalue of given index
     int getElementCount();                                                                           //return Element count
     bool isEmpty(){return ELEMENTCOUNT==0; }
+	virtual RecordPointer findKey(ElementType s);
 };
 
 class BPlusTreeLeaf : public BPlusTreeNode
 {
 private:
-    //RecordPointer* ptrToChild;
-    RecordPointer  ptrToChild[KEYNUM];
+    RecordPointer* ptrToChild;
     BPlusPointer ptrToSibling;
 
 public:
-    //BPlusTreeLeaf(int keyNumber);
-    BPlusTreeLeaf();
+    BPlusTreeLeaf(int keyNumber);
     ~BPlusTreeLeaf();
     BPlusPointer addKey(RecordPointer p, ElementType s);
     BPlusPointer removeKey(ElementType s);
@@ -83,6 +79,7 @@ public:
     int indexOf(RecordPointer s);
     int indexOf(ElementType s);
     void traverse(int level);
+	RecordPointer findKey(ElementType s);
 };
 
 class BPlusTree
@@ -94,7 +91,7 @@ public:
     ~BPlusTree();
     bool addKey(RecordPointer p, ElementType s);
     bool removeKey(ElementType s);
-    ElementType* findKey(ElementType s);
+    RecordPointer findKey(ElementType s);
     void traverseTree();
 };
 
