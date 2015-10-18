@@ -2,6 +2,9 @@
 #define _CATALOGMANAGER_H_
 
 #include <string>
+
+class Table;
+
 class CatalogManager
 {
 public:
@@ -10,7 +13,7 @@ public:
 	void createTableCatalog(const Table& table);
 	void deleteTableCatalog(const std::string& tableName);
 	Table getTable(const std::string& tableName);
-	string getIndexName(std::string attribute, std::string& fileName);
+	std::string getIndexName(std::string& attribute, std::string& fileName);
 	std::string getFileNameFromIndexName(const std::string& indexName, const std::string& fileName);
 	void deleteIndexCatalog(const std::string& indexName);
 };

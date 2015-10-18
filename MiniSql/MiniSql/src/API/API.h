@@ -4,7 +4,7 @@
 #include <string>
 #include <list>
 #include <vector>
-#include "..\Defination.h"
+#include "..\Definition.h"
 #include "..\CatalogManager\CatalogManager.h"
 #include "..\RecordManager\RecordManager.h"
 #include "..\IndexManager\IndexManager.h"
