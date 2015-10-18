@@ -1,10 +1,8 @@
 #ifndef _CATALOGMANAGER_H_
 #define _CATALOGMANAGER_H_
 
+#include "Definition.h"
 #include <string>
-
-class BufferManager;
-class Table;
 
 class CatalogManager
 {
@@ -19,6 +17,7 @@ public:
 	void deleteIndexCatalog(const std::string& indexName);
 private: 
 	BufferManager* bm;
+	void saveData(const Data& data, BYTE* ptr);
 };
 
 
