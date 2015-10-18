@@ -14,7 +14,8 @@ RecordManager::~RecordManager()
 
 void RecordManager::insertValues(const std::string& tableName, const list<std::string>& values)
 {
-
+	int tail = *(int *)(bmPtr->fecthARecord(tableName, 0));
+	
 }
 
 void RecordManager::deleteValues(const std::string& tableName)

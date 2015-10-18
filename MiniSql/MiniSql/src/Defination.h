@@ -98,7 +98,7 @@ private:
 class ArrayList
 {
 private:
-	int head, tail;
+	int header, tail;
 	struct{
 		int last;
 		int next;
@@ -107,5 +107,5 @@ public:
 	ArrayList();
 	~ArrayList();
 	void moveTail(int index);
-	int getHead();
+	int getHeader();
 };

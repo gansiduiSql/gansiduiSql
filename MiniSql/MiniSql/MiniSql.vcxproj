@@ -80,7 +80,7 @@
     <ClCompile Include="src\Defination.cpp" />
     <ClCompile Include="src\IndexManager\IndexManager.cpp" />
     <ClCompile Include="src\InterpreterManager\Interpreter.cpp" />
-    <ClCompile Include="src\RecordManager\RecorderManager.cpp" />
+    <ClCompile Include="src\RecordManager\RecordManager.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

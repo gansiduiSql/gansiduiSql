@@ -13,7 +13,6 @@ public:
 	~BufferManager();
 	BYTE* fecthARecord(const std::string& name, const ADDRESS& address);
 	void writeARecord(BYTE* record, int recordLength, const string& name, const ADDRESS& address);
-
 	void setBlockPinned(int blockIndex);
 	void getHeader(const std::string& fileName, ADDRESS& recordHeader, ADDRESS& freeListHeader);
 	static BufferManager* getBufferManager();
