@@ -11,7 +11,7 @@ class BufferManager
 public:
 	BufferManager();
 	~BufferManager();
-	BYTE* fecthARecord(const std::string& name, const ADDRESS& address);
+	BYTE* fetchARecord(const std::string& name, const ADDRESS& address);
 	void writeARecord(BYTE* record, int recordLength, const std::string& name, const ADDRESS& address);
 	void setBlockPinned(int blockIndex);
 	void getHeader(const std::string& fileName, ADDRESS& recordHeader, ADDRESS& freeListHeader);

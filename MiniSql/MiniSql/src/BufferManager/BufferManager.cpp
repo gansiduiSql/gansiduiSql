@@ -119,7 +119,7 @@ int BufferManager::fetchABlock(const string& fileName, const ADDRESS& tag)
 *@param name	the name of the file without suffix name
 *@param 
 */
-BYTE* BufferManager::fecthARecord(const string& name, const ADDRESS& address)
+BYTE* BufferManager::fetchARecord(const string& name, const ADDRESS& address)
 {
 	//hit and return the corresponding block
 	int blockIndex;
