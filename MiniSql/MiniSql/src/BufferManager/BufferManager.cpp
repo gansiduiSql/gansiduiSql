@@ -48,11 +48,11 @@ BufferManager* BufferManager::getBufferManager()
 int BufferManager::substitute(const string& fileName, const ADDRESS& tag, BYTE* buffer)
 {
 	/*decide which block to substitute*/
-	int it = substitutionQue.getHead();
+	int it = substitutionQue.getHeader();
 	while (it != -1 && blocks[it].getPinnnedBit())
 	{
 		substitutionQue.moveTail(it);
-		it = substitutionQue.getHead();
+		it = substitutionQue.getHeader();
 	}
 	if (it == -1)
 	{
