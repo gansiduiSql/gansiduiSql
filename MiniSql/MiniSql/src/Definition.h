@@ -24,6 +24,7 @@ struct Expression
 	OPERATOR op;
 };
 
+
 struct Oprand
 {
 	std::string oprandName;
@@ -40,9 +41,9 @@ enum TYPE
 class Table
 {
 public:
-	Table();
+	Table(){}
 	Table(const std::string& tableName, std::vector<Data>& tableVec, int primaryKeyIndex)
-		:tableName(tableName), tableVec(tableVec), primaryKeyIndex(primaryKeyIndex)
+		:tableName(tableName), tableVec(tableVec), primaryKeyIndex(primaryKeyIndex), length(length)
 	{}
 	const std::string& getTableName()const { return tableName; }
 	void setTableName(const std::string& tableName) { this->tableName = tableName; }
@@ -50,12 +51,13 @@ public:
 	void setTableVec(const std::vector<Data>& tableVec) { this->tableVec = tableVec; }
 	int getPrimaryKeyIndex()const { return primaryKeyIndex; }
 	void setPrimaryKeyIndex(int primaryKeyIndex) { this->primaryKeyIndex = primaryKeyIndex; }
-
+	int getLength()const { return length; }
 	~Table();
 private:
 	std::string tableName;
 	std::vector<Data> tableVec;
 	int primaryKeyIndex;
+	int length;
 };
 
 class Data
@@ -82,22 +84,21 @@ public:
 
 	~Data();
 };
-
 class Block
 {
 public:
 	Block();
 	~Block();
-	void setBlockData(BYTE* data){ memcpy(blockData, data, BLOCKSIZE); }
-	BYTE* getBlockData(){ return blockData; }
-	void setDirtyBit(bool isDirty){ this->dirtyBit = isDirty; }
-	bool getDirtyBit(){ return dirtyBit; }
-	void setPinnedBit(bool pinnnedBit){ this->isPinned = pinnnedBit; }
-	bool getPinnnedBit(){ return isPinned; }
-	void setFileName(const std::string& fileName){ this->fileName = fileName; }
-	std::string getFileName(){ return fileName; }
-	void setTag(ADDRESS tag){ this->tag = tag; }
-	ADDRESS getTag(){ return tag; }
+	void setBlockData(BYTE* data);
+	BYTE* getBlockData();
+	void setDirtyBit(bool isDirty);
+	bool getDirtyBit();
+	void setPinnedBit(bool pinnnedBit);
+	bool getPinnnedBit();
+	void setFileName(const std::string& fileName);
+	std::string getFileName();
+	void setTag(ADDRESS tag);
+	ADDRESS getTag();
 private:
 	BYTE blockData[BLOCKSIZE];
 	bool dirtyBit;
