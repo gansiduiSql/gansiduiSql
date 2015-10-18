@@ -3,6 +3,7 @@
 
 #include <string>
 
+class BufferManager;
 class Table;
 
 class CatalogManager
@@ -16,6 +17,10 @@ public:
 	std::string getIndexName(std::string& attribute, std::string& fileName);
 	std::string getFileNameFromIndexName(const std::string& indexName, const std::string& fileName);
 	void deleteIndexCatalog(const std::string& indexName);
+private: 
+	BufferManager* bm;
 };
+
+
 
 #endif

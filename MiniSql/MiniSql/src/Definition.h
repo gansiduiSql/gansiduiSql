@@ -45,11 +45,11 @@ public:
 	Table(const std::string& tableName, std::vector<Data>& tableVec, int primaryKeyIndex)
 		:tableName(tableName), tableVec(tableVec), primaryKeyIndex(primaryKeyIndex)
 	{}
-	const std::string& getTableName() { return tableName; }
+	const std::string& getTableName()const { return tableName; }
 	void setTableName(const std::string& tableName) { this->tableName = tableName; }
-	const vector<Data>& getTableVec() { return tableVec; }
+	const std::vector<Data>& getTableVec()const { return tableVec; }
 	void setTableVec(const std::vector<Data>& tableVec) { this->tableVec = tableVec; }
-	int getPrimaryKeyIndex() { return primaryKeyIndex; }
+	int getPrimaryKeyIndex()const { return primaryKeyIndex; }
 	void setPrimaryKeyIndex(int primaryKeyIndex) { this->primaryKeyIndex = primaryKeyIndex; }
 
 	~Table();
@@ -69,13 +69,13 @@ private:
 	bool primaryFlag;
 public:
 	Data(const std::string& attribute, TYPE type, int length, bool isUnique, bool isPrimary);
-	const std::string& getAttribute() { return attribute; }
+	const std::string& getAttribute()const { return attribute; }
 	void setAttribute(const std::string& attr) { attribute = attr; }
-	int getLength() { return length; }
-	void setLength( int len) { length = len; }
-	bool isUnique() { return uniqueFlag; }
+	int getLength()const{ return length; }
+	void setLength(int len) { length = len; }
+	bool isUnique()const { return uniqueFlag; }
 	void setUnique(bool flag) { uniqueFlag = flag; }
-	bool isPrimary() { return primaryFlag; }
+	bool isPrimary()const { return primaryFlag; }
 	void setPrimary(bool flag) { primaryFlag = flag; }
 
 	~Data();
@@ -91,8 +91,8 @@ public:
 	bool getDirtyBit();
 	void setPinnedBit(bool pinnnedBit);
 	bool getPinnnedBit();
-	void setFileName(const string& fileName);
-	string getFileName();
+	void setFileName(const std::string& fileName);
+	std::string getFileName();
 	void setTag(ADDRESS tag);
 	ADDRESS getTag();
 private:
@@ -100,7 +100,7 @@ private:
 	bool dirtyBit;
 	bool isPinned;
 	ADDRESS tag;
-	string fileName;
+	std::string fileName;
 };
 
 class ArrayList
