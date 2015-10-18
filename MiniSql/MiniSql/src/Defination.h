@@ -2,12 +2,10 @@
 #include <vector>
 
 #define BLOCKNUM 10
+#define BLOCKSIZE 4096
 typedef unsigned char BYTE;
-
-typedef struct{
-	long long blockNum;
-	long long blockOffset;
-}ADDRESS;
+typedef int ADDRESS;
+typedef std::vector<std::vector<std::string>> RECORDBUFFER;
 
 enum OPERATOR
 {
@@ -25,6 +23,17 @@ struct Expression
 	Oprand rigthOprand;
 	OPERATOR op;
 };
+
+/*class Expression
+{
+public:
+	bool isTrue();
+private:
+	string attributeName;
+	string value;
+	TYPE 
+
+};*/
 
 class Oprand
 {
@@ -74,9 +83,29 @@ public:
 	bool getDirtyBit();
 	void setPinnedBit(bool pinnnedBit);
 	bool getPinnnedBit();
+	void setFileName(const string& fileName);
+	string getFileName();
+	void setTag(ADDRESS tag);
+	ADDRESS getTag();
 private:
 	BYTE blockData[4096];
 	bool dirtyBit;
 	bool isPinned;
 	ADDRESS tag;
+	string fileName;
+};
+
+class ArrayList
+{
+private:
+	int header, tail;
+	struct{
+		int last;
+		int next;
+	} arraylist[BLOCKNUM];
+public:
+	ArrayList();
+	~ArrayList();
+	void moveTail(int index);
+	int getHeader();
 };
