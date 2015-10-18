@@ -17,7 +17,9 @@ public:
 	void deleteIndexCatalog(const std::string& indexName);
 private: 
 	BufferManager* bm;
-	void saveData(const Data& data, BYTE* ptr);
+	BYTE* saveData(const Data& data, BYTE* ptr);
+	BYTE* readData(Data& data, BYTE* ptr);
+	bool isEnd(BYTE* ptr);
 };
 
 

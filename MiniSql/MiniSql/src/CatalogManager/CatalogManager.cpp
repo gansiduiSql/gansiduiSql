@@ -17,14 +17,16 @@ CatalogManager::~CatalogManager()
 void CatalogManager::createTableCatalog(const Table& table)
 {
 	string tableName = table.getTableName();
-	BYTE* buffer = bm->fecthARecord(tableName + ".log", 0);
-	BYTE* tPtr = buffer;
-
-	if (buffer == NULL)
-	{
-		throw runtime_error("The table does not exist!");
-	}
+	BYTE* buffer = bm->fetchARecord(tableName + ".log", 0);
+	const char* cTableName = table.getTableName().c_str();
 	const vector<Data>& tableVec = table.getTableVec();
+	
+	BYTE* tPtr = buffer;
+	//store the table Name
+	memcpy(tPtr, cTableName, strlen(cTableName) + 1);
+	tPtr += strlen(cTableName) + 1;
+
+	//store the Attribute
 	for (auto &data : tableVec)
 	{
 		tPtr = saveData(data, tPtr);
@@ -33,10 +35,26 @@ void CatalogManager::createTableCatalog(const Table& table)
 }
 void CatalogManager::deleteTableCatalog(const std::string& tableName)
 {
+	BYTE* buffer = bm->fetchARecord(tableName + ".log", 0);
 
+	if (buffer == NULL)
+		throw runtime_error("The table does not exist!");
+
+	memset(buffer, 0, BLOCKSIZE);
 }
 Table CatalogManager::getTable(const std::string& tableName)
 {
+	BYTE* buffer = bm->fetchARecord(tableName, 0);
+	if (buffer == NULL)
+		throw runtime_error("The table does not exist!");
+
+	Table rTable;
+	rTable.setTableName(tableName);
+	
+	vector<Data> tableVec;
+	Data tmpData;
+	while(1)
+
 
 }
 std::string	CatalogManager::getIndexName(const std::string& attribute, const std::string& fileName);
@@ -58,4 +76,23 @@ BYTE* CatalogManager::saveData(const Data& data, BYTE* ptr)
 	*(iPtr++) = data.isUnique();
 	*(iPtr++) = data.isPrimary();
 	return (BYTE*)iPtr;
+}
+
+BYTE* CatalogManager::readData(Data& data, BYTE* ptr)
+{
+	BYTE* tPtr = ptr;
+	data.setAttribute(string((const char *)tPtr));
+	while (tPtr++ != 0);
+	int* iPtr = (int*)tPtr;
+	data.setType((TYPE)*(iPtr++));
+	data.setLength(*(iPtr++));
+	data.setUnique((bool)*(iPtr++));
+	data.setPrimary((bool)*(iPtr++));
+	return (BYTE*)iPtr;
+
+}
+
+bool isEnd(BYTE* ptr)
+{
+	return *ptr == 0xff;
 }

@@ -68,9 +68,12 @@ private:
 	bool uniqueFlag;
 	bool primaryFlag;
 public:
+	Data(){}
 	Data(const std::string& attribute, TYPE type, int length, bool isUnique, bool isPrimary);
 	const std::string& getAttribute()const { return attribute; }
 	void setAttribute(const std::string& attr) { attribute = attr; }
+	TYPE getType()const { return type; }
+	void setType(TYPE type) { this->type = type; }
 	int getLength()const{ return length; }
 	void setLength(int len) { length = len; }
 	bool isUnique()const { return uniqueFlag; }
