@@ -24,16 +24,6 @@ struct Expression
 	OPERATOR op;
 };
 
-/*class Expression
-{
-public:
-	bool isTrue();
-private:
-	string attributeName;
-	string value;
-	TYPE 
-
-};*/
 
 class Oprand
 {
@@ -52,11 +42,14 @@ class Table
 {
 public:
 	Table();
+	Table(const std::string& tableName, std::vector<Data>& tableVec, int primaryKeyIndex)
+		:tableName(tableName), tableVec(tableVec), primaryKeyIndex(primaryKeyIndex)
+	{}
 	~Table();
 private:
 	std::string tableName;
-	int primaryKeyIndex;
 	std::vector<Data> tableVec;
+	int primaryKeyIndex;
 };
 
 class Data
@@ -65,13 +58,21 @@ private:
 	std::string attribute;
 	TYPE type;
 	int length;
-	bool isUnique;
-	bool isPrimay;
+	bool uniqueFlag;
+	bool primaryFlag;
 public:
 	Data(std::string attribute, TYPE type, int length, bool isUnique, bool isPrimary);
+	std::string getAttribute() { return attribute; }
+	void setAttribute(std::string& attr) { attribute = attr; }
+	int getLength() { return length; }
+	void setLength(int len) { length = len; }
+	bool isUnique() { return uniqueFlag; }
+	void setUnique(bool flag) { uniqueFlag = flag; }
+	bool isPrimary() { return primaryFlag; }
+	void setPrimary(bool flag) { primaryFlag = flag; }
+
 	~Data();
 };
-
 class Block
 {
 public:
@@ -88,7 +89,7 @@ public:
 	void setTag(ADDRESS tag);
 	ADDRESS getTag();
 private:
-	BYTE blockData[4096];
+	BYTE blockData[BLOCKSIZE];
 	bool dirtyBit;
 	bool isPinned;
 	ADDRESS tag;
