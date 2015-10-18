@@ -2,6 +2,7 @@
 #include <vector>
 
 #define BLOCKNUM 10
+#define BLOCKSIZE 4096
 typedef unsigned char BYTE;
 typedef int ADDRESS;
 typedef std::vector<std::vector<std::string>> RECORDBUFFER;
@@ -82,10 +83,29 @@ public:
 	bool getDirtyBit();
 	void setPinnedBit(bool pinnnedBit);
 	bool getPinnnedBit();
+	void setFileName(const string& fileName);
+	string getFileName();
+	void setTag(ADDRESS tag);
+	ADDRESS getTag();
 private:
 	BYTE blockData[4096];
 	bool dirtyBit;
 	bool isPinned;
 	ADDRESS tag;
 	string fileName;
+};
+
+class ArrayList
+{
+private:
+	int head, tail;
+	struct{
+		int last;
+		int next;
+	} arraylist[BLOCKNUM];
+public:
+	ArrayList();
+	~ArrayList();
+	void moveTail(int index);
+	int getHead();
 };
