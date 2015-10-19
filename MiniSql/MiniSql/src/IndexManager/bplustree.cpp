@@ -29,16 +29,16 @@ BPlusTreeNode::~BPlusTreeNode()
 
 BPlusPointer BPlusTreeNode::addKey(RecordPointer p, ElementType s)
 {
-	int i = firstValueBiggerThan(s);       //Find the index of the first value bigger than s
+	int i = firstValueBiggerThan(s);				 //Find the index of the first value bigger than s
 	if (i == -1)                                                 //If every Value is smaller than s,  or if the node is empty
 	{
 		int j;
-		for (j = 0; j < POINTERNUM;)      //Find the index of the first none-null index
+		for (j = 0; j < POINTERNUM;)				 //Find the index of the first none-null index
 		{
 			if (ptrToChild[++j] == NULL)
 				break;
 		}
-		ptrToChild[j]->addKey(p, s);       //Addkey recursively
+		ptrToChild[j]->addKey(p, s);			    //Addkey recursively
 	}
 	else if (i == KEYNUM)
 	{
@@ -46,17 +46,17 @@ BPlusPointer BPlusTreeNode::addKey(RecordPointer p, ElementType s)
 	}
 	else
 	{
-		if (s == keyValue[i])            //若第i项和s相等
-			ptrToChild[i + 1]->addKey(p, s); //递归向下
-		else                             //第i项大于s
-			ptrToChild[i]->addKey(p, s);  //递归向下查询
+		if (s == keyValue[i])								//若第i项和s相等
+			ptrToChild[i + 1]->addKey(p, s);		//递归向下
+		else															 //第i项大于s
+			ptrToChild[i]->addKey(p, s);				//递归向下查询
 	}
 	return this->ptrToParent == NULL ? this : this->ptrToParent;
 }
 
 void BPlusTreeNode::insertKey(BPlusPointer p, ElementType s, int direction)
 {
-	if (isFull())                             //若该node已满
+	if (isFull())															  //若该node已满
 	{
 		bool newParentCreated = false;
 		if (ptrToParent == NULL)
@@ -65,7 +65,7 @@ void BPlusTreeNode::insertKey(BPlusPointer p, ElementType s, int direction)
 			ptrToParent = newFatherNode;
 			newParentCreated = true;
 		}
-		BPlusPointer newNode = new BPlusTreeNode(KEYNUM); //创建一个新Node
+		BPlusPointer newNode = new BPlusTreeNode(KEYNUM);							 //创建一个新Node
 		newNode->setParentNode(ptrToParent);
 
 		ElementType* tmpKeyValue = new ElementType[KEYNUM + 1];          //创建两个多一个位置的数组
@@ -742,16 +742,28 @@ BPlusTree::~BPlusTree()
 	delete Root;
 }
 
-bool BPlusTree::addKey(RecordPointer p, ElementType s)
+void BPlusTree::addKey(RecordPointer p, ElementType s)throw(exception)
 {
-	Root = Root->addKey(p, s);
-	return true;
+	try
+	{
+		Root = Root->addKey(p, s);
+	}
+	catch (exception ex)
+	{
+		throw ex;
+	}
 }
 
-bool BPlusTree::removeKey(ElementType s)
+void BPlusTree::removeKey(ElementType s)throw(exception)
 {
-	Root = Root->removeKey(s);
-	return true;
+	try
+	{
+		Root = Root->removeKey(s);
+	}
+	catch (exception ex)
+	{
+		throw ex;
+	}
 }
 
 RecordPointer BPlusTree::findKey(ElementType s)

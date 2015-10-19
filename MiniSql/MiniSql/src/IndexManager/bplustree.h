@@ -89,8 +89,8 @@ class BPlusTree
 public:
     BPlusTree(int maxKeyNum);
     ~BPlusTree();
-    bool addKey(RecordPointer p, ElementType s);
-    bool removeKey(ElementType s);
+    void addKey(RecordPointer p, ElementType s);
+    void removeKey(ElementType s);
     RecordPointer findKey(ElementType s);
     void traverseTree();
 };
