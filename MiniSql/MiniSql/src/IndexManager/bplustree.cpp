@@ -728,21 +728,21 @@ void BPlusTreeLeaf::traverse(int level)
 	ELEMENTNUM += ELEMENTCOUNT;
 }
 ////////////////////////////////////////////////////////////////////////////////////////
-/// \brief BPlusTree
-/// \param BPlusTree
+/// \brief BPlusTreeIndex
+/// \param BPlusTreeIndex
 ///
 ////////////////////////////////////////////////////////////////////////////////////////
-BPlusTree::BPlusTree(int maxKeyNum) :MAXKEYNUMBER(maxKeyNum)
+BPlusTreeIndex::BPlusTreeIndex(int maxKeyNum) :MAXKEYNUMBER(maxKeyNum)
 {
 	Root = new BPlusTreeLeaf(MAXKEYNUMBER);
 }
 
-BPlusTree::~BPlusTree()
+BPlusTreeIndex::~BPlusTreeIndex()
 {
 	delete Root;
 }
 
-void BPlusTree::addKey(RecordPointer p, ElementType s)throw(exception)
+void BPlusTreeIndex::addKey(RecordPointer p, ElementType s)throw(exception)
 {
 	try
 	{
@@ -754,7 +754,7 @@ void BPlusTree::addKey(RecordPointer p, ElementType s)throw(exception)
 	}
 }
 
-void BPlusTree::removeKey(ElementType s)throw(exception)
+void BPlusTreeIndex::removeKey(ElementType s)throw(exception)
 {
 	try
 	{
@@ -766,12 +766,12 @@ void BPlusTree::removeKey(ElementType s)throw(exception)
 	}
 }
 
-RecordPointer BPlusTree::findKey(ElementType s)
+RecordPointer BPlusTreeIndex::findKey(ElementType s)
 {
 	return Root->findKey(s);
 }
 
-void BPlusTree::traverseTree()
+void BPlusTreeIndex::traverseTree()
 {
 	Root->traverse(0);
 }

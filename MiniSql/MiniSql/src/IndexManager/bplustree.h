@@ -2,6 +2,7 @@
 #define _BPLUSTREE_H_
 #include <string>
 #include <iostream>
+#include "../Definition.h"
 
 using namespace std;
 typedef string ElementType;
@@ -82,17 +83,20 @@ public:
 	RecordPointer findKey(ElementType s);
 };
 
-class BPlusTree
+class BPlusTreeIndex
 {
+private:
     BPlusPointer Root;
     int MAXKEYNUMBER;
+	TYPE type;
 public:
-    BPlusTree(int maxKeyNum);
-    ~BPlusTree();
+    BPlusTreeIndex(int maxKeyNum, TYPE type);
+    ~BPlusTreeIndex();
     void addKey(RecordPointer p, ElementType s);
     void removeKey(ElementType s);
     RecordPointer findKey(ElementType s);
     void traverseTree();
+	TYPE getAttributeType();
 };
 
 

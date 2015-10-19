@@ -2,22 +2,26 @@
 #define _INDEXMANAGER_H_
 #include "../Definition.h"
 #include "bplustree.h"
+#include <sstream>
 #include "../BufferManager/BufferManager.h"
 #include <list>
 #include <map>
 using namespace std;
+typedef map<string, BPlusTreeIndex*>::iterator ITER;
 
 class IndexManager
 {
 private:
-	map<string, BPlusTree*> indexLibrary;
+	map<string, BPlusTreeIndex*> indexLibrary;
 	BufferManager * bufferManager;
 public:
-	void createIndex(string indexName, string attributeName, string indexKey, 
-					TYPE keyValueType, std::string fileName, ADDRESS firstRecordOffset);
-	void dropIndex(string indexName); //delet/drop index indexfile and index in this function
-	void deleteValues(string indexName, list<Expression> expressions); 
-	void selectValues(string indexName, list<Expression> expressions, RECORDBUFFER recordBuffer);
+	IndexManager();
+	void createIndex(const string indexName, const Data attribute,const int recordLength, const string fileName);
+	void dropIndex(const string indexName); //delet/drop index indexfile and index in this function
+	void deleteValues(const string indexName, list<Expression> expressions); 
+	void selectValues(const string indexName, list<Expression> expressions, RECORDBUFFER recordBuffer);
+
+	void insertValues(const string indexName, const string key, const ADDRESS RecordOffset);
 };
 
 #endif
