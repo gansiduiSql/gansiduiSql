@@ -4,6 +4,8 @@
 #include "../Definition.h"
 #include <string>
 
+class BufferManager;
+
 class CatalogManager
 {
 public:

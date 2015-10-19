@@ -6,7 +6,7 @@ Table::Table(const std::string& tableName, std::vector<Data>& tableVec)
 	:tableName(tableName), tableVec(tableVec)
 {
 	int i = 0;
-	this->length = 0;
+	length = 0;
 	for (auto &data : this->tableVec)
 	{
 		if (data.isPrimary())

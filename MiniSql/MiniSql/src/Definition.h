@@ -1,3 +1,6 @@
+#ifndef _DEFINITION_H_
+#define _DEFINITION_H_
+
 #include <string>
 #include <vector>
 
@@ -6,6 +9,13 @@
 typedef unsigned char BYTE;
 typedef int ADDRESS;
 typedef std::vector<std::vector<std::string>> RECORDBUFFER;
+
+struct Expression;
+struct Operand;
+class Table;
+class Data;
+class Block;
+class ArrayList;
 
 enum OPERATOR
 {
@@ -19,13 +29,13 @@ enum OPERATOR
 
 struct Expression
 {
-	Oprand leftOprand;
-	Oprand rigthOprand;
+	Operand leftOprand;
+	Operand rigthOprand;
 	OPERATOR op;
 };
 
 
-struct Oprand
+struct Operand
 {
 	std::string oprandName;
 	bool isAttribute;
@@ -119,3 +129,5 @@ public:
 	void moveTail(int index);
 	int getHeader();
 };
+
+#endif
