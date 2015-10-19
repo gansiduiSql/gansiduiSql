@@ -42,9 +42,7 @@ class Table
 {
 public:
 	Table(){}
-	Table(const std::string& tableName, std::vector<Data>& tableVec, int primaryKeyIndex)
-		:tableName(tableName), tableVec(tableVec), primaryKeyIndex(primaryKeyIndex), length(length)
-	{}
+	Table(const std::string& tableName, std::vector<Data>& tableVec);
 	const std::string& getTableName()const { return tableName; }
 	void setTableName(const std::string& tableName) { this->tableName = tableName; }
 	const std::vector<Data>& getTableVec()const { return tableVec; }

@@ -4,7 +4,7 @@
 #include <exception>
 #include <cstring>
 using namespace std;
-
+#define FIX_LENGTH 64
 CatalogManager::CatalogManager()
 {
 	bm = BufferManager::getBufferManager();
@@ -24,7 +24,7 @@ void CatalogManager::createTableCatalog(const Table& table)
 	BYTE* tPtr = buffer;
 	//store the table Name
 	memcpy(tPtr, cTableName, strlen(cTableName) + 1);
-	tPtr += strlen(cTableName) + 1;
+	tPtr += FIX_LENGTH;
 
 	//store the Attribute
 	for (auto &data : tableVec)
@@ -47,33 +47,84 @@ Table CatalogManager::getTable(const std::string& tableName)
 	BYTE* buffer = bm->fetchARecord(tableName + "log", 0);
 	if (buffer == NULL)
 		throw runtime_error("The table does not exist!");
-
-	Table rTable;
-	rTable.setTableName(tableName);
 	
 	BYTE* tPtr = buffer;
-	while (*(tPtr++) == 0);
+	tPtr += 64;
 
 	vector<Data> tableVec;
 	Data tmpData;
-	int i = 0;
+
 	while (!isEnd(tPtr))
 	{
 		tPtr=readData(tmpData,tPtr);
-		if (tmpData.isPrimary())
-		{
-			rTable.setPrimaryKeyIndex(i);
-		}
 		tableVec.push_back(tmpData);
-		i++;
 	}
-
+	return Table(tableName, tableVec);
 }
-std::string	CatalogManager::getIndexName(const std::string& attribute, const std::string& fileName);
-std::string	CatalogManager::getFileNameFromIndexName(const std::string& indexName, const std::string& fileName);
+std::string	CatalogManager::getIndexName(const std::string& attribute, const std::string& tableName)
+{
+	BYTE* buffer = bm->fetchARecord("index.index", 0);
+	BYTE* tPtr = buffer;
+	string sIndexName,sAttributeName,sTableName;
+	while (!isEnd(tPtr))
+	{
+		tPtr = readString(sIndexName, tPtr);
+		tPtr = readString(sTableName, tPtr);
+		tPtr = readString(sAttributeName, tPtr);
+		if (sTableName == tableName&&sAttributeName == attribute)
+			return sIndexName;
+	}
+	throw runtime_error("This index does not exist.");
+	return "";
+}
+std::string	CatalogManager::getFileNameFromIndexName(const std::string& indexName, const std::string& tableName)
+{
+	BYTE* buffer = bm->fetchARecord("index.index", 0);
+	BYTE* tPtr = buffer;
+	string sIndexName, sAttributeName, sTableName;
+	while (!isEnd(tPtr))
+	{
+		tPtr = readString(sIndexName, tPtr);
+		tPtr = readString(sTableName, tPtr);
+		tPtr = readString(sAttributeName, tPtr);
+		if (sTableName == tableName&&indexName == sIndexName)
+			return tableName;
+	}
+	throw runtime_error("This file does not exist.");
+	return "";
+}
 void CatalogManager::deleteIndexCatalog(const std::string& indexName)
 {
-
+	BYTE* buffer = bm->fetchARecord("index.index", 0);
+	BYTE* tPtr = buffer, *deletedPtr, *headPtr;
+	string sIndexName, sAttributeName, sTableName;
+	bool flag = false;
+	while (!isEnd(tPtr))
+	{
+		headPtr = tPtr;
+		tPtr = readString(sIndexName, tPtr);
+		tPtr = readString(sTableName, tPtr);
+		tPtr = readString(sAttributeName, tPtr);
+		if (!flag && sIndexName == indexName)
+		{
+			deletedPtr = headPtr;
+			flag = true;
+			break;
+		}
+	}
+	if (flag)
+	{
+		while (!isEnd(tPtr))
+		{
+			headPtr = tPtr;
+			tPtr += FIX_LENGTH * 3;
+		}
+		if(headPtr==tPtr)
+			memcpy(deletedPtr, headPtr, FIX_LENGTH * 3);
+		*headPtr = 0xff;
+	}
+	else
+	throw runtime_error("This index does not exist.");
 }
 
 BYTE* CatalogManager::saveData(const Data& data, BYTE* ptr)
@@ -81,7 +132,7 @@ BYTE* CatalogManager::saveData(const Data& data, BYTE* ptr)
 	BYTE* tPtr = ptr;
 	const char* attributeName = data.getAttribute().c_str();
 	memcpy(tPtr, attributeName, strlen(attributeName)+1);
-	tPtr += strlen(attributeName) + 1;
+	tPtr += FIX_LENGTH;
 	unsigned int* iPtr = (unsigned int*)tPtr;
 	*(iPtr++) = data.getType();
 	*(iPtr++) = data.getLength();
@@ -92,19 +143,25 @@ BYTE* CatalogManager::saveData(const Data& data, BYTE* ptr)
 
 BYTE* CatalogManager::readData(Data& data, BYTE* ptr)
 {
+	//attributeNameCannotMoreThan64bytes
 	BYTE* tPtr = ptr;
 	data.setAttribute(string((const char *)tPtr));
-	while (tPtr++ != 0);
+	tPtr += FIX_LENGTH;
 	int* iPtr = (int*)tPtr;
 	data.setType((TYPE)*(iPtr++));
 	data.setLength(*(iPtr++));
 	data.setUnique((bool)*(iPtr++));
 	data.setPrimary((bool)*(iPtr++));
 	return (BYTE*)iPtr;
-
 }
 
-bool isEnd(BYTE* ptr)
+bool CatalogManager::isEnd(BYTE* ptr)
 {
 	return *ptr == 0xff;
+}
+
+BYTE* CatalogManager::readString(std::string& s, BYTE* ptr)
+{
+	s = string((char*)ptr);
+	return ptr + FIX_LENGTH;
 }
