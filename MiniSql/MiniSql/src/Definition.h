@@ -27,19 +27,21 @@ enum OPERATOR
 	LESS_AND_EQUAL
 };
 
-struct Expression
-{
-	Operand leftOprand;
-	Operand rigthOprand;
-	OPERATOR op;
-};
-
-
 struct Operand
 {
 	std::string oprandName;
 	bool isAttribute;
 };
+
+struct Expression
+{
+	Operand leftOperand;
+	Operand rightOperand;
+	OPERATOR op;
+};
+
+
+
 
 enum TYPE
 {
