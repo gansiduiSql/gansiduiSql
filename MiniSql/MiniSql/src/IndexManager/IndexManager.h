@@ -6,6 +6,8 @@
 #include "../BufferManager/BufferManager.h"
 #include <list>
 #include <map>
+#define INT_STRING_SIZE 10
+#define FLOAT_STRING_SIZE 20
 using namespace std;
 typedef map<string, BPlusTreeIndex*>::iterator ITER;
 
@@ -16,12 +18,12 @@ private:
 	BufferManager * bufferManager;
 public:
 	IndexManager();
-	void createIndex(const string indexName, const Data attribute,const int recordLength, const string fileName);
-	void dropIndex(const string indexName); //delet/drop index indexfile and index in this function
-	void deleteValues(const string indexName, list<Expression> expressions); 
+	void createIndex(const string indexName, const Data attribute, const int recordLength, const string fileName);/*create Index of a relation*/
+	void dropIndex(const string indexName); /*delet/drop index indexfile and index in this function*/
+	void deleteValues(const string indexName, list<Expression> expressions, TYPE type); 
 	void selectValues(const string indexName, list<Expression> expressions, RECORDBUFFER recordBuffer);
 
-	void insertValues(const string indexName, const string key, const ADDRESS RecordOffset);
+	void insertValues(const string indexName, const string indexKey, const ADDRESS RecordOffset);
 };
 
 #endif
