@@ -2,6 +2,20 @@
 
 using namespace std;
 
+Table::Table(const std::string& tableName, std::vector<Data>& tableVec)
+	:tableName(tableName), tableVec(tableVec)
+{
+	int i = 0;
+	this->length = 0;
+	for (auto &data : this->tableVec)
+	{
+		if (data.isPrimary())
+			this->primaryKeyIndex = i;
+		this->length += data.getLength();
+		i++;
+	}
+}
+
 ArrayList::ArrayList()
 {
 	header = 0;
