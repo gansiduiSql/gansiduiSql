@@ -162,6 +162,33 @@ BPlusPointer BPlusTreeNode::removeKey(ElementType s)
 	else return ptrToParent;
 }
 
+BPlusLeaf BPlusTreeNode::returnLeafNode(ElementType s)
+{
+	int i = firstValueBiggerThan(s);     //找到最小的比s大的元素的index
+	BPlusPointer returnedPointer;
+	if (i == -1)                                                         //若所有元素比s小或者Node为空
+	{
+		int j;
+		for (j = 0; j < POINTERNUM;)               //找到第一个不为0的指针的index
+		{
+			if (ptrToChild[++j] == NULL)
+				break;
+		}
+		return ptrToChild[j]->returnLeafNode(s);             //递归向下删除
+	}
+	else if (i == KEYNUM)
+	{
+		return ptrToChild[POINTERNUM - 1]->returnLeafNode(s);
+	}
+	else
+	{
+		if (s == keyValue[i])                              //若第i项和s相等
+			return ptrToChild[i + 1]->returnLeafNode(s);     //递归向下
+		else                                                           //第i项大于s
+			return ptrToChild[i]->returnLeafNode(s);           //递归向下查询
+	}
+}
+
 void BPlusTreeNode::insertPtr(BPlusPointer p)
 {
 	int i = 0;
@@ -515,6 +542,7 @@ void BPlusTreeLeaf::insertKey(RecordPointer p, ElementType s, int direction)
 		this->makeEmpty();
 		for (int i = 0; i < POINTERNUM / 2; i++)
 			this->insertKey(tmpPtr[i], tmpKeyValue[i], LEFT);
+		newNode->ptrToSibling = this->ptrToSibling;
 		this->ptrToSibling = newNode;                 //对于Leaf Sibling为下一个
 
 		if (newParentCreated)
@@ -544,6 +572,11 @@ void BPlusTreeLeaf::insertKey(RecordPointer p, ElementType s, int direction)
 			keyValue[i] = s;
 		}
 	}
+}
+
+BPlusLeaf BPlusTreeLeaf::returnLeafNode(ElementType s)
+{
+	return this;
 }
 
 void BPlusTreeLeaf::insertPtrToSibling(BPlusLeaf p)
@@ -600,6 +633,11 @@ BPlusPointer BPlusTreeLeaf::deleteKey(RecordPointer p)
 				ptrToParent->alterKeyValue(ptrToParent->indexOf(sibPtr), sibPtr->keyValue[0]);
 			else
 				ptrToParent->alterKeyValue(ptrToParent->indexOf(sibPtr) - 1, sibPtr->keyValue[0]);
+			if (ptrToParent->indexOf(this) != 0)
+			{
+				BPlusLeaf leftLeafNode = (BPlusLeaf)(ptrToParent->getPtrToChild(ptrToParent->indexOf(this) - 1));
+				leftLeafNode->insertPtrToSibling(this->ptrToSibling);
+			}
 			ptrToParent->deleteKey(this);
 			return sibPtr;
 		}
@@ -732,7 +770,7 @@ void BPlusTreeLeaf::traverse(int level)
 /// \param BPlusTreeIndex
 ///
 ////////////////////////////////////////////////////////////////////////////////////////
-BPlusTreeIndex::BPlusTreeIndex(int maxKeyNum) :MAXKEYNUMBER(maxKeyNum)
+BPlusTreeIndex::BPlusTreeIndex(int maxKeyNum,TYPE type) :MAXKEYNUMBER(maxKeyNum)
 {
 	Root = new BPlusTreeLeaf(MAXKEYNUMBER);
 }
@@ -769,6 +807,11 @@ void BPlusTreeIndex::removeKey(ElementType s)throw(exception)
 RecordPointer BPlusTreeIndex::findKey(ElementType s)
 {
 	return Root->findKey(s);
+}
+
+BPlusLeaf BPlusTreeIndex::returnLeafNode(ElementType s)
+{
+	return Root->returnLeafNode(s);
 }
 
 void BPlusTreeIndex::traverseTree()
