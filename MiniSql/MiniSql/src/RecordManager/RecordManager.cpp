@@ -1,5 +1,6 @@
 #include "RecordManager.h"
 #include <sstream>
+#include <map>
 
 using namespace std;
 
@@ -56,6 +57,8 @@ void RecordManager::insertValues(const std::string& tableName, const list<std::s
 
 void RecordManager::deleteValues(const std::string& tableName)
 {
+	//move the corresponding tail to the first block
+	//the data is still in the file but use to tail to devote the deletion
 	bmPtr->writeARecord((BYTE*)(4096), 4, tableName, 0);
 }
 
@@ -66,7 +69,24 @@ void RecordManager::deleteValues(const std::string& tableName, std::list<Express
 
 RECORDBUFFER RecordManager::selectValues(const std::list<std::string>& attributeName, const std::string& tableName, const Table& table)
 {
+	map<string, int> attributeOffset;
+	int offset = 0;
+	vector<Data> tableVec = table.getTableVec();
+	
+	for (auto iter : tableVec)
+	{
+		string attributeName = iter.getAttribute();
+		attributeOffset[attributeName] = offset;
+		offset += iter.getLength();
+	}
 
+	ADDRESS tail = *((int *)(bmPtr->fetchARecord(tableName, 0)));
+	ADDRESS it = BLOCKSIZE;
+	while (it < tail)
+	{
+		BYTE* buffer = bmPtr->fetchARecord(tableName, it);
+
+	}
 }
 
 RECORDBUFFER RecordManager::selectValues(const std::list<std::string>& attributeName, const std::string& tableName, std::list<Expression>& expressions)
