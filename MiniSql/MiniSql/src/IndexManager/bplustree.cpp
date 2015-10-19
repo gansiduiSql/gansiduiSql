@@ -229,11 +229,11 @@ void BPlusTreeNode::reDistributePtr(BPlusPointer sibPtr)
 			sibPtr->insertKey(tmpPtr[count], tmpKeyValue[count], LEFT);
 		sibPtr->insertPtr(tmpPtr[MIDPOINT]);
 
-		ptrToParent->alterKeyValue(ptrToParent->indexOf(this)-1,tmpKeyValue[MIDPOINT]);
-		this->insertKey(tmpPtr[MIDPOINT+1], tmpPtr[MIDPOINT+2]->keyValue[0], LEFT);
+		ptrToParent->alterKeyValue(ptrToParent->indexOf(this) - 1, tmpKeyValue[MIDPOINT]);
+		this->insertKey(tmpPtr[MIDPOINT + 1], tmpPtr[MIDPOINT + 2]->keyValue[0], LEFT);
 
 		for (count = MIDPOINT + 1; count < TOTALELEMENT; count++)
-			this->insertKey(tmpPtr[count+1], tmpKeyValue[count], LEFT);
+			this->insertKey(tmpPtr[count + 1], tmpKeyValue[count], LEFT);
 		this->insertPtr(tmpPtr[TOTALELEMENT + 1]);
 	}
 
@@ -252,17 +252,19 @@ BPlusPointer BPlusTreeNode::deleteKey(BPlusPointer p)
 	{
 		for (i = position; i < KEYNUM - 1; i++)
 			keyValue[i] = keyValue[i + 1];
+		keyValue[i] = "";
 	}
 	else
 	{
 		for (i = position - 1; i < KEYNUM - 1; i++)
 			keyValue[i] = keyValue[i + 1];
+		keyValue[i] = "";
 	}
 	ELEMENTCOUNT--;
 
-	if (ptrToParent == NULL)
+	if (ptrToParent == NULL || ptrToParent->isEmpty())
 	{
-
+		ptrToParent = NULL;
 	}
 	else if (ELEMENTCOUNT < KEYNUM / 2)
 	{
@@ -273,19 +275,24 @@ BPlusPointer BPlusTreeNode::deleteKey(BPlusPointer p)
 			{
 				sibPtr->insertKey(ptrToChild[0], ptrToChild[0]->keyValue[0], RIGHT);
 				for (int i = 0; i < ELEMENTCOUNT; i++)
-					sibPtr->insertKey(ptrToChild[i+1], keyValue[i], RIGHT);
+					sibPtr->insertKey(ptrToChild[i + 1], keyValue[i], RIGHT);
 			}
 			else
 			{
-				sibPtr->insertKey(ptrToChild[KEYNUM / 2-1],sibPtr->ptrToChild[0]->keyValue[0], LEFT);
+				sibPtr->insertKey(ptrToChild[KEYNUM / 2 - 1], sibPtr->ptrToChild[0]->keyValue[0], LEFT);
 				for (int i = 0; i < ELEMENTCOUNT; i++)
 					sibPtr->insertKey(ptrToChild[i], keyValue[i], LEFT);
 			}
+			this->alterParentNode();
+			sibPtr->alterParentNode();
 			ptrToParent->deleteKey(this);
+			return this;
 		}
 		else//else if number of element doesn't fits into its sibling
 		{
 			reDistributePtr(sibPtr);
+			this->alterParentNode();
+			sibPtr->alterParentNode();
 		}
 	}
 	return this;
@@ -293,7 +300,9 @@ BPlusPointer BPlusTreeNode::deleteKey(BPlusPointer p)
 
 BPlusPointer BPlusTreeNode::deleteKey(BPlusPointer p, ElementType s)
 {
-	keyValue[indexOf(p) - 1] = s;
+	int i = indexOf(p);
+	if (i != 0)
+		keyValue[indexOf(p) - 1] = s;
 	return this;
 }
 
@@ -417,7 +426,7 @@ int BPlusTreeNode::firstValueBiggerThan(ElementType s)
 
 void BPlusTreeNode::alterParentNode()
 {
-	for (int i = 0; ptrToChild[i] != NULL; i++)
+	for (int i = 0; ptrToChild[i] != NULL&&i < POINTERNUM; i++)
 		ptrToChild[i]->ptrToParent = this;
 }
 
@@ -520,15 +529,20 @@ void BPlusTreeLeaf::insertKey(RecordPointer p, ElementType s, int direction)
 	}
 	else
 	{                                                           //叶节点的插入步骤
-		int i = firstValueBiggerThan(s);
-		for (int j = KEYNUM - 1; j>i; j--)
+		if (containsKey(s))
+			ptrToChild[indexOf(s)] = p;
+		else
 		{
-			ptrToChild[j] = ptrToChild[j - 1];
-			keyValue[j] = keyValue[j - 1];
+			int i = firstValueBiggerThan(s);
+			for (int j = KEYNUM - 1; j>i; j--)
+			{
+				ptrToChild[j] = ptrToChild[j - 1];
+				keyValue[j] = keyValue[j - 1];
+			}
+			ELEMENTCOUNT++;
+			ptrToChild[i] = p;
+			keyValue[i] = s;
 		}
-		ELEMENTCOUNT++;
-		ptrToChild[i] = p;
-		keyValue[i] = s;
 	}
 }
 
@@ -542,6 +556,8 @@ BPlusPointer BPlusTreeLeaf::removeKey(ElementType s)
 	BPlusPointer returnedPointer;
 	if (containsKey(s))
 		returnedPointer = deleteKey(ptrToChild[this->indexOf(s)]);
+	else
+		returnedPointer = this;
 	if (ptrToParent == NULL || ptrToParent->isEmpty())
 		return returnedPointer;
 	else return ptrToParent;
@@ -557,9 +573,15 @@ BPlusPointer BPlusTreeLeaf::deleteKey(RecordPointer p)
 		ptrToChild[i] = ptrToChild[i + 1];
 	}
 	keyValue[i] = "";
-	ptrToChild[i] = NULL;
+	ptrToChild[i] = 0;
 	ELEMENTCOUNT--;
-	if (ELEMENTCOUNT >= KEYNUM / 2)
+	if (ptrToParent == NULL || ptrToParent->isEmpty())
+	{
+		if (ptrToParent != NULL)
+			delete ptrToParent;
+		ptrToParent = NULL;
+	}
+	else if (ELEMENTCOUNT >= KEYNUM / 2)
 	{
 		if (position == 0)//if the first element is deleted, the value must be deleted in it's parent
 		{
@@ -577,8 +599,9 @@ BPlusPointer BPlusTreeLeaf::deleteKey(RecordPointer p)
 			if (sibPtr->keyValue[0] < keyValue[0])
 				ptrToParent->alterKeyValue(ptrToParent->indexOf(sibPtr), sibPtr->keyValue[0]);
 			else
-				ptrToParent->alterKeyValue(ptrToParent->indexOf(sibPtr)-1, sibPtr->keyValue[0]);
+				ptrToParent->alterKeyValue(ptrToParent->indexOf(sibPtr) - 1, sibPtr->keyValue[0]);
 			ptrToParent->deleteKey(this);
+			return sibPtr;
 		}
 		else            //else if number of element doesn't fits into its sibling
 			reDistributePtr(sibPtr);  //redistribute pointer and update tags along the road
@@ -590,7 +613,7 @@ RecordPointer BPlusTreeLeaf::findKey(ElementType s)
 {
 	for (int i = 0; keyValue[i] != ""; i++)
 	{
-		if (keyValue[i]==s)
+		if (keyValue[i] == s)
 			return ptrToChild[i];
 	}
 	return -1;
@@ -605,8 +628,9 @@ void BPlusTreeLeaf::reDistributePtr(BPlusLeaf sibPtr)
 	int TOTALELEMENT = SIBELEMENT + THISELEMENT;
 	bool sibBiggerThanThis;
 
-	if (sibPtr->getKeyValue(0) < keyValue[0])
-		sibBiggerThanThis = false;
+	string st = sibPtr->getKeyValue(0);
+	if (st.compare(keyValue[0]) > 0)
+		sibBiggerThanThis = true;
 
 	if (sibBiggerThanThis)
 	{
@@ -701,7 +725,7 @@ void BPlusTreeLeaf::traverse(int level)
 	}
 	cout << " level:" << level++;
 	cout << " Element count=" << ELEMENTCOUNT << endl;
-	ELEMENTNUM+=ELEMENTCOUNT;
+	ELEMENTNUM += ELEMENTCOUNT;
 }
 ////////////////////////////////////////////////////////////////////////////////////////
 /// \brief BPlusTree
