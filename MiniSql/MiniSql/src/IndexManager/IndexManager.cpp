@@ -1,4 +1,4 @@
-/* @file IndexManager.h
+/* @file IndexManager.cpp
 * @brief Implementation of B+ Tree index on a minisql System
 * @author lucas95123@outlook.com
 * @version 1.0
@@ -9,7 +9,7 @@
 /* @brief Constructor of IndexManager */
 IndexManager::IndexManager()
 {
-	bufferManager = new BufferManager();
+	bufferManager = BufferManager::getBufferManager();
 }
 
 /* @brief Drop the index named string indexName, delete the BplusTree
@@ -20,7 +20,7 @@ IndexManager::IndexManager()
 * @throw IndexNotExistException
 * @post The BplusTree in memory and Index file on disk will be deleted
 */
-void IndexManager::dropIndex(string indexName)throw(exception)
+void IndexManager::dropIndex(const string indexName)throw(exception)
 {
 	/*Delete the BPlusTree in the index Library*/
 	delete indexLibrary[indexName];
@@ -28,7 +28,7 @@ void IndexManager::dropIndex(string indexName)throw(exception)
 	indexLibrary.erase(indexToDrop);
 
 	/*delete the BPlusTree in the file*/
-	bufferManager;
+	bufferManager->deleteIndexFile(indexName);
 }
 
 /* @brief Traverse the whole File of the relation specified by fileName
@@ -60,30 +60,30 @@ void IndexManager::createIndex(const string indexName, const Data attribute, con
 	/*Create an index B+ Tree and insert it to index library*/
 	BPlusTreeIndex *newIndex = new BPlusTreeIndex(bPlusFanOut, attribute.getType());
 	indexLibrary[indexName] = newIndex;
+	ADDRESS endOffset = getEndOffset(fileName);
 
 	/*Get record from bufferManager and create index*/
-	for (ADDRESS recordOffset = 0; recordOffset <= endOffset; recordOffset += recordLength)
+	for (ADDRESS recordOffset = HEADER_BLOCK_OFFSET; recordOffset <= endOffset; recordOffset += recordLength)
 	{
-		BYTE* recordData = bufferManager->fetchARecord(fileName, recordOffset);
-		recordData += attribute.getOffset();/*point to the start of the attribute*/
+		BYTE* recordData = bufferManager->fetchARecord(fileName, recordOffset) + attribute.getOffset();/*point to the start of the attribute*/
 		string recordString = "";
-		string *tmpRecordString = new string;
-		int *tmpRecordInt = new int;
-		float *tmpRecordFloat = new float;
+		string tmpRecordString = "";
+		int tmpRecordInt = 0;
+		float tmpRecordFloat = 0;
 		stringstream ss;
 		switch (attribute.getType())
 		{
 		case CHAR:
-			memcpy(tmpRecordString, recordData, attribute.getLength());
-			recordString = *tmpRecordString;
+			memcpy(&tmpRecordString, recordData, attribute.getLength());
+			recordString = tmpRecordString;
 			break;
 		case INT:
-			memcpy(tmpRecordInt, recordData, sizeof(int));
+			memcpy(&tmpRecordInt, recordData, sizeof(int));
 			ss << tmpRecordInt;
 			ss >> recordString;
 			break;
 		case FLOAT:
-			memcpy(tmpRecordFloat, recordData, sizeof(float));
+			memcpy(&tmpRecordFloat, recordData, sizeof(float));
 			ss << tmpRecordFloat;
 			ss >> recordString;
 			break;
@@ -91,21 +91,21 @@ void IndexManager::createIndex(const string indexName, const Data attribute, con
 			break;
 		}
 		newIndex->addKey(recordOffset, recordString);
-		delete tmpRecordFloat;
-		delete tmpRecordString;
-		delete tmpRecordInt;
 	}
 }
 
 /* @brief delete the values specified by expression and indexName
-* @param IndexName The name of the index
-* @param Expression The expression that specify the deletion
+* @param indexName The name of the index
+* @param expression The expression that specify the deletion
+* @param fileName The name of the file
+* @param type The object type of attribute
 * @pre Index exists
 * @return void
 * @throw IndexNotExistException
 * @post Values statisfy the expression is deleted
 */
-void IndexManager::deleteValues(const string indexName, list<Expression> expressions, TYPE type)
+void IndexManager::deleteValues(const string indexName, list<Expression> expressions,
+	const string fileName, const int recordLength, TYPE type)
 {
 	list<Expression>::iterator expIter;
 	string upperbound = "";
@@ -118,20 +118,20 @@ void IndexManager::deleteValues(const string indexName, list<Expression> express
 		switch (type)
 		{
 		case INT:
-			if (expIter->rigthOprand.oprandName.length() <= INT_STRING_SIZE)
+			if (expIter->rightOperand.oprandName.length() <= INT_STRING_SIZE)
 			{
-				bound = expIter->rigthOprand.oprandName;
-				for (int i = expIter->rigthOprand.oprandName.length(); i <= INT_STRING_SIZE; i++);
+				bound = expIter->rightOperand.oprandName;
+				for (int i = expIter->rightOperand.oprandName.length(); i <= INT_STRING_SIZE; i++);
 				bound = "0" + bound;
 			}
 			break;
 		case CHAR:
 			break;
 		case FLOAT:
-			if (expIter->rigthOprand.oprandName.length() <= FLOAT_STRING_SIZE)
+			if (expIter->rightOperand.oprandName.length() <= FLOAT_STRING_SIZE)
 			{
-				bound = expIter->rigthOprand.oprandName;
-				for (int i = expIter->rigthOprand.oprandName.length(); i <= FLOAT_STRING_SIZE; i++);
+				bound = expIter->rightOperand.oprandName;
+				for (int i = expIter->rightOperand.oprandName.length(); i <= FLOAT_STRING_SIZE; i++);
 				bound = "0" + bound;
 			}
 			break;
@@ -169,7 +169,27 @@ void IndexManager::deleteValues(const string indexName, list<Expression> express
 	}
 	if (equal)
 	{
-		indexLibrary[indexName]->findKey("bound");
-		indexLibrary[indexName]->removeKey("Bound");
+		ADDRESS endOffset = getEndOffset(fileName);
+		bufferManager->writeARecord(bufferManager->fetchARecord(fileName, indexLibrary[indexName]->findKey(upperbound)), recordLength, fileName,
+			indexLibrary[indexName]->findKey(upperbound)); 
+		indexLibrary[indexName]->removeKey(upperbound);
+
 	}
+}
+
+/* @brief Get the offset of the last record
+* @return ADDRESS
+*/
+ADDRESS IndexManager::getEndOffset(const string fileName)
+{
+	*(ADDRESS *)bufferManager->fetchARecord(fileName, 0);
+}
+
+/* @brief Get the offset of the last record
+* @return ADDRESS
+*/
+void IndexManager::renewEndOffset(const string fileName, const int recordLength)
+{
+	ADDRESS renewedOffset = getEndOffset(fileName) - recordLength;
+	bufferManager->writeARecord((BYTE *)&renewedOffset,recordLength,fileName,HEADER_BLOCK_OFFSET);
 }

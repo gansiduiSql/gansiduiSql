@@ -57,29 +57,35 @@ public:
     int getElementCount();                                                                           //return Element count
     bool isEmpty(){return ELEMENTCOUNT==0; }
 	virtual RecordPointer findKey(ElementType s);
+	virtual BPlusLeaf returnLeafNode(ElementType s);
 };
 
 class BPlusTreeLeaf : public BPlusTreeNode
 {
 private:
     RecordPointer* ptrToChild;
-    BPlusPointer ptrToSibling;
+    BPlusTreeLeaf* ptrToSibling;
 
 public:
     BPlusTreeLeaf(int keyNumber);
     ~BPlusTreeLeaf();
     BPlusPointer addKey(RecordPointer p, ElementType s);
-    BPlusPointer removeKey(ElementType s);
-    void insertKey(RecordPointer p, ElementType s, int direction);
+    BPlusPointer removeKey(ElementType s); 
     BPlusPointer deleteKey(RecordPointer p);
+	BPlusLeaf returnLeafNode(ElementType s);
+	BPlusLeaf getPtrToSinling(){ return ptrToSibling; }
+
+	void insertKey(RecordPointer p, ElementType s, int direction);
     void deletePtr(RecordPointer p);
     void reDistributePtr(BPlusLeaf sibPtr);
     void makeEmpty();
-    RecordPointer getPtrToChild(int index);
+	void traverse(int level);
     void insertPtrToSibling(BPlusLeaf p);
+
     int indexOf(RecordPointer s);
     int indexOf(ElementType s);
-    void traverse(int level);
+    
+	RecordPointer getPtrToChild(int index);
 	RecordPointer findKey(ElementType s);
 };
 
@@ -95,6 +101,7 @@ public:
     void addKey(RecordPointer p, ElementType s);
     void removeKey(ElementType s);
     RecordPointer findKey(ElementType s);
+	BPlusLeaf returnLeafNode(ElementType s);
     void traverseTree();
 	TYPE getAttributeType();
 };
