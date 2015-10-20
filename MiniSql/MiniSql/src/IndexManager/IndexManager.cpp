@@ -28,10 +28,10 @@ void IndexManager::dropIndex(const string indexName)throw(exception)
 	indexLibrary.erase(indexToDrop);
 
 	/*delete the BPlusTree in the file*/
-	bufferManager->deleteIndexFile(indexName);
+	bufferManager->deleteFile(indexName+"index");
 }
 
-/* @brief Traverse the whole File of the relation specified by fileName
+/*@brief Traverse the whole File of the relation specified by fileName
 * and add lndex for each record
 * @param indexName The name of the created Index
 * @param attribute The attribute where Index is created on
@@ -107,11 +107,51 @@ void IndexManager::createIndex(const string indexName, const Data attribute, con
 void IndexManager::deleteValues(const string indexName, list<Expression> expressions,
 	const string fileName, const int recordLength, TYPE type)
 {
-	list<Expression>::iterator expIter;
 	string upperbound = "";
 	string lowerbound = "";
 	bool equal = false;
+	analysisExpression(lowerbound,upperbound,equal,expressions);
 
+	if (equal)
+	{
+		renewEndOffset(fileName, recordLength); /*endOffset - recordLength*/
+		bufferManager->writeARecord(bufferManager->fetchARecord(fileName, getEndOffset(fileName)), recordLength, fileName,
+			indexLibrary[indexName]->findKey(upperbound));/*Write the last record of data on the space of the deleted record*/
+		indexLibrary[indexName]->removeKey(upperbound);
+	}
+	else
+	{
+
+	}
+}
+
+/* @brief Get the offset of the last record
+* @return ADDRESS
+*/
+ADDRESS IndexManager::getEndOffset(const string fileName)
+{
+	*(ADDRESS *)bufferManager->fetchARecord(fileName, 0);
+}
+
+/* @brief Get the offset of the last record
+* @return ADDRESS
+*/
+void IndexManager::renewEndOffset(const string fileName, const int recordLength)
+{
+	ADDRESS renewedOffset = getEndOffset(fileName) - recordLength;
+	bufferManager->writeARecord((BYTE *)&renewedOffset,recordLength,fileName,HEADER_BLOCK_OFFSET);
+}
+
+/* @brief Analyze given expression and set the lower or upperbound of this expression
+* @param dstLowerBound 
+* @param dstUpperBound
+* @param dstEqual
+* @param expression
+* @return ADDRESS
+*/
+void IndexManager::analysisExpression(string &dstLowerBound, string &dstUpperBound, bool &dstEqual, list<Expression> &expressions,const TYPE &type)
+{
+	list<Expression>::iterator expIter;
 	for (expIter = expressions.begin(); expIter != expressions.end(); expIter++)
 	{
 		string bound; /*stores the bound in string, int is a string of 10 char, float is a string of 20 char*/
@@ -142,54 +182,29 @@ void IndexManager::deleteValues(const string indexName, list<Expression> express
 		{
 		case GREATER:
 		case GREATER_AND_EQUAL:
-			if (upperbound == "")
-				upperbound = bound;
-			else if (bound > upperbound)
-				upperbound = bound;
+			if (dstUpperBound == "")
+				dstUpperBound = bound;
+			else if (bound > dstUpperBound)
+				dstUpperBound = bound;
 			break;
 		case LESS:
 		case LESS_AND_EQUAL:
-			if (lowerbound == "")
-				lowerbound = bound;
-			else if (bound < lowerbound)
-				lowerbound = bound;
+			if (dstLowerBound == "")
+				dstLowerBound = bound;
+			else if (bound < dstLowerBound)
+				dstLowerBound = bound;
 			break;
 		case EQUAL:
-			equal = true;
+			dstEqual = true;
 			break;
 		default:
 			break;
 		}
-		if (equal)
+		if (dstEqual)
 		{
-			lowerbound = bound;
-			upperbound = bound;
-			break;
+			dstLowerBound = bound;
+			dstUpperBound = bound;
 		}
+		return;
 	}
-	if (equal)
-	{
-		ADDRESS endOffset = getEndOffset(fileName);
-		bufferManager->writeARecord(bufferManager->fetchARecord(fileName, indexLibrary[indexName]->findKey(upperbound)), recordLength, fileName,
-			indexLibrary[indexName]->findKey(upperbound)); 
-		indexLibrary[indexName]->removeKey(upperbound);
-
-	}
-}
-
-/* @brief Get the offset of the last record
-* @return ADDRESS
-*/
-ADDRESS IndexManager::getEndOffset(const string fileName)
-{
-	*(ADDRESS *)bufferManager->fetchARecord(fileName, 0);
-}
-
-/* @brief Get the offset of the last record
-* @return ADDRESS
-*/
-void IndexManager::renewEndOffset(const string fileName, const int recordLength)
-{
-	ADDRESS renewedOffset = getEndOffset(fileName) - recordLength;
-	bufferManager->writeARecord((BYTE *)&renewedOffset,recordLength,fileName,HEADER_BLOCK_OFFSET);
 }

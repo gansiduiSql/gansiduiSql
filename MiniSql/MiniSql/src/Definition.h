@@ -40,9 +40,6 @@ struct Expression
 	OPERATOR op;
 };
 
-
-
-
 enum TYPE
 {
 	INT,

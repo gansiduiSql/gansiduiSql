@@ -28,6 +28,7 @@ private:
 	BufferManager * bufferManager;
 	ADDRESS getEndOffset(const string fileName);
 	void renewEndOffset(const string fileName, const int recordLength);
+	void analysisExpression(string &dstLowerBound, string &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const TYPE &type);
 public:
 	IndexManager();
 	void createIndex(const string indexName, const Data attribute, const int recordLength, const string fileName);/*create Index of a relation*/
