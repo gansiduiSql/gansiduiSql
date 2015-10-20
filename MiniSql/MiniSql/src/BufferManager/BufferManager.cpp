@@ -78,16 +78,29 @@ int BufferManager::substitute(const string& fileName, const ADDRESS& tag, BYTE* 
 *@param tag    the offset(tag) in the file of the visited record
 *@return the hitted block index or -1 to devoted miss
 */
-int BufferManager::hit(string fileName, ADDRESS tag)
+int BufferManager::hit(const string& fileName,const ADDRESS& tag)
 {
 	for (int i = 0; i < BLOCKNUM; i++)
 	{
 		//hit and return the hitted block index
-		if (fileName == blocks[i].getFileName() && tag == blocks[i].getTag())
+		if ((blocks[i].getFileName() == fileName) && (blocks[i].getTag() == tag))
 			return i;
 	}
 	//miss and return -1 to devoted miss
 	return -1;
+}
+
+/*when create an index or create a table, create the dbfile in the disk
+*@param name	the name of the file
+*@return void
+*/
+void BufferManager::createFile(const string& name)
+{
+	string fileName = name + ".data";
+	openedFilePtr = fopen(("/DBFile/" + fileName).c_str(), "wb");//folder problem
+	openedFileName = fileName;
+
+	writeARecord((BYTE*)(0), 4, fileName, 0);
 }
 
 /*fecth a block from the given fileName and address
@@ -170,6 +183,20 @@ void BufferManager::writeABlock(const int& blockIndex)
 	fclose(fp);
 }
 
+/*delete the corresponding file according to the given filename
+*@param name	the name of the given file
+*@return void
+*@exception		if fail to delete, throw an exception
+*/
+void BufferManager::deleteFile(const string& name)
+{
+	string fileName = name + ".data";
+
+	if ((remove(fileName.c_str())) == -1)
+	{
+		//throw FileDeleteFail
+	}
+}
 
 /*set the block pinnned
 *@param blockIndex		the block that you want to set it pinned

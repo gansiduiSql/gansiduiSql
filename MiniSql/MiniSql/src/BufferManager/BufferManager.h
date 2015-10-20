@@ -11,15 +11,17 @@ class BufferManager
 public:
 	BufferManager();
 	~BufferManager();
+	void createFile(const std::string& fileName);
 	BYTE* fetchARecord(const std::string& name, const ADDRESS& address);
 	void writeARecord(BYTE* record, int recordLength, const std::string& name, const ADDRESS& address);
+	void deleteFile(const std::string& name);
 	void setBlockPinned(int blockIndex);
 	void getHeader(const std::string& fileName, ADDRESS& recordHeader, ADDRESS& freeListHeader);
 	static BufferManager* getBufferManager();
 private:
 	void writeABlock(const int& blockIndex);
 	int substitute(const std::string& fileName, const ADDRESS& tag, BYTE* buffer);
-	int hit(std::string fileName, ADDRESS tag);
+	int hit(const std::string& fileName, const ADDRESS& tag);
 	int fetchABlock(const std::string& fileName, const ADDRESS& address);
 private:
 	FILE *openedFilePtr;

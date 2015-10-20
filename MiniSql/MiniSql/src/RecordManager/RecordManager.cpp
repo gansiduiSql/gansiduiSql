@@ -18,11 +18,12 @@ void RecordManager::insertValues(const std::string& tableName, const list<std::s
 {
 	ADDRESS tail = *((int *)(bmPtr->fetchARecord(tableName, 0)));
 	int tableLength = table.getLength();
-	
+
 	BYTE* buffer = new BYTE[tableLength];
 	ADDRESS offset = 0;
 	vector<Data> tableVec = table.getTableVec();
 	list<string>::const_iterator it = values.cbegin();
+	BYTE* tmp = nullptr;
 	for (auto iter : tableVec)
 	{
 		stringstream ss;
@@ -31,20 +32,20 @@ void RecordManager::insertValues(const std::string& tableName, const list<std::s
 		switch (iter.getType())
 		{
 		case INT:
-			int num;
-			ss >> num;
-			memcpy(buffer + offset, (BYTE*)(num), attributeLength);
+			int intNum;
+			ss >> intNum;
+			memcpy(buffer + offset, &intNum, attributeLength);
 			break;
 		case CHAR:
-			BYTE* tmp = new BYTE[attributeLength];
+			tmp = new BYTE[attributeLength];
 			ss >> tmp;
 			memcpy(buffer + offset, tmp, attributeLength);
 			delete[] tmp;
 			break;
 		case FLOAT:
-			float num;
-			ss >> num;
-			memcpy(buffer + offset, (BYTE*)(num), attributeLength);
+			float floatNum;
+			ss >> floatNum;
+			memcpy(buffer + offset, &floatNum, attributeLength);
 			break;
 		default:
 			break;
@@ -67,7 +68,7 @@ void RecordManager::deleteValues(const std::string& tableName, std::list<Express
 
 }
 
-RECORDBUFFER RecordManager::selectValues(const std::list<std::string>& attributeName, const std::string& tableName, const Table& table)
+void RecordManager::selectValues(const std::list<std::string>& attributeName, const std::string& tableName, const Table& table, RECORDBUFFER& recordBuffer)
 {
 	map<string, int> attributeOffset;
 	int offset = 0;
@@ -89,7 +90,7 @@ RECORDBUFFER RecordManager::selectValues(const std::list<std::string>& attribute
 	}
 }
 
-RECORDBUFFER RecordManager::selectValues(const std::list<std::string>& attributeName, const std::string& tableName, std::list<Expression>& expressions)
+void RecordManager::selectValues(const std::list<std::string>& attributeName, const std::string& tableName, std::list<Expression>& expressions, RECORDBUFFER& recordBuffer)
 {
 
 }
