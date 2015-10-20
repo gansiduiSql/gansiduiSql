@@ -770,7 +770,7 @@ void BPlusTreeLeaf::traverse(int level)
 /// \param BPlusTreeIndex
 ///
 ////////////////////////////////////////////////////////////////////////////////////////
-BPlusTreeIndex::BPlusTreeIndex(int maxKeyNum,TYPE type) :MAXKEYNUMBER(maxKeyNum)
+BPlusTreeIndex::BPlusTreeIndex(int maxKeyNum, TYPE type) :MAXKEYNUMBER(maxKeyNum), type(type)
 {
 	Root = new BPlusTreeLeaf(MAXKEYNUMBER);
 }

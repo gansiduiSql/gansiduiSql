@@ -15,7 +15,8 @@
 #include <map>
 
 #define INT_STRING_SIZE 10
-#define FLOAT_STRING_SIZE 20
+#define FLOAT_INTEGER_SIZE 10 //Integer part length of a float number
+#define FLOAT_DECIMAL_SIZE 10//decimal part length of a float number
 #define HEADER_BLOCK_OFFSET 1
 
 using namespace std;
@@ -28,6 +29,9 @@ private:
 	BufferManager * bufferManager;
 	ADDRESS getEndOffset(const string fileName);
 	void renewEndOffset(const string fileName, const int recordLength);
+	void deleteRecordFromFile(const string indexName, const int recordOffset, const int recordLength, const string fileName);
+	string toAlignedInt(string s);
+	string toAlignedFloat(string s);
 	void analysisExpression(string &dstLowerBound, string &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const TYPE &type);
 public:
 	IndexManager();
@@ -35,7 +39,7 @@ public:
 	void dropIndex(const string indexName); /*delet/drop index indexfile and index in this function*/
 	void deleteValues(const string indexName, list<Expression> expressions, const string fileName, const int recordLength, TYPE type);
 	void selectValues(const string indexName, list<Expression> expressions, RECORDBUFFER recordBuffer);
-	void insertValues(const string indexName, const string indexKey, const ADDRESS RecordOffset);
+	void insertValues(const string indexName, const string indexKey, const ADDRESS recordOffset);/*insert indexkey to bplus tree after insertion with RM*/
 };
 
 #endif
