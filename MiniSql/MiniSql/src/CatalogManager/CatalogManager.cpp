@@ -5,6 +5,13 @@
 #include <cstring>
 using namespace std;
 #define FIX_LENGTH 64
+
+CatalogManager * CatalogManager::getCatalogManager()
+{
+	static CatalogManager cm;
+	return &cm;
+}
+
 CatalogManager::CatalogManager()
 {
 	bm = BufferManager::getBufferManager();

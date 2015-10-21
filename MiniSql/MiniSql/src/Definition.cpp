@@ -16,6 +16,15 @@ Table::Table(const std::string& tableName, std::vector<Data>& tableVec)
 	}
 }
 
+void Data::setType(TYPE type) 
+{ 
+	this->type = type; 
+	if (type == INT)
+		this->length = sizeof(int);
+	else if (type == FLOAT)
+		this->length = sizeof(float);
+}
+
 ArrayList::ArrayList()
 {
 	header = 0;
@@ -50,4 +59,16 @@ void ArrayList::moveTail(int index)
 	tail = index;
 	if (index == header)
 		header = next;
+}
+
+TYPE stringToTYPE(std::string s)
+{
+	if (s == "int")
+		return INT;
+	else if (s == "float")
+		return FLOAT;
+	else if (s == "char")
+		return CHAR;
+	else 
+		return UNDEFINED;
 }

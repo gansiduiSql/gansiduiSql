@@ -6,9 +6,9 @@
 
 class BufferManager;
 
-class CatalogManager
-{
+class CatalogManager{
 public:
+	static CatalogManager *getCatalogManager();
 	CatalogManager();
 	~CatalogManager();
 	void createTableCatalog(const Table& table);
@@ -16,6 +16,7 @@ public:
 	Table getTable(const std::string& tableName);
 	std::string getIndexName(const std::string& attribute, const std::string& tableName);
 	std::string getFileNameFromIndexName(const std::string& indexName, const std::string& fileName);
+	
 	void deleteIndexCatalog(const std::string& indexName);
 private: 
 	BufferManager* bm;
@@ -24,7 +25,5 @@ private:
 	BYTE* readString(std::string& s, BYTE* ptr);
 	bool isEnd(BYTE* ptr);
 };
-
-
 
 #endif

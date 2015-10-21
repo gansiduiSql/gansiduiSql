@@ -44,8 +44,11 @@ enum TYPE
 {
 	INT,
 	CHAR,
-	FLOAT
+	FLOAT,
+	UNDEFINED
 };
+
+TYPE stringToTYPE(std::string s);
 
 class Table
 {
@@ -59,6 +62,7 @@ public:
 	int getPrimaryKeyIndex()const { return primaryKeyIndex; }
 	void setPrimaryKeyIndex(int primaryKeyIndex) { this->primaryKeyIndex = primaryKeyIndex; }
 	int getLength()const { return length; }
+	void pushData(Data& data) { tableVec.push_back(data); }
 	~Table();
 private:
 	std::string tableName;
@@ -81,7 +85,7 @@ public:
 	const std::string& getAttribute()const { return attribute; }
 	void setAttribute(const std::string& attr) { attribute = attr; }
 	TYPE getType()const { return type; }
-	void setType(TYPE type) { this->type = type; }
+	void setType(TYPE type);
 	int getLength()const{ return length; }
 	void setLength(int len) { length = len; }
 	bool isUnique()const { return uniqueFlag; }
