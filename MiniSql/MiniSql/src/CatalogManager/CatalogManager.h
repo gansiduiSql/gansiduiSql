@@ -6,8 +6,7 @@
 
 class BufferManager;
 
-class CatalogManager
-{
+class CatalogManager{
 public:
 	static CatalogManager *getCatalogManager();
 	CatalogManager();
@@ -26,7 +25,5 @@ private:
 	BYTE* readString(std::string& s, BYTE* ptr);
 	bool isEnd(BYTE* ptr);
 };
-
-
 
 #endif

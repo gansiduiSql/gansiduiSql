@@ -21,6 +21,16 @@ private:
 	std::string errorInfo;
 };
 
-
+class EndOfString:public std::exception {
+public:
+	EndOfString() {};
+	EndOfString(int state1, int state2) :state1(state1),state2(state2) {}
+	const char *what()const { return ""; }
+	int getState1() { return state1; }
+	int getState2() { return state2; }
+private:
+	int state1;
+	int state2;
+};
 
 #endif
