@@ -68,9 +68,11 @@ void RecordManager::deleteValues(const std::string& tableName, std::list<Express
 
 }
 
-void RecordManager::selectValues(const std::list<std::string>& attributeName, const std::string& tableName, const Table& table, RECORDBUFFER& recordBuffer)
+void RecordManager::selectValues(const std::list<std::string>& attributeNames, const std::string& tableName, const Table& table, RECORDBUFFER& recordBuffer)
 {
-	map<string, int> attributeOffset;
+	map<string, int> attributeOffset; //map the attribute name to the offset in the each record
+	map<string, TYPE> attributeType;
+	map<string, int> attributeLength;
 	int offset = 0;
 	vector<Data> tableVec = table.getTableVec();
 	
@@ -78,6 +80,8 @@ void RecordManager::selectValues(const std::list<std::string>& attributeName, co
 	{
 		string attributeName = iter.getAttribute();
 		attributeOffset[attributeName] = offset;
+		attributeType[attributeName] = iter.getType();
+		attributeLength[attributeName] = iter.getLength();
 		offset += iter.getLength();
 	}
 
@@ -86,7 +90,47 @@ void RecordManager::selectValues(const std::list<std::string>& attributeName, co
 	while (it < tail)
 	{
 		BYTE* buffer = bmPtr->fetchARecord(tableName, it);
+		int index = 0;
+		for (auto attributeName : attributeNames)
+		{
+			int off = attributeOffset[attributeName];
+			TYPE type = attributeType[attributeName];
+			int length = attributeLength[attributeName];
+			stringstream ss;
+			int intNum;
+			string s;
+			float floatNum;
+			switch (type)
+			{
+			case INT:
+				memcpy(&intNum, buffer + off, length);
+				ss << intNum;
+				recordBuffer[index].push_back(ss.str());
+				break;
+			case CHAR:
+				memcpy(&s, buffer + off, length);
+				recordBuffer[index].push_back(s);
+				break;
+			case FLOAT:
+				memcpy(&floatNum, buffer + off, length);
+				ss << floatNum;
+				recordBuffer[index].push_back(ss.str());
+				break;
+			default:
+				break;
+			}
+			index++;
+		}
 
+		/*move it to the begin to the next record start
+		*if a record can't fit in the remain size in this block
+		*move the it to the begin of next block
+		*cause by the record can't stored in two blocks
+		*/
+		it += table.getLength();
+		int blockIndex = it / BLOCKSIZE;
+		if (blockIndex*BLOCKSIZE - it < table.getLength())
+			it = (blockIndex + 1)*BLOCKSIZE;
 	}
 }
 
