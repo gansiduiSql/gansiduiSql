@@ -15,7 +15,7 @@ public:
 	void deleteValues(const std::string& tableName);
 	void deleteValues(const std::string& tableName, std::list<Expression>& expressions);
 	void selectValues(const std::list<std::string>& attributeNames, const std::string& tableName, const Table& table, RECORDBUFFER& recordBuffer);
-	void selectValues(const std::list<std::string>& attributeNames, const std::string& tableName, std::list<Expression>& expressions, RECORDBUFFER& recordBuffer);
+	void selectValues(const std::list<std::string>& attributeNames, const std::string& tableName, const Table& table, std::list<Expression>& expressions, RECORDBUFFER& recordBuffer);
 private:
 	BufferManager* bmPtr;
 };
