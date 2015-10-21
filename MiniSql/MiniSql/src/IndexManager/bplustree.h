@@ -38,8 +38,7 @@ public:
     virtual ~BPlusTreeNode();                                                                                                  //virtual distructor, delete dynamic allocated ptrToChild and keyValue
     virtual BPlusPointer addKey(RecordPointer p, ElementType s);                          //recursively add key until to the left
     virtual BPlusPointer removeKey(ElementType s);                                                     //recursively remove key until to the left
-    virtual void insertKey(BPlusPointer p, ElementType s, int direction);                 //insert element in the node, if direction is LEFT, p lies left of s, if RIGHT p lies right of s
-                                                                                                                                                      //also implement spliting nodes and correct pointers
+    virtual void insertKey(BPlusPointer p, ElementType s, int direction);                 //insert element in the node, if direction is LEFT, p lies left of s, if RIGHT p lies right of s also implement spliting nodes and correct pointers
     virtual void insertPtr(BPlusPointer p);                                                    //insert pointer to the next NON_NULL positon
     virtual BPlusPointer deleteKey(BPlusPointer p);                                                //delete key from node, will recursive goes up
     BPlusPointer deleteKey(BPlusPointer p, ElementType s);
@@ -58,6 +57,7 @@ public:
     bool isEmpty(){return ELEMENTCOUNT==0; }
 	virtual RecordPointer findKey(ElementType s);
 	virtual BPlusLeaf returnLeafNode(ElementType s);
+	virtual BPlusLeaf returnFirstLeafNode(); /*wait to be completed*/
 };
 
 class BPlusTreeLeaf : public BPlusTreeNode
@@ -73,15 +73,14 @@ public:
     BPlusPointer removeKey(ElementType s); 
     BPlusPointer deleteKey(RecordPointer p);
 	BPlusLeaf returnLeafNode(ElementType s);
+	BPlusLeaf returnFirstLeafNode();/*wait to be completed*/
 	BPlusLeaf getPtrToSinling(){ return ptrToSibling; }
-
 	void insertKey(RecordPointer p, ElementType s, int direction);
     void deletePtr(RecordPointer p);
     void reDistributePtr(BPlusLeaf sibPtr);
     void makeEmpty();
 	void traverse(int level);
     void insertPtrToSibling(BPlusLeaf p);
-
     int indexOf(RecordPointer s);
     int indexOf(ElementType s);
     

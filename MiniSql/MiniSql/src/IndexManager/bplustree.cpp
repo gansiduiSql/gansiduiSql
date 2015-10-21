@@ -1,16 +1,12 @@
-/// ///////////////////////////////////
-/// BPlusTree implementation
-/// Summary: BPlusTree with single value index
-/// Author: KUAN LU
-/// Data: 2015/10/18
-/// Department: Zhejiang University College of Computer Science
-/// //////////////////////////////////
+//BPlusTree implementation
+//Summary: BPlusTree with single value index
+//Author: KUAN LU
+//Data: 2015/10/18
+//Department: Zhejiang University College of Computer Science
 #include "bplustree.h"
 extern int ELEMENTNUM;
-/// //////////////////////////////////
-/// \brief BPlusTree Node
-/// \param BPusTree Node
-/// ///////////////////////////////////
+// \brief BPlusTree Node
+// \param BPusTree Node
 BPlusTreeNode::BPlusTreeNode(int keyNumber) :KEYNUM(keyNumber), POINTERNUM(keyNumber + 1)
 {
 	ELEMENTCOUNT = 0;

@@ -30,11 +30,14 @@ private:
 	ADDRESS getEndOffset(const string fileName);
 	void renewEndOffset(const string fileName, const int recordLength);
 	void deleteRecordFromFile(const string indexName, const int recordOffset, const int recordLength, const string fileName);
+	void analysisExpression(string &dstLowerBound, string &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const TYPE &type);
+	void createIndexFromFile(const string indexName);
+	void saveIndexToFile(const string indexName);
 	string toAlignedInt(string s);
 	string toAlignedFloat(string s);
-	void analysisExpression(string &dstLowerBound, string &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const TYPE &type);
 public:
 	IndexManager();
+	IndexManager(list<string> indexName);
 	void createIndex(const string indexName, const Data attribute, const int recordLength, const string fileName);/*create Index of a relation*/
 	void dropIndex(const string indexName); /*delet/drop index indexfile and index in this function*/
 	void deleteValues(const string indexName, list<Expression> expressions, const string fileName, const int recordLength, TYPE type);

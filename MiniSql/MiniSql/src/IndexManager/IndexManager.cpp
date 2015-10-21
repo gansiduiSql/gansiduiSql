@@ -6,10 +6,22 @@
 */
 #include "IndexManager.h"
 
-/* @brief Constructor of IndexManager */
+/* @brief Constructor of IndexManager 
+* @pre No index exists
+*/
 IndexManager::IndexManager()
 {
 	bufferManager = BufferManager::getBufferManager();
+}
+
+/* @brief Constructor of IndexManager
+* @param indexName List of index that exists
+*/
+IndexManager::IndexManager(list<string> indexName)
+{
+	list<string>::iterator iter;
+	for (iter = indexName.begin(); iter != indexName.end(); iter++)
+		createIndexFromFile(*iter);
 }
 
 /* @brief Drop the index named string indexName, delete the BplusTree
@@ -43,7 +55,7 @@ void IndexManager::dropIndex(const string indexName)throw(exception)
 * @post A index is created and store in .index file
 */
 void IndexManager::createIndex(const string indexName, const Data attribute, const int recordLength, const string fileName)
-{
+{/*storing index wait to be completed*/
 	/*Calculate the fan-out of BPlusTree so that each leaf node's size is a block*/
 	int bPlusFanOut;
 	switch (attribute.getType())
@@ -94,6 +106,31 @@ void IndexManager::createIndex(const string indexName, const Data attribute, con
 			break;
 		}
 	}
+	saveIndexToFile(indexName);
+}
+
+/* @brief create a B+ tree from existing index files at the ctor of IndexManager
+* @param indexName 
+*/
+void IndexManager::createIndexFromFile(const string indexName)
+{
+	/*wait to be completed*/
+}
+
+/* @brief save the information of index to indexfile
+* @param indexName
+*/
+void IndexManager::saveIndexToFile(const string indexName)
+{
+	/*create index file header
+	* TYPE
+	  Offset
+	  {Offset 32bit,Key[]\0}[]
+	*/
+	BPlusTreeIndex* i = indexLibrary[indexName];
+	/*Find the first leaf of b+ tree*/
+	/*traverse to the end leaf*/
+	/*for each node, store offset and keyvalue*/
 }
 
 void IndexManager::insertValues(const string indexName, const string indexKey, const ADDRESS recordOffset)
@@ -137,7 +174,7 @@ void IndexManager::deleteValues(const string indexName, list<Expression> express
 			for (int i = 0; i < currentLeaf->getElementCount(); i++)
 			{
 				deleteRecordFromFile(indexName, currentLeaf->getPtrToChild(i), recordLength, fileName);/*deleted the record from data file*/
-				waitToBeCompleted
+				/*waitToBeCompleted still don't know*/
 			}
 		}
 	}
@@ -251,5 +288,5 @@ string IndexManager::toAlignedInt(string s)
 */
 string IndexManager::toAlignedFloat(string s)
 {
-	WaitToBeCompleted
+	/*WaitToBeCompleted*/
 }
