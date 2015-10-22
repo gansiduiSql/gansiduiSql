@@ -352,8 +352,8 @@ void BPlusTreeNode::makeEmpty()
 BPlusPointer BPlusTreeNode::findSibling(BPlusPointer p)
 {
 	int i = indexOf(p);
-	if (i == POINTERNUM)
-		return ptrToChild[POINTERNUM - 1];
+	if (i == POINTERNUM-1)
+		return ptrToChild[POINTERNUM - 2];
 	else if (i == 0)
 		return ptrToChild[1];
 	else if (ptrToChild[i + 1] == NULL)
@@ -365,8 +365,8 @@ BPlusPointer BPlusTreeNode::findSibling(BPlusPointer p)
 BPlusLeaf BPlusTreeNode::findSibling(BPlusLeaf p)
 {
 	int i = indexOf(p);
-	if (i == POINTERNUM)
-		return (BPlusLeaf)ptrToChild[POINTERNUM - 1];
+	if (i == POINTERNUM-1)
+		return (BPlusLeaf)ptrToChild[POINTERNUM - 2];
 	else if (i == 0)
 		return (BPlusLeaf)ptrToChild[1];
 	else if (ptrToChild[i + 1] == NULL)

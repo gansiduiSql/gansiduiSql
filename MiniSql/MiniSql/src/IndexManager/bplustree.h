@@ -3,8 +3,8 @@
 #include <string>
 #include <iostream>
 #include "../Definition.h"
-
 using namespace std;
+
 typedef string ElementType;
 class BPlusTreeNode;
 class Record;
