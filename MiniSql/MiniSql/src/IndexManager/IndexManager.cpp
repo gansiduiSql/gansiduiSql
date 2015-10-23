@@ -40,7 +40,7 @@ void IndexManager::dropIndex(const string indexName)throw(exception)
 	indexLibrary.erase(indexToDrop);
 
 	/*delete the BPlusTree in the file*/
-	bufferManager->deleteFile(indexName+"index");
+	bufferManager->deleteFile(indexName);
 }
 
 /*@brief Traverse the whole File of the relation specified by fileName
@@ -60,9 +60,9 @@ void IndexManager::createIndex(const string indexName, const Data attribute, con
 	int bPlusFanOut;
 	switch (attribute.getType())
 	{
-	case CHAR:bPlusFanOut = (BLOCKSIZE - 4) / (attribute.getLength() + sizeof(ADDRESS)) + 1; break;
-	case INT:bPlusFanOut = (BLOCKSIZE - 4) / (INT_STRING_SIZE + sizeof(ADDRESS)) + 1; break;
-	case FLOAT:bPlusFanOut = (BLOCKSIZE - 4) / (FLOAT_INTEGER_SIZE+FLOAT_DECIMAL_SIZE + sizeof(ADDRESS)) + 1; break;
+	case CHAR:bPlusFanOut = (BLOCKSIZE - 4) / (attribute.getLength() + sizeof(ADDRESS)); break;
+	case INT:bPlusFanOut = (BLOCKSIZE - 4) / (INT_STRING_SIZE + sizeof(ADDRESS)); break;
+	case FLOAT:bPlusFanOut = (BLOCKSIZE - 4) / (FLOAT_INTEGER_SIZE+FLOAT_DECIMAL_SIZE + sizeof(ADDRESS)); break;
 	default:
 		exception ex;
 		throw ex;
@@ -106,7 +106,7 @@ void IndexManager::createIndex(const string indexName, const Data attribute, con
 			break;
 		}
 	}
-	saveIndexToFile(indexName);
+	saveIndexToFile(indexName,attribute.getType());
 }
 
 /* @brief create a B+ tree from existing index files at the ctor of IndexManager
@@ -114,25 +114,62 @@ void IndexManager::createIndex(const string indexName, const Data attribute, con
 */
 void IndexManager::createIndexFromFile(const string indexName)
 {
-	/*wait to be completed*/
+	/*Read indexfile header*/
+	INDEXFILEHEADER infh = *(INDEXFILEHEADER *)(bufferManager->fetchARecord(indexName, 0));
+	indexLibrary[indexName] = new BPlusTreeIndex(infh.fanOut, infh.type);
+	ADDRESS curser = HEADER_BLOCK_OFFSET;
+	for (int i = 0; i < infh.elementCount; i++)
+	{	
+		string keyValue = *(string *)bufferManager->fetchARecord(indexName, curser + sizeof(int));
+		indexLibrary[indexName]->addKey(*(int *)bufferManager->fetchARecord(indexName,curser),keyValue);
+		curser += sizeof(keyValue);
+	}
 }
 
 /* @brief save the information of index to indexfile
 * @param indexName
 */
-void IndexManager::saveIndexToFile(const string indexName)
+void IndexManager::saveIndexToFile(const string indexName, TYPE type)
 {
-	/*create index file header
-	* TYPE
-	  Offset
-	  {Offset 32bit,Key[]\0}[]
-	*/
-	BPlusTreeIndex* i = indexLibrary[indexName];
-	/*Find the first leaf of b+ tree*/
-	/*traverse to the end leaf*/
-	/*for each node, store offset and keyvalue*/
+	INDEXFILEHEADER infh;
+	/*Generate indexfile header*/
+	int i;
+	for (i = 0; i < indexName.length(); i++)
+		infh.indexName[i] = indexName[i];
+	infh.indexName[i] = 0;
+	infh.type = type;
+	/*Travser leafnode and store data*/
+	BPlusTreeIndex* index = indexLibrary[indexName];
+	BPlusLeaf currentLeaf = index->returnFirstLeafNode();
+	infh.fanOut = currentLeaf->getKeyNum;/*my fan out is defined by key number*/
+	ADDRESS curser = HEADER_BLOCK_OFFSET;
+	int  elementCount;
+	for (; currentLeaf->getPtrToSinling() != NULL; currentLeaf = currentLeaf->getPtrToSinling())/*traverse to the end leaf*/
+	{
+		for (int i = 0; i < currentLeaf->getElementCount(); i++)
+		{/*总觉得这段有些些许不对*/ 	/*for each node, store offset and keyvalue*/
+			bufferManager->writeARecord((BYTE *)&currentLeaf->getPtrToChild[i], sizeof(RecordPointer), indexName, curser);
+			curser += sizeof(RecordPointer);
+			bufferManager->writeARecord((BYTE *)&currentLeaf->getKeyValue[i], sizeof(currentLeaf->getKeyValue[i]), indexName, curser);
+			curser += sizeof(currentLeaf->getKeyValue[i]);
+			elementCount++;
+		}
+	}
+	/*add elementCount infomation to indexfileHeader*/
+	infh.elementCount = elementCount;
+	/*Write indexfile header*/
+	bufferManager->writeARecord((BYTE *)&infh, sizeof(INDEXFILEHEADER), indexName, 0);
 }
 
+/* @brief update the B+ tree index after insertion
+* @param indexName The name of the index
+* @param indexKey The keyValue
+* @param the recordOffset of the value
+* @pre Index exists
+* @return void
+* @throw IndexNotExistException
+* @post The value is inserted to the B+ tree index
+*/
 void IndexManager::insertValues(const string indexName, const string indexKey, const ADDRESS recordOffset)
 {
 	if (indexLibrary[indexKey]->getAttributeType() == INT)
@@ -282,11 +319,17 @@ string IndexManager::toAlignedInt(string s)
 	else return s;
 }
 
-/* @brief  Casting float to string, the string length FLOAT_STRING_SIZE
+/* @brief  Casting float to string, the decimal part length of FLOAT_DECIMAL_LENGTH
+* the integer part length FLOAT_INTEGER_LENGTH
 * @param initial string
 * @return string
 */
 string IndexManager::toAlignedFloat(string s)
 {
 	/*WaitToBeCompleted*/
+	while (s.find_first_of('.') <= FLOAT_DECIMAL_SIZE)
+		s = "0" + s;
+	while (s.length()<FLOAT_DECIMAL_SIZE+FLOAT_INTEGER_SIZE+1)
+		s = s + "0";
+	return s;
 }

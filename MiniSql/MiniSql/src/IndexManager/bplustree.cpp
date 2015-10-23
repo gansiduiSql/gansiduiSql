@@ -1,12 +1,17 @@
-//BPlusTree implementation
-//Summary: BPlusTree with single value index
-//Author: KUAN LU
-//Data: 2015/10/18
-//Department: Zhejiang University College of Computer Science
+/* @file IndexManager.cpp
+* @brief Implementation of B+ Tree index on a minisql System
+* @author lucas95123@outlook.com
+* @version 1.0
+* @date 2015/10/19
+*/
 #include "bplustree.h"
 extern int ELEMENTNUM;
-// \brief BPlusTree Node
-// \param BPusTree Node
+
+////////////////////////////////////////////////////////////////////////////////////////
+/// \brief BPlusTreeLeaf
+/// \param BPlusTreeLeaf
+///
+////////////////////////////////////////////////////////////////////////////////////////
 BPlusTreeNode::BPlusTreeNode(int keyNumber) :KEYNUM(keyNumber), POINTERNUM(keyNumber + 1)
 {
 	ELEMENTCOUNT = 0;
@@ -71,6 +76,11 @@ BPlusLeaf BPlusTreeNode::returnLeafNode(ElementType s)
 		else                                                           //第i项大于s
 			return ptrToChild[i]->returnLeafNode(s);           //递归向下查询
 	}
+}
+
+BPlusLeaf BPlusTreeNode::returnFirstLeafNode()
+{
+	return ptrToChild[0]->returnFirstLeafNode();
 }
 
 void BPlusTreeNode::insertKey(BPlusPointer p, ElementType s, int direction)
@@ -515,6 +525,11 @@ BPlusLeaf BPlusTreeLeaf::returnLeafNode(ElementType s)
 	return this;
 }
 
+BPlusLeaf BPlusTreeLeaf::returnFirstLeafNode()
+{
+	return this;
+}
+
 void BPlusTreeLeaf::insertPtrToSibling(BPlusLeaf p)
 {
 	ptrToSibling = p;
@@ -750,6 +765,11 @@ RecordPointer BPlusTreeIndex::findKey(ElementType s)
 BPlusLeaf BPlusTreeIndex::returnLeafNode(ElementType s)
 {
 	return Root->returnLeafNode(s);
+}
+
+BPlusLeaf BPlusTreeIndex::returnFirstLeafNode()
+{
+	return Root->returnFirstLeafNode();
 }
 
 void BPlusTreeIndex::traverseTree()

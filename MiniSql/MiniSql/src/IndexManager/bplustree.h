@@ -1,3 +1,9 @@
+/* @file IndexManager.cpp
+* @brief Implementation of B+ Tree index on a minisql System
+* @author lucas95123@outlook.com
+* @version 1.0
+* @date 2015/10/19
+*/
 #ifndef _BPLUSTREE_H_
 #define _BPLUSTREE_H_
 #include <string>
@@ -49,8 +55,9 @@ public:
 	//Search
 	virtual RecordPointer findKey(ElementType s);
 	virtual BPlusLeaf returnLeafNode(ElementType s);
-	//virtual BPlusLeaf returnFirstLeafNode(); /*wait to be completed*/
+	virtual BPlusLeaf returnFirstLeafNode();
 	//General function
+	int getKeyNum(){ return KEYNUM; }
 	void setParentNode(BPlusPointer p);//set the ptrToPartent node
 	ElementType getKeyValue(int index);//get the keyvalue of given index
 	void alterKeyValue(int index, ElementType s);//change the key value of the given index
@@ -78,7 +85,7 @@ public:
     BPlusPointer removeKey(ElementType s); 
     BPlusPointer deleteKey(RecordPointer p);
 	BPlusLeaf returnLeafNode(ElementType s);
-	//BPlusLeaf returnFirstLeafNode();/*wait to be completed*/
+	BPlusLeaf returnFirstLeafNode();
 	BPlusLeaf getPtrToSinling(){ return ptrToSibling; }
 	void insertKey(RecordPointer p, ElementType s, int direction);
     void deletePtr(RecordPointer p);
@@ -106,6 +113,7 @@ public:
     void removeKey(ElementType s);
     RecordPointer findKey(ElementType s);
 	BPlusLeaf returnLeafNode(ElementType s);
+	BPlusLeaf returnFirstLeafNode();
     void traverseTree();
 	TYPE getAttributeType();
 };
