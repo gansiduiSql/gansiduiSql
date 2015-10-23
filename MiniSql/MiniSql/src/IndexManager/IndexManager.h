@@ -29,6 +29,11 @@ typedef struct{
 	int elementCount;
 }INDEXFILEHEADER;
 
+typedef struct{
+	string value;
+	bool equal;
+}bound;
+
 class IndexManager
 {
 private:
@@ -37,11 +42,11 @@ private:
 	ADDRESS getEndOffset(const string fileName);
 	void renewEndOffset(const string fileName, const int recordLength);
 	void deleteRecordFromFile(const string indexName, const int recordOffset, const int recordLength, const string fileName);
-	void analysisExpression(string &dstLowerBound, string &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const TYPE &type);
+	void analysisExpression(bound &dstLowerBound, bound &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const TYPE &type);/*Function tested*/
 	void createIndexFromFile(const string indexName);
 	void saveIndexToFile(const string indexName, TYPE type);
-	string toAlignedInt(string s);
-	string toAlignedFloat(string s);
+	string toAlignedInt(string s);/*Function tested*/
+	string toAlignedFloat(string s);/*Function tested*/
 public:
 	IndexManager();
 	IndexManager(list<string> indexName);
@@ -49,7 +54,7 @@ public:
 	void createIndex(const string indexName, const Data attribute, const int recordLength, const string fileName);/*create Index of a relation*/
 	void dropIndex(const string indexName); /*delet/drop index indexfile and index in this function*/
 	void deleteValues(const string indexName, list<Expression> expressions, const string fileName, const int recordLength, TYPE type);
-	void selectValues(const string indexName, list<Expression> expressions, RECORDBUFFER recordBuffer);
+	void selectValues(const string indexName, list<Expression> expressions, RECORDBUFFER recordBuffer, TYPE type);
 	void insertValues(const string indexName, const string indexKey, const ADDRESS recordOffset);/*insert indexkey to bplus tree after insertion with RM*/
 };
 

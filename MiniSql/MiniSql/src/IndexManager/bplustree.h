@@ -56,6 +56,7 @@ public:
 	virtual RecordPointer findKey(ElementType s);
 	virtual BPlusLeaf returnLeafNode(ElementType s);
 	virtual BPlusLeaf returnFirstLeafNode();
+	virtual BPlusLeaf returnLastLeafNode();
 	//General function
 	int getKeyNum(){ return KEYNUM; }
 	void setParentNode(BPlusPointer p);//set the ptrToPartent node
@@ -86,6 +87,7 @@ public:
     BPlusPointer deleteKey(RecordPointer p);
 	BPlusLeaf returnLeafNode(ElementType s);
 	BPlusLeaf returnFirstLeafNode();
+	BPlusLeaf returnLastLeafNode();
 	BPlusLeaf getPtrToSinling(){ return ptrToSibling; }
 	void insertKey(RecordPointer p, ElementType s, int direction);
     void deletePtr(RecordPointer p);

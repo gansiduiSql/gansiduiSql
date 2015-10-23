@@ -83,6 +83,11 @@ BPlusLeaf BPlusTreeNode::returnFirstLeafNode()
 	return ptrToChild[0]->returnFirstLeafNode();
 }
 
+BPlusLeaf BPlusTreeNode::returnLastLeafNode()
+{
+	return ptrToChild[ELEMENTCOUNT]->returnLastLeafNode();
+}
+
 void BPlusTreeNode::insertKey(BPlusPointer p, ElementType s, int direction)
 {
 	if (isFull())															  //若该node已满
@@ -530,6 +535,11 @@ BPlusLeaf BPlusTreeLeaf::returnFirstLeafNode()
 	return this;
 }
 
+BPlusLeaf BPlusTreeLeaf::returnLastLeafNode()
+{
+	return this;
+}
+
 void BPlusTreeLeaf::insertPtrToSibling(BPlusLeaf p)
 {
 	ptrToSibling = p;
@@ -698,6 +708,10 @@ int BPlusTreeLeaf::indexOf(RecordPointer s)
 
 int BPlusTreeLeaf::indexOf(ElementType s)
 {
+	if (s == "ffff_ffff")
+		return ELEMENTCOUNT - 1;
+	else if (s == "-ffff_ffff")
+		return 0;
 	int i;
 	for (i = 0; i < KEYNUM; i++)
 	if (keyValue[i] == s)
@@ -764,6 +778,10 @@ RecordPointer BPlusTreeIndex::findKey(ElementType s)
 
 BPlusLeaf BPlusTreeIndex::returnLeafNode(ElementType s)
 {
+	if (s == "-ffff_ffff")
+		return Root->returnFirstLeafNode();
+	else if (s == "ffff_ffff")
+		return Root->returnLastLeafNode();
 	return Root->returnLeafNode(s);
 }
 
