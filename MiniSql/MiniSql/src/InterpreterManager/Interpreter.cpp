@@ -106,7 +106,9 @@ void Interpreter::createTableParser(Iterator& begin, Iterator end){
 	shared_ptr<StatementBlock> pSB(new CreateTableBlock(pTable));
 	vStatementBlock.push_back(pSB);
 }
-void Interpreter::createIndexParser(Iterator& begin, Iterator end);
+void Interpreter::createIndexParser(Iterator& begin, Iterator end) {
+	readWord(begin, end, IsVariableName());
+}
 void Interpreter::dropTableParser(Iterator& begin, Iterator end) {
 	auto s = readWord(begin, end, IsNum());
 	shared_ptr<StatementBlock> pSB(new DropTableBlock(s));
@@ -119,11 +121,25 @@ void Interpreter::dropIndexParser(Iterator& begin, Iterator end) {
 }
 void Interpreter::selectParser(Iterator& begin, Iterator end);
 void Interpreter::insertParser(Iterator& begin, Iterator end);
-void Interpreter::deleteParser(Iterator& begin, Iterator end);
+void Interpreter::deleteParser(Iterator& begin, Iterator end){
+	readWord(begin, end, IsString("from"));
+	auto s = readWord(begin, end, IsVariableName());
+	auto tableName = s;
+	
+	try{
+		s = readWord(begin, end);
+	}catch(EndOfString e){
+		shared_ptr<StatementBlock> pSB(new DeleteBlock(tableName));
+		return;
+	}
+	if(s!="where")
+		throw GrammarError("illegal delete operation");
+	
+}
 void Interpreter::quitParser(Iterator& begin, Iterator end) {
 	try {
 		readWord(begin, end);
-	}catch(EndOfString){
+	}catch(EndOfString e){
 		shared_ptr<StatementBlock> pSB(new QuitBlock);
 		vStatementBlock.push_back(pSB);
 		return;

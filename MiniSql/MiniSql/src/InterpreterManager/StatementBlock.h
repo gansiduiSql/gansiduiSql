@@ -2,6 +2,7 @@
 #define _STATEMENTBLOCK_H_
 
 #include <memory>
+#include <string>
 class Table;
 
 // an interface 
@@ -19,6 +20,19 @@ public:
 	virtual ~CreateTableBlock() {};
 private:
 	std::shared_ptr<Table> pTable;
+};
+
+class CreateIndexBlock :StatementBlock {
+public:
+	CreateIndexBlock(std::string indexName,std::string tableName, std::string attributeName) 
+		:indexName(indexName),tableName(tableName),attributeName(attributeName) {};
+	virtual void execute();
+
+	virtual ~CreateIndexBlock() {};
+private:
+	std::string indexName;
+	std::string tableName;
+	std::string attributeName;
 };
 
 class InsertTableBlock :StatementBlock {
@@ -58,5 +72,29 @@ public:
 	virtual ~DropIndexBlock() {}
 private:
 	std::string indexName;
+};
+
+class DropIndexBlock : StatementBlock {
+public:
+	DropIndexBlock(std::string s) :indexName(s) {}
+	virtual void execute();
+
+	virtual ~DropIndexBlock() {}
+private:
+	std::string indexName;
+};
+
+class DeleteBlock : StatementBlock{
+public:
+	DeleteBlock(std::string tableName):tableName(tableName),flag(false){}
+	DeleteBlock(std::string tableName, std::shared_ptr<std::list<Expression>> pel)
+	 :tableName(tableName),pExpList(pel),flag(true){}
+	 
+	virtual void execute();
+	virtual ~DeleteBlock(){}
+private:
+	std::string tableName;
+	std::shared_ptr<std::list<Expression>> pExpList;
+	bool flag;
 };
 #endif

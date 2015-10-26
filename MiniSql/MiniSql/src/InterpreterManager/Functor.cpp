@@ -23,6 +23,27 @@ string readWord(Iterator& sIter, Iterator end, std::function<bool(char)> f)
 
 }
 
+std::list<Expression>
+ readExp(std::string::iterator& begin, std::string::iterator end){
+	 string s;
+	 list<Expression> ret;
+	 try{
+		 for(;;){
+			 Expression tmpExp;
+			 s = readWord(begin, end, IsAlnum);
+			 tmpExp.leftOperand.operandName = s;
+			 
+			 s = readWord(begin, end, IsOperator());
+			 s = readWord(begin, end, IsAlnum);
+			 tmpExp.rightOperand.operandName = s;
+			 ret.push_back(tmpExp);
+			 s = readWord(begin, end, IsString("and"));
+		 }
+	 }catch (const EndOfString& e){
+	 }
+	 return move(ret);
+ }
+
 bool IsVariableName::operator()(char c) {
 	if (i == 0) {
 		i++;
