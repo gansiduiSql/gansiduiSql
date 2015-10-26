@@ -93,23 +93,25 @@ public:
 	bool isPrimary()const { return primaryFlag; }
 	void setPrimary(bool flag) { primaryFlag = flag; }
 
-	~Data();
+	~Data(){}
 };
+
 class Block
 {
 public:
-	Block();
-	~Block();
-	void setBlockData(BYTE* data);
-	BYTE* getBlockData();
-	void setDirtyBit(bool isDirty);
-	bool getDirtyBit();
-	void setPinnedBit(bool pinnnedBit);
-	bool getPinnnedBit();
-	void setFileName(const std::string& fileName);
-	std::string getFileName();
-	void setTag(ADDRESS tag);
-	ADDRESS getTag();
+	Block(){ dirtyBit = false; isPinned = false; }
+	~Block(){}
+	void setBlockData(BYTE* data){ memcpy(blockData, data, BLOCKSIZE); }
+	BYTE* getBlockData(){ return blockData; }
+	void setDirtyBit(bool isDirty){ this->dirtyBit = isDirty; }
+	bool getDirtyBit(){ return dirtyBit; }
+	void setPinnedBit(bool pinnnedBit){ this->isPinned = pinnnedBit; }
+	bool getPinnnedBit(){ return isPinned; }
+	void setFileName(const std::string& fileName){ this->fileName = fileName; }
+	std::string getFileName(){ return fileName; }
+	void setTag(ADDRESS tag){ this->tag = tag; }
+	ADDRESS getTag(){ return tag; }
+	void clear(){ dirtyBit = false; fileName = ""; }
 private:
 	BYTE blockData[BLOCKSIZE];
 	bool dirtyBit;
@@ -131,6 +133,7 @@ public:
 	~ArrayList();
 	void moveTail(int index);
 	int getHeader();
+	int getNext(int index){ return arraylist[index].next; }	//test function
 };
 
 #endif

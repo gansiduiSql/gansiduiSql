@@ -1,16 +1,17 @@
-/// ///////////////////////////////////
-/// BPlusTree implementation
-/// Summary: BPlusTree with single value index
-/// Author: KUAN LU
-/// Data: 2015/10/18
-/// Department: Zhejiang University College of Computer Science
-/// //////////////////////////////////
+/* @file IndexManager.cpp
+* @brief Implementation of B+ Tree index on a minisql System
+* @author lucas95123@outlook.com
+* @version 1.0
+* @date 2015/10/19
+*/
 #include "bplustree.h"
 extern int ELEMENTNUM;
-/// //////////////////////////////////
-/// \brief BPlusTree Node
-/// \param BPusTree Node
-/// ///////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////
+/// \brief BPlusTreeLeaf
+/// \param BPlusTreeLeaf
+///
+////////////////////////////////////////////////////////////////////////////////////////
 BPlusTreeNode::BPlusTreeNode(int keyNumber) :KEYNUM(keyNumber), POINTERNUM(keyNumber + 1)
 {
 	ELEMENTCOUNT = 0;
@@ -29,29 +30,62 @@ BPlusTreeNode::~BPlusTreeNode()
 
 BPlusPointer BPlusTreeNode::addKey(RecordPointer p, ElementType s)
 {
-	int i = firstValueBiggerThan(s);				 //Find the index of the first value bigger than s
-	if (i == -1)                                                 //If every Value is smaller than s,  or if the node is empty
+	returnLeafNode(s)->addKey(p,s);
+	if (this->ptrToParent != NULL)
+		return this->ptrToParent;
+	else
+		return this;
+}
+
+BPlusPointer BPlusTreeNode::removeKey(ElementType s)
+{
+	returnLeafNode(s)->removeKey(s);
+	if (this->isEmpty())
+		return this->ptrToChild[0];
+	else
+		return this;
+}
+
+RecordPointer BPlusTreeNode::findKey(ElementType s)
+{
+	return returnLeafNode(s)->findKey(s);
+}
+
+BPlusLeaf BPlusTreeNode::returnLeafNode(ElementType s)
+{
+	int i = firstValueBiggerThan(s);     //找到最小的比s大的元素的index
+	BPlusPointer returnedPointer;
+	if (i == -1)                                                         //若所有元素比s小或者Node为空
 	{
 		int j;
-		for (j = 0; j < POINTERNUM;)				 //Find the index of the first none-null index
+		for (j = 0; j < POINTERNUM;)               //找到第一个不为0的指针的index
 		{
 			if (ptrToChild[++j] == NULL)
 				break;
 		}
-		ptrToChild[j]->addKey(p, s);			    //Addkey recursively
+		return ptrToChild[j]->returnLeafNode(s);             //递归向下删除
 	}
 	else if (i == KEYNUM)
 	{
-		ptrToChild[POINTERNUM - 1]->addKey(p, s);
+		return ptrToChild[POINTERNUM - 1]->returnLeafNode(s);
 	}
 	else
 	{
-		if (s == keyValue[i])								//若第i项和s相等
-			ptrToChild[i + 1]->addKey(p, s);		//递归向下
-		else															 //第i项大于s
-			ptrToChild[i]->addKey(p, s);				//递归向下查询
+		if (s == keyValue[i])                              //若第i项和s相等
+			return ptrToChild[i + 1]->returnLeafNode(s);     //递归向下
+		else                                                           //第i项大于s
+			return ptrToChild[i]->returnLeafNode(s);           //递归向下查询
 	}
-	return this->ptrToParent == NULL ? this : this->ptrToParent;
+}
+
+BPlusLeaf BPlusTreeNode::returnFirstLeafNode()
+{
+	return ptrToChild[0]->returnFirstLeafNode();
+}
+
+BPlusLeaf BPlusTreeNode::returnLastLeafNode()
+{
+	return ptrToChild[ELEMENTCOUNT]->returnLastLeafNode();
 }
 
 void BPlusTreeNode::insertKey(BPlusPointer p, ElementType s, int direction)
@@ -130,65 +164,6 @@ void BPlusTreeNode::insertKey(BPlusPointer p, ElementType s, int direction)
 	}
 }
 
-BPlusPointer BPlusTreeNode::removeKey(ElementType s)
-{
-	int i = firstValueBiggerThan(s);     //找到最小的比s大的元素的index
-	BPlusPointer returnedPointer;
-	if (i == -1)                                                         //若所有元素比s小或者Node为空
-	{
-		int j;
-		for (j = 0; j < POINTERNUM;)               //找到第一个不为0的指针的index
-		{
-			if (ptrToChild[++j] == NULL)
-				break;
-		}
-		returnedPointer = ptrToChild[j]->removeKey(s);             //递归向下删除
-	}
-	else if (i == KEYNUM)
-	{
-		returnedPointer = ptrToChild[POINTERNUM - 1]->removeKey(s);
-	}
-	else
-	{
-		if (s == keyValue[i])                              //若第i项和s相等
-			returnedPointer = ptrToChild[i + 1]->removeKey(s);     //递归向下
-		else                                                           //第i项大于s
-			returnedPointer = ptrToChild[i]->removeKey(s);           //递归向下查询
-	}
-	if (ptrToParent == NULL)
-		return returnedPointer;
-	else if (ptrToParent->isEmpty())
-		return ptrToParent->ptrToChild[0];
-	else return ptrToParent;
-}
-
-BPlusLeaf BPlusTreeNode::returnLeafNode(ElementType s)
-{
-	int i = firstValueBiggerThan(s);     //找到最小的比s大的元素的index
-	BPlusPointer returnedPointer;
-	if (i == -1)                                                         //若所有元素比s小或者Node为空
-	{
-		int j;
-		for (j = 0; j < POINTERNUM;)               //找到第一个不为0的指针的index
-		{
-			if (ptrToChild[++j] == NULL)
-				break;
-		}
-		return ptrToChild[j]->returnLeafNode(s);             //递归向下删除
-	}
-	else if (i == KEYNUM)
-	{
-		return ptrToChild[POINTERNUM - 1]->returnLeafNode(s);
-	}
-	else
-	{
-		if (s == keyValue[i])                              //若第i项和s相等
-			return ptrToChild[i + 1]->returnLeafNode(s);     //递归向下
-		else                                                           //第i项大于s
-			return ptrToChild[i]->returnLeafNode(s);           //递归向下查询
-	}
-}
-
 void BPlusTreeNode::insertPtr(BPlusPointer p)
 {
 	int i = 0;
@@ -205,7 +180,7 @@ void BPlusTreeNode::reDistributePtr(BPlusPointer sibPtr)
 	int SIBELEMENT = sibPtr->ELEMENTCOUNT;
 	int THISELEMENT = this->ELEMENTCOUNT;
 	int TOTALELEMENT = SIBELEMENT + THISELEMENT;
-	bool sibBiggerThanThis;
+	bool sibBiggerThanThis = true;
 
 	if (sibPtr->keyValue[0] < this->keyValue[0])
 		sibBiggerThanThis = false;
@@ -214,8 +189,9 @@ void BPlusTreeNode::reDistributePtr(BPlusPointer sibPtr)
 	{
 		for (int i = 0; i < THISELEMENT; i++)                 //将Key全部移出
 			tmpKeyValue[i] = this->keyValue[i];
+		tmpKeyValue[THISELEMENT] = sibPtr->ptrToChild[0]->keyValue[0];//右边Node第一个child的最小Key插入
 		for (int i = 0; i < SIBELEMENT; i++)
-			tmpKeyValue[i + THISELEMENT] = sibPtr->keyValue[i];
+			tmpKeyValue[i + THISELEMENT+1] = sibPtr->keyValue[i];
 		for (int i = 0; i < THISELEMENT + 1; i++)                 //将指针全部移出
 			tmpPtr[i] = this->ptrToChild[i];
 		for (int i = 0; i < SIBELEMENT + 1; i++)
@@ -225,8 +201,9 @@ void BPlusTreeNode::reDistributePtr(BPlusPointer sibPtr)
 	{
 		for (int i = 0; i < SIBELEMENT; i++)                 //将Key全部移出
 			tmpKeyValue[i] = sibPtr->keyValue[i];
+		tmpKeyValue[SIBELEMENT] = ptrToChild[0]->keyValue[0];//右边Node第一个child的最小Key插入
 		for (int i = 0; i < THISELEMENT; i++)
-			tmpKeyValue[i + SIBELEMENT] = this->keyValue[i];
+			tmpKeyValue[i + SIBELEMENT+1] = this->keyValue[i];
 		for (int i = 0; i < SIBELEMENT + 1; i++)                 //将指针全部移出
 			tmpPtr[i] = sibPtr->ptrToChild[i];
 		for (int i = 0; i < THISELEMENT + 1; i++)
@@ -244,11 +221,10 @@ void BPlusTreeNode::reDistributePtr(BPlusPointer sibPtr)
 		this->insertPtr(tmpPtr[MIDPOINT]);
 
 		ptrToParent->alterKeyValue(ptrToParent->indexOf(sibPtr) - 1, tmpKeyValue[MIDPOINT]);
-		sibPtr->insertKey(tmpPtr[MIDPOINT + 1], tmpPtr[MIDPOINT + 2]->keyValue[0], LEFT);
+		sibPtr->insertPtr(tmpPtr[MIDPOINT + 1]);
 
-		for (count = MIDPOINT + 1; count < TOTALELEMENT; count++)
-			sibPtr->insertKey(tmpPtr[count + 1], tmpKeyValue[count], LEFT);
-		sibPtr->insertPtr(tmpPtr[TOTALELEMENT + 1]);
+		for (count = MIDPOINT + 1; count < TOTALELEMENT+1; count++)
+			sibPtr->insertKey(tmpPtr[count + 1], tmpKeyValue[count], RIGHT);
 	}
 	else
 	{
@@ -257,11 +233,10 @@ void BPlusTreeNode::reDistributePtr(BPlusPointer sibPtr)
 		sibPtr->insertPtr(tmpPtr[MIDPOINT]);
 
 		ptrToParent->alterKeyValue(ptrToParent->indexOf(this) - 1, tmpKeyValue[MIDPOINT]);
-		this->insertKey(tmpPtr[MIDPOINT + 1], tmpPtr[MIDPOINT + 2]->keyValue[0], LEFT);
+		this->insertPtr(tmpPtr[MIDPOINT + 1]);
 
-		for (count = MIDPOINT + 1; count < TOTALELEMENT; count++)
-			this->insertKey(tmpPtr[count + 1], tmpKeyValue[count], LEFT);
-		this->insertPtr(tmpPtr[TOTALELEMENT + 1]);
+		for (count = MIDPOINT + 1; count < TOTALELEMENT+1; count++)
+			this->insertKey(tmpPtr[count + 1], tmpKeyValue[count], RIGHT);
 	}
 
 	delete[] tmpKeyValue;
@@ -333,41 +308,17 @@ BPlusPointer BPlusTreeNode::deleteKey(BPlusPointer p, ElementType s)
 	return this;
 }
 
-RecordPointer BPlusTreeNode::findKey(ElementType s)
-{
-	int i = firstValueBiggerThan(s);						 //找到最小的比s大的元素的index
-	if (i == -1)                                                         //若所有元素比s小或者Node为空
-	{
-		int j;
-		for (j = 0; j < POINTERNUM;)						 //找到第一个不为0的指针的index
-		{
-			if (ptrToChild[++j] == NULL)
-				break;
-		}
-		return ptrToChild[j]->findKey(s);             //递归向下删除
-	}
-	else if (i == KEYNUM)
-	{
-		return ptrToChild[POINTERNUM - 1]->findKey(s);
-	}
-	else
-	{
-		if (s == keyValue[i])                              //若第i项和s相等
-			return ptrToChild[i + 1]->findKey(s);    //递归向下
-		else                                                           //第i项大于s
-			return ptrToChild[i]->findKey(s);           //递归向下查询
-	}
-}
-
 void BPlusTreeNode::traverse(int level)
 {
+	/*cout << "Address: " << this<<" ";
+	cout << " parent Address: " << this->ptrToParent << " ";*/
 	cout << '|';
 	for (int i = 0; i < KEYNUM; i++)
 	{
 		cout << keyValue[i] << "|";
 	}
 	cout << " level:" << level++;
-	cout << " Element count=" << ELEMENTCOUNT << endl;
+	cout << " Element count=" << ELEMENTCOUNT<< endl;
 	for (int i = 0; i < POINTERNUM; i++)
 	{
 		if (ptrToChild[i] != NULL)
@@ -416,8 +367,8 @@ void BPlusTreeNode::makeEmpty()
 BPlusPointer BPlusTreeNode::findSibling(BPlusPointer p)
 {
 	int i = indexOf(p);
-	if (i == POINTERNUM)
-		return ptrToChild[POINTERNUM - 1];
+	if (i == POINTERNUM-1)
+		return ptrToChild[POINTERNUM - 2];
 	else if (i == 0)
 		return ptrToChild[1];
 	else if (ptrToChild[i + 1] == NULL)
@@ -429,8 +380,8 @@ BPlusPointer BPlusTreeNode::findSibling(BPlusPointer p)
 BPlusLeaf BPlusTreeNode::findSibling(BPlusLeaf p)
 {
 	int i = indexOf(p);
-	if (i == POINTERNUM)
-		return (BPlusLeaf)ptrToChild[POINTERNUM - 1];
+	if (i == POINTERNUM-1)
+		return (BPlusLeaf)ptrToChild[POINTERNUM - 2];
 	else if (i == 0)
 		return (BPlusLeaf)ptrToChild[1];
 	else if (ptrToChild[i + 1] == NULL)
@@ -575,6 +526,16 @@ void BPlusTreeLeaf::insertKey(RecordPointer p, ElementType s, int direction)
 }
 
 BPlusLeaf BPlusTreeLeaf::returnLeafNode(ElementType s)
+{
+	return this;
+}
+
+BPlusLeaf BPlusTreeLeaf::returnFirstLeafNode()
+{
+	return this;
+}
+
+BPlusLeaf BPlusTreeLeaf::returnLastLeafNode()
 {
 	return this;
 }
@@ -747,6 +708,10 @@ int BPlusTreeLeaf::indexOf(RecordPointer s)
 
 int BPlusTreeLeaf::indexOf(ElementType s)
 {
+	if (s == "ffff_ffff")
+		return ELEMENTCOUNT - 1;
+	else if (s == "-ffff_ffff")
+		return 0;
 	int i;
 	for (i = 0; i < KEYNUM; i++)
 	if (keyValue[i] == s)
@@ -756,6 +721,8 @@ int BPlusTreeLeaf::indexOf(ElementType s)
 
 void BPlusTreeLeaf::traverse(int level)
 {
+	/*cout << "Address: " << this << " ";
+	cout << " parent Address: " << this->ptrToParent << " ";*/
 	cout << '|';
 	for (int i = 0; i < KEYNUM; i++)
 	{
@@ -811,7 +778,16 @@ RecordPointer BPlusTreeIndex::findKey(ElementType s)
 
 BPlusLeaf BPlusTreeIndex::returnLeafNode(ElementType s)
 {
+	if (s == "-ffff_ffff")
+		return Root->returnFirstLeafNode();
+	else if (s == "ffff_ffff")
+		return Root->returnLastLeafNode();
 	return Root->returnLeafNode(s);
+}
+
+BPlusLeaf BPlusTreeIndex::returnFirstLeafNode()
+{
+	return Root->returnFirstLeafNode();
 }
 
 void BPlusTreeIndex::traverseTree()

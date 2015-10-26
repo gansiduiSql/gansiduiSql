@@ -5,6 +5,41 @@
 #include <queue>
 #include <string>
 #include <cstdio>
+#include <exception>
+
+//open a file exception
+class OpenFileException : public std::exception
+{
+private:
+	std::string errLog;
+public:
+	OpenFileException(){ errLog = "fail to open file"; }
+	OpenFileException(std::string fileName){ errLog = "fail to open " + fileName; }
+	virtual const char* what(){ return errLog.c_str(); }
+};
+
+//remove a file exception
+class RemoveFileException : public std::exception
+{
+private:
+	std::string errLog;
+public:
+	RemoveFileException(){ errLog = "fail to remove file"; }
+	RemoveFileException(std::string fileName){ errLog = "fail to remove " + fileName; }
+	virtual ~RemoveFileException(){}
+	virtual const char* what(){ return errLog.c_str(); }
+};
+
+//all block has been pinned
+class AllBlockPinned : public std::exception
+{
+private:
+	std::string errLog;
+public:
+	AllBlockPinned(){ errLog = "All block has been pinned!"; }
+	virtual ~AllBlockPinned(){}
+	virtual const char* what(){ return errLog.c_str(); }
+};
 
 class BufferManager
 {
@@ -16,6 +51,7 @@ public:
 	void writeARecord(BYTE* record, int recordLength, const std::string& name, const ADDRESS& address);
 	void deleteFile(const std::string& name);
 	void setBlockPinned(int blockIndex);
+	void setBlockNotPinned(int blockIndex);
 	void getHeader(const std::string& fileName, ADDRESS& recordHeader, ADDRESS& freeListHeader);
 	static BufferManager* getBufferManager();
 private:
