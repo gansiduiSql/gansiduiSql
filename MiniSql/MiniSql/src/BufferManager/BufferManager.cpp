@@ -97,7 +97,7 @@ int BufferManager::hit(const string& fileName,const ADDRESS& tag)
 void BufferManager::createFile(const string& name)
 {
 	string fileName = name + ".data";
-	openedFilePtr = fopen(("/DBFile/" + fileName).c_str(), "wb");//folder problem
+	openedFilePtr = fopen(fileName.c_str(), "wb");//folder problem
 	openedFileName = fileName;
 
 	writeARecord((BYTE*)(0), 4, fileName, 0);
