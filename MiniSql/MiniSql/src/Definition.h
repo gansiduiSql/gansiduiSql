@@ -111,6 +111,7 @@ public:
 	std::string getFileName(){ return fileName; }
 	void setTag(ADDRESS tag){ this->tag = tag; }
 	ADDRESS getTag(){ return tag; }
+	void clear(){ dirtyBit = false; fileName = ""; }
 private:
 	BYTE blockData[BLOCKSIZE];
 	bool dirtyBit;
@@ -132,6 +133,7 @@ public:
 	~ArrayList();
 	void moveTail(int index);
 	int getHeader();
+	int getNext(int index){ return arraylist[index].next; }	//test function
 };
 
 #endif

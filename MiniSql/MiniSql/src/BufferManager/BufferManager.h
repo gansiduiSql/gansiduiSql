@@ -5,6 +5,30 @@
 #include <queue>
 #include <string>
 #include <cstdio>
+#include <exception>
+
+//open a file exception
+class OpenFileException : public std::exception
+{
+private:
+	std::string errLog;
+public:
+	OpenFileException(){ errLog = "fail to open file"; }
+	OpenFileException(std::string fileName){ errLog = "fail to open " + fileName; }
+	virtual const char* what(){ return errLog.c_str(); }
+};
+
+//remove a file exception
+class RemoveFileException : public std::exception
+{
+private:
+	std::string errLog;
+public:
+	RemoveFileException(){ errLog = "fail to remove file"; }
+	RemoveFileException(std::string fileName){ errLog = "fail to remove " + fileName; }
+	virtual ~RemoveFileException(){}
+	virtual const char* what(){ return errLog.c_str(); }
+};
 
 class BufferManager
 {
