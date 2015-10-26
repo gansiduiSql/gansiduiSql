@@ -30,6 +30,17 @@ public:
 	virtual const char* what(){ return errLog.c_str(); }
 };
 
+//all block has been pinned
+class AllBlockPinned : public std::exception
+{
+private:
+	std::string errLog;
+public:
+	AllBlockPinned(){ errLog = "All block has been pinned!"; }
+	virtual ~AllBlockPinned(){}
+	virtual const char* what(){ return errLog.c_str(); }
+};
+
 class BufferManager
 {
 public:
@@ -40,6 +51,7 @@ public:
 	void writeARecord(BYTE* record, int recordLength, const std::string& name, const ADDRESS& address);
 	void deleteFile(const std::string& name);
 	void setBlockPinned(int blockIndex);
+	void setBlockNotPinned(int blockIndex);
 	void getHeader(const std::string& fileName, ADDRESS& recordHeader, ADDRESS& freeListHeader);
 	static BufferManager* getBufferManager();
 private:

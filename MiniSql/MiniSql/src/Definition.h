@@ -99,7 +99,7 @@ public:
 class Block
 {
 public:
-	Block(){}
+	Block(){ dirtyBit = false; isPinned = false; }
 	~Block(){}
 	void setBlockData(BYTE* data){ memcpy(blockData, data, BLOCKSIZE); }
 	BYTE* getBlockData(){ return blockData; }

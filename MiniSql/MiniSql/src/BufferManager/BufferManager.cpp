@@ -60,7 +60,7 @@ void BufferManager::createFile(const string& name)
 	openedFilePtr = fopen(fileName.c_str(), "wb+");
 	//fail to open this file
 	if (openedFilePtr == NULL)
-		throw OpenFileException(fileName);
+		throw OpenFileException(fileName);	//throw the openFile exception
 	openedFileName = fileName;
 
 	/*
@@ -83,8 +83,12 @@ void BufferManager::deleteFile(const string& name)
 	string fileName = name + ".data";
 
 	if (openedFileName == fileName)
+	{
 		fclose(openedFilePtr);
-
+		openedFileName = "";
+		openedFilePtr = nullptr;
+	}
+	//clear the data in the blocks that contain the data in the deleted filed
 	for (int i = 0; i < BLOCKNUM; i++)
 	{
 		if (blocks[i].getFileName() == fileName)
@@ -95,27 +99,45 @@ void BufferManager::deleteFile(const string& name)
 }
 
 /*fetch a record from the buffer if not hit, fecth it from the file into the buffer first
-*@param name	the name of the file without suffix name
+*@param name the name of the file without suffix name
 *@param address	the address of the record in the file
 *@return the header address of the record in the block
 */
 BYTE* BufferManager::fetchARecord(const string& name, const ADDRESS& address)
 {
-	//hit and return the corresponding block
 	int blockIndex;
 	string fileName = name + ".data";
 	//miss and fecth a block from the file and return the corresponding block
 	if ((blockIndex = hit(fileName, address / BLOCKSIZE)) == -1)
-	{
-		//miss and we must get the data from disk(file)
-		string fileName = name + ".data";
-		blockIndex = fetchABlock(fileName, address / BLOCKSIZE);
+		blockIndex = fetchABlock(fileName, address / BLOCKSIZE);	//miss and we must get the data from disk(file)
+	else //hit
+	{	
+		/*visiting this block and move it to tail
+		*it devote that it is most recently used and will be substituted last
+		*/
+		substitutionQue.moveTail(blockIndex);
 	}
-
+	//blockoffset is the offset that the address in this block
 	int blockOffset = address - (address / BLOCKSIZE) * BLOCKSIZE;
-	substitutionQue.moveTail(blockIndex);
-
+	
 	return blocks[blockIndex].getBlockData() + blockOffset;
+}
+
+/*decide whether it hits and if it hits, return the block index, otherwise return -1
+*@param fileName the file name of visited record
+*@param tag the offset(tag) in the file of the visited record
+*@return the hitted block index or -1 to devoted miss
+*/
+int BufferManager::hit(const string& fileName, const ADDRESS& tag)
+{
+	for (int i = 0; i < BLOCKNUM; i++)
+	{
+		//hit and return the hitted block index
+		if ((blocks[i].getFileName() == fileName) && (blocks[i].getTag() == tag))
+			return i;
+	}
+	//miss and return -1
+	return -1;
 }
 
 /*write a record if it in buffer, write it into buffer otherwise fecth it from the file and write it
@@ -130,6 +152,13 @@ void BufferManager::writeARecord(BYTE* record, int recordLength, const string& n
 	//miss
 	if ((blockIndex = hit(fileName, address / BLOCKSIZE)) == -1)
 		blockIndex = fetchABlock(fileName, address / BLOCKSIZE);
+	else //hit
+	{
+		/*visiting this block and move it to tail
+		*it devote that it is most recently used and will be substituted last
+		*/
+		substitutionQue.moveTail(blockIndex);
+	}
 
 	int blockOffset = address - (address / BLOCKSIZE) * BLOCKSIZE;
 	memcpy(blocks[blockIndex].getBlockData() + blockOffset, record, recordLength);
@@ -153,10 +182,7 @@ int BufferManager::substitute(const string& fileName, const ADDRESS& tag, BYTE* 
 		it = substitutionQue.getHeader();
 	}
 	if (it == -1)
-	{
-		//all blocks are pinned
-		//throw an exception
-	}
+		throw AllBlockPinned();
 
 	//the block is dirty and write it into the 
 	if (blocks[it].getDirtyBit())
@@ -171,23 +197,6 @@ int BufferManager::substitute(const string& fileName, const ADDRESS& tag, BYTE* 
 	return  it;
 }
 
-/*decide whether it hits and if it hits, return the block index, otherwise return -1
-*@param fileName	the file name of visited record
-*@param tag    the offset(tag) in the file of the visited record
-*@return the hitted block index or -1 to devoted miss
-*/
-int BufferManager::hit(const string& fileName,const ADDRESS& tag)
-{
-	for (int i = 0; i < BLOCKNUM; i++)
-	{
-		//hit and return the hitted block index
-		if ((blocks[i].getFileName() == fileName) && (blocks[i].getTag() == tag))
-			return i;
-	}
-	//miss and return -1 to devoted miss
-	return -1;
-}
-
 /*fecth a block from the given fileName and address
 *@param fileName	the file name of the block to fecth
 *@param tag			the file block num(tag) of the file 
@@ -199,11 +208,11 @@ int BufferManager::fetchABlock(const string& fileName, const ADDRESS& tag)
 	if (openedFileName != fileName&&openedFilePtr != NULL)
 	{
 		fclose(openedFilePtr);
-		openedFilePtr = fopen(fileName.c_str(), "rb");
+		openedFilePtr = fopen(fileName.c_str(), "rb+");
 	}
 	//no file is open and open the needed file
 	if (openedFilePtr == NULL)
-		openedFilePtr = fopen(fileName.c_str(), "rb");
+		openedFilePtr = fopen(fileName.c_str(), "rb+");
 
 	//read the corresponding file data into a 4K buffer
 	BYTE buffer[BLOCKSIZE];
@@ -230,9 +239,17 @@ void BufferManager::writeABlock(const int& blockIndex)
 }
 
 /*set the block pinnned
-*@param blockIndex		the block that you want to set it pinned
+*@param blockIndex	the block that you want to set it pinned
 */
 void BufferManager::setBlockPinned(int blockIndex)
 {
 	blocks[blockIndex].setPinnedBit(true);
+}
+
+/*set the block not pinnned
+*@param blockIndex	the block that you want to set it pinned
+*/
+void BufferManager::setBlockNotPinned(int blockIndex)
+{
+	blocks[blockIndex].setPinnedBit(false);
 }
