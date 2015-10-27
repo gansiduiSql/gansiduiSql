@@ -70,7 +70,7 @@ TYPE stringToTYPE(std::string s)
 	else if (s == "char")
 		return CHAR;
 	else 
-		return TYPE::UNDEFINED;
+		return TYPE::UNDEFINEDTYPE;
 }
 
 OPERATOR stringToOperand(std::string s)

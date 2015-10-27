@@ -46,7 +46,7 @@ enum TYPE
 	INT,
 	CHAR,
 	FLOAT,
-	UNDEFINED
+	UNDEFINEDTYPE
 };
 
 TYPE stringToTYPE(std::string s);
