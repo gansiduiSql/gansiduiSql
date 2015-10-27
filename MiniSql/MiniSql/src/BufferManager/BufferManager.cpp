@@ -57,11 +57,12 @@ void BufferManager::createFile(const string& name)
 {
 	//open the file
 	string fileName = name + ".data";
-	openedFilePtr = fopen(fileName.c_str(), "wb+");
+	FILE *fp = fopen(fileName.c_str(), "wb+");
 	//fail to open this file
-	if (openedFilePtr == NULL)
+	if (fp == NULL)
 		throw OpenFileException(fileName);	//throw the openFile exception
-	openedFileName = fileName;
+	
+	fclose(fp);
 
 	/*
 	//write a empty block into the file
@@ -69,8 +70,8 @@ void BufferManager::createFile(const string& name)
 	//fwrite(buffer, sizeof(buffer), 1, openedFilePtr);
 	*/
 	//set the tail to be the start of the data segment
-	int tail = BLOCKSIZE;
-	writeARecord((BYTE*)(&tail), sizeof(int), name, 0);
+	//int tail = BLOCKSIZE;
+	//writeARecord((BYTE*)(&tail), sizeof(int), name, 0);
 }
 
 /*delete the corresponding file according to the given filename
