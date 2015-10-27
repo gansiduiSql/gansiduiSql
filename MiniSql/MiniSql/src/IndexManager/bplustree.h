@@ -117,7 +117,7 @@ public:
 	BPlusLeaf returnLeafNode(ElementType s);
 	BPlusLeaf returnFirstLeafNode();
     void traverseTree();
-	TYPE getAttributeType();
+	TYPE getAttributeType(){ return type; }
 };
 
 
