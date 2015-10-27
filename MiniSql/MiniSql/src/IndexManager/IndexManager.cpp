@@ -20,6 +20,7 @@ IndexManager::IndexManager()
 */
 IndexManager::IndexManager(list<string> indexName)
 {
+	bufferManager = BufferManager::getBufferManager();
 	list<string>::iterator iter;
 	for (iter = indexName.begin(); iter != indexName.end(); iter++)
 		createIndexFromFile(*iter);
@@ -73,7 +74,7 @@ void IndexManager::createIndex(const string &indexName, Data &attribute, const i
 	{
 	case CHAR:bPlusFanOut = (BLOCKSIZE - 4) / (attribute.getLength() + sizeof(ADDRESS)); break;
 	case INT:bPlusFanOut = (BLOCKSIZE - 4) / (1 + INT_STRING_SIZE + sizeof(ADDRESS)); break;
-	case FLOAT:bPlusFanOut = (BLOCKSIZE - 4) / (1 + FLOAT_INTEGER_SIZE + FLOAT_DECIMAL_SIZE+1 + sizeof(ADDRESS)); break;
+	case FLOAT:bPlusFanOut = (BLOCKSIZE - 4) / (1 + FLOAT_INTEGER_SIZE + FLOAT_DECIMAL_SIZE + 1 + sizeof(ADDRESS)); break;
 	default:
 		exception ex;
 		throw ex;
@@ -90,7 +91,7 @@ void IndexManager::createIndex(const string &indexName, Data &attribute, const i
 	{
 		BYTE* recordData = bufferManager->fetchARecord(fileName, recordOffset + attribute.getOffset());/*point to the start of the attribute*/
 		string recordString = "";
-		char* tmpRecordString = new char[attribute.getLength()+1];
+		char* tmpRecordString = new char[attribute.getLength() + 1];
 		int tmpRecordInt = 0;
 		float tmpRecordFloat = 0;
 		stringstream ss;
@@ -124,17 +125,24 @@ void IndexManager::createIndex(const string &indexName, Data &attribute, const i
 /* @brief create a B+ tree from existing index files at the ctor of IndexManager
 * @param indexName
 */
-void IndexManager::createIndexFromFile(const string &indexName)
+void IndexManager::createIndexFromFile(const string &indexName)throw(exception)
 {
 	/*Read indexfile header*/
-	INDEXFILEHEADER infh = *(INDEXFILEHEADER *)(bufferManager->fetchARecord(indexName, 0));
-	indexLibrary[indexName] = new BPlusTreeIndex(infh.fanOut, infh.type);
-	ADDRESS curser = HEADER_BLOCK_OFFSET;
-	for (int i = 0; i < infh.elementCount; i++)
+	try
 	{
-		string keyValue = *(string *)bufferManager->fetchARecord(indexName, curser + sizeof(int));
-		indexLibrary[indexName]->addKey(*(int *)bufferManager->fetchARecord(indexName, curser), keyValue);
-		curser += sizeof(keyValue);
+		INDEXFILEHEADER infh = *(INDEXFILEHEADER *)(bufferManager->fetchARecord(indexName, 0));
+		indexLibrary[indexName] = new BPlusTreeIndex(infh.fanOut, infh.type);
+		ADDRESS curser = HEADER_BLOCK_OFFSET;
+		for (int i = 0; i < infh.elementCount; i++)
+		{
+			string keyValue = (char *)bufferManager->fetchARecord(indexName, curser + sizeof(int));
+			indexLibrary[indexName]->addKey(*(int *)bufferManager->fetchARecord(indexName, curser), keyValue);
+			curser += keyValue.length() + 1 + sizeof(int);
+		}
+	}
+	catch (exception ex)
+	{
+		throw ex;
 	}
 }
 
@@ -148,25 +156,29 @@ void IndexManager::saveIndexToFile(const string &indexName, const TYPE &type)
 	unsigned int i;
 	for (i = 0; i < indexName.length(); i++)
 		infh.indexName[i] = indexName[i];
-	infh.indexName[i] = 0;
-	infh.type = type;
+	infh.indexName[i] = 0;/*Write the indexName to the header*/
+	infh.type = type;/*Write the keyValue type to the header*/
 	/*Travser leafnode and store data*/
 	BPlusLeaf currentLeaf = indexLibrary[indexName]->returnFirstLeafNode();
 	infh.fanOut = currentLeaf->getKeyNum();/*my fan out is defined by key number*/
 	ADDRESS curser = HEADER_BLOCK_OFFSET;
 	int  elementCount;
-	for (; currentLeaf->getPtrToSinling() != NULL; currentLeaf = currentLeaf->getPtrToSinling())/*traverse to the end leaf*/
+
+	bufferManager->createFile(indexName);
+	while (currentLeaf != NULL)/*traverse to the end leaf*/
 	{
 		for (int i = 0; i < currentLeaf->getElementCount(); i++)
-		{/*总觉得这段有些些许不对*/ 	/*for each node, store offset and keyvalue*/
-			RecordPointer recordPointer=currentLeaf->getPtrToChild(i);
+		{/*for each node, store offset and keyvalue*/
+			RecordPointer recordPointer = currentLeaf->getPtrToChild(i);
 			ElementType keyValue = currentLeaf->getKeyValue(i);
+			keyValue += '\0';
 			bufferManager->writeARecord((BYTE *)&recordPointer, sizeof(recordPointer), indexName, curser);
 			curser += sizeof(RecordPointer);
-			bufferManager->writeARecord((BYTE *)&keyValue, sizeof(keyValue), indexName, curser);
-			curser += sizeof(currentLeaf->getKeyValue(i));
+			bufferManager->writeARecord((BYTE *)keyValue.c_str(), keyValue.length(), indexName, curser);
+			curser += keyValue.length();
 			elementCount++;
 		}
+		currentLeaf = currentLeaf->getPtrToSinling();/*Go to next node*/
 	}
 	/*add elementCount infomation to indexfileHeader*/
 	infh.elementCount = elementCount;
@@ -185,12 +197,12 @@ void IndexManager::saveIndexToFile(const string &indexName, const TYPE &type)
 */
 void IndexManager::insertValues(const string &indexName, const string &indexKey, const ADDRESS &recordOffset)
 {
-	if (indexLibrary[indexKey]->getAttributeType() == INT)
-		indexLibrary[indexKey]->addKey(recordOffset, toAlignedInt(indexKey));
-	else if (indexLibrary[indexKey]->getAttributeType() == FLOAT)
-		indexLibrary[indexKey]->addKey(recordOffset, toAlignedFloat(indexKey));
+	if (indexLibrary[indexName]->getAttributeType() == INT)
+		indexLibrary[indexName]->addKey(recordOffset, toAlignedInt(indexKey));
+	else if (indexLibrary[indexName]->getAttributeType() == FLOAT)
+		indexLibrary[indexName]->addKey(recordOffset, toAlignedFloat(indexKey));
 	else
-		indexLibrary[indexKey]->addKey(recordOffset, indexKey);
+		indexLibrary[indexName]->addKey(recordOffset, indexKey);
 }
 
 /* @brief delete the values specified by expression and indexName
@@ -204,7 +216,7 @@ void IndexManager::insertValues(const string &indexName, const string &indexKey,
 * @post Values statisfy the expression is deleted
 */
 void IndexManager::deleteValues(const string &indexName, list<Expression> expressions,
-	const string &fileName, const int& recordLength,const TYPE &type)
+	const string &fileName, const int& recordLength, const TYPE &type)
 {
 	bound upperbound;
 	bound lowerbound;
@@ -296,31 +308,31 @@ void IndexManager::selectValues(const string &indexName, list<Expression> expres
 		if (lowerbound.equal)
 		for (int i = currentLeaf->indexOf(lowerbound.value); i < currentLeaf->getElementCount() - 1; i++)/*from the key to the last node*/
 		{
-			
+
 		}
 		else
 		for (int i = currentLeaf->indexOf(lowerbound.value) + 1; i < currentLeaf->getElementCount() - 1; i++)/*from the next key to the last node*/
 		{
-			
+
 		}
 
 		for (; currentLeaf != endLeaf; currentLeaf = currentLeaf->getPtrToSinling())
-		{  
+		{
 			for (int i = 0; i < currentLeaf->getElementCount(); i++)
 			{
-				
+
 			}
 		}
 		/*The remaining part of endLeaf*/
 		if (upperbound.equal)
 		for (int i = 0; i <= endLeaf->indexOf(upperbound.value); i++)
 		{
-			
+
 		}
 		else
 		for (int i = 0; i < endLeaf->indexOf(upperbound.value); i++)
 		{
-			
+
 		}
 	}
 }
@@ -357,17 +369,17 @@ void IndexManager::analysisExpression(bound &dstLowerBound, bound &dstUpperBound
 		switch (type)
 		{
 		case INT:
-			expIter->rightOperand.oprandName = toAlignedInt(expIter->rightOperand.oprandName);
+			expIter->rightOperand.operandName = toAlignedInt(expIter->rightOperand.operandName);
 			break;
 		case CHAR:
 			break;
 		case FLOAT:
-			expIter->rightOperand.oprandName = toAlignedFloat(expIter->rightOperand.oprandName);
+			expIter->rightOperand.operandName = toAlignedFloat(expIter->rightOperand.operandName);
 			break;
 		default:
 			break;
 		}
-		string bound = expIter->rightOperand.oprandName; /*stores the bound in string, int is a string of 10 char, float is a string of 20 char*/
+		string bound = expIter->rightOperand.operandName; /*stores the bound in string, int is a string of 10 char, float is a string of 20 char*/
 		switch (expIter->op)
 		{
 		case GREATER:
@@ -515,7 +527,7 @@ string IndexManager::toAlignedFloat(string s)
 		s = s + '.';
 	while (s.find_first_of('.') <= FLOAT_DECIMAL_SIZE)
 		s = "0" + s;
-	while (s.length()<FLOAT_INTEGER_SIZE + FLOAT_DECIMAL_SIZE + 1)
+	while (s.length() < FLOAT_INTEGER_SIZE + FLOAT_DECIMAL_SIZE + 1)
 		s = s + "0";
 	if (positive)
 		return "+" + s;
@@ -529,5 +541,9 @@ string IndexManager::toAlignedFloat(string s)
 */
 void IndexManager::traverseTree(const string& indexName)
 {
-	indexLibrary[indexName]->traverseTree();
+	ITER iter = indexLibrary.find(indexName);
+	if (iter != indexLibrary.end())
+		indexLibrary[indexName]->traverseTree();
+	else
+		throw new exception;
 }

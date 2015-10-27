@@ -54,7 +54,6 @@ RecordPointer BPlusTreeNode::findKey(ElementType s)
 BPlusLeaf BPlusTreeNode::returnLeafNode(ElementType s)
 {
 	int i = firstValueBiggerThan(s);     //找到最小的比s大的元素的index
-	BPlusPointer returnedPointer;
 	if (i == -1)                                                         //若所有元素比s小或者Node为空
 	{
 		int j;
