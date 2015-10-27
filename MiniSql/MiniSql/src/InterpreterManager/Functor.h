@@ -15,7 +15,7 @@ std::string readWord(std::string::iterator& sIter, std::string::iterator end, st
 std::list<Expression>
  readExp(std::string::iterator& sIter, std::string::iterator end);
 
-
+void readToEnd(std::string::iterator& begin, std::string end);
 class IsString {
 public:
 	IsString(std::string s) :s(s), iter(s.begin()) {}
@@ -111,6 +111,36 @@ public:
 	}
 private:
 	char c;
+};
+
+class IsCharArray {
+public:
+	IsCharArray():flagConvert(false),flagBrace(0){}
+	bool operator()(char ch) {
+		if (flagBrace == 0) {
+			if (ch == '\"') {
+				flagBrace = 1;
+				return true;
+			}
+			else return false;
+		}
+		else if (flagBrace == 1) {
+			if (flagConvert) {
+				flagConvert = false;
+				return true;
+			};
+			if (ch == '\\') {
+				flagConvert = true;
+				return true;
+			}
+			if (ch == '\"') {
+				return false;
+			}	
+	}
+	}
+private:
+	bool flagConvert;
+	int flagBrace;
 };
 
 bool isEnd(std::string::iterator& begin, std::string::iterator& end);

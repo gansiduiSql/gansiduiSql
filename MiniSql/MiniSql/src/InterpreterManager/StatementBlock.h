@@ -1,9 +1,11 @@
 #ifndef _STATEMENTBLOCK_H_
 #define _STATEMENTBLOCK_H_
 
+#include "../Definition.h"
 #include <memory>
 #include <string>
-class Table;
+#include <list>
+
 
 // an interface 
 class StatementBlock{
@@ -14,12 +16,12 @@ public:
 
 class CreateTableBlock :StatementBlock {
 public:
-	CreateTableBlock(std::shared_ptr<Table> p) :pTable(p) {};
+	CreateTableBlock(Table table) :table(table) {};
 	virtual void execute();
 
 	virtual ~CreateTableBlock() {};
 private:
-	std::shared_ptr<Table> pTable;
+	Table table;
 };
 
 class CreateIndexBlock :StatementBlock {
@@ -37,13 +39,21 @@ private:
 
 class InsertTableBlock :StatementBlock {
 public:
-	InsertTableBlock(std::shared_ptr<Table> p) :pTable(p) {};
+	InsertTableBlock(std::string tableName, std::list<std::string> values) 
+	:tableName(tableName),values(values) {};
 	virtual void execute();
 
 	virtual ~InsertTableBlock() {};
 private:
-	std::shared_ptr<Table> pTable;
+	std::string tableName;
+	std::list<std::string> values;
 };
+
+class SelectBlock {
+public:
+	SelectBlock(){}
+};
+
 
 class QuitBlock :StatementBlock {
 public:
@@ -87,14 +97,14 @@ private:
 class DeleteBlock : StatementBlock{
 public:
 	DeleteBlock(std::string tableName):tableName(tableName),flag(false){}
-	DeleteBlock(std::string tableName, std::shared_ptr<std::list<Expression>> pel)
-	 :tableName(tableName),pExpList(pel),flag(true){}
+	DeleteBlock(std::string tableName, std::list<Expression> exps)
+	 :tableName(tableName),exps(exps),flag(true){}
 	 
 	virtual void execute();
 	virtual ~DeleteBlock(){}
 private:
 	std::string tableName;
-	std::shared_ptr<std::list<Expression>> pExpList;
+	std::list<Expression> exps;
 	bool flag;
 };
 #endif

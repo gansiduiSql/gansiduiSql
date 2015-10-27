@@ -15,7 +15,7 @@ string readWord(Iterator& sIter, Iterator end, std::function<bool(char)> f)
 			return "";
 	}
 	Iterator tmpIter = tIter;
-	while (tIter != end && f(*tIter)) {
+	while (!isEnd(tIter, end) && f(*tIter)) {
 		tIter++;
 	}
 	sIter = tIter;
@@ -43,6 +43,15 @@ std::list<Expression>
 	 }
 	 return move(ret);
  }
+
+void readToEnd(std::string::iterator& begin, std::string::iterator end){
+	try{
+		readWord(begin, end, [](char)->bool{return false;});
+	}catch (EndOfString& e){
+		return;
+	}
+	throw GrammarError("redundant words found at the tail");
+}
 
 bool IsVariableName::operator()(char c) {
 	if (i == 0) {

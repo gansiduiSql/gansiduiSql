@@ -25,6 +25,7 @@ void CatalogManager::createTableCatalog(const Table& table)
 {
 	string tableName = table.getTableName();
 	BYTE* buffer = bm->fetchARecord(tableName + ".log", 0);
+	bm->createFile(tableName);
 	const char* cTableName = table.getTableName().c_str();
 	const vector<Data>& tableVec = table.getTableVec();
 	
@@ -51,7 +52,8 @@ void CatalogManager::deleteTableCatalog(const std::string& tableName)
 }
 Table CatalogManager::getTable(const std::string& tableName)
 {
-	BYTE* buffer = bm->fetchARecord(tableName + "log", 0);
+	BYTE* buffer = bm->fetchARecord(tableName + ".log", 0);
+	
 	if (buffer == NULL)
 		throw runtime_error("The table does not exist!");
 	

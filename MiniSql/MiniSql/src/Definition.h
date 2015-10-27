@@ -24,12 +24,13 @@ enum OPERATOR
 	EQUAL,
 	NOTEQUAL,
 	GREATER_AND_EQUAL,
-	LESS_AND_EQUAL
+	LESS_AND_EQUAL,
+	UNDEFINED
 };
 
 struct Operand
 {
-	std::string oprandName;
+	std::string operandName;
 	bool isAttribute;
 };
 
@@ -49,6 +50,7 @@ enum TYPE
 };
 
 TYPE stringToTYPE(std::string s);
+OPERATOR stringToOperand(std::string s);
 
 class Table
 {
