@@ -110,10 +110,10 @@ void RecordManager::insertValues(const std::string& tableName, const list<std::s
 	ADDRESS tail = *((int *)(bmPtr->fetchARecord(tableName, 0)));
 	int tableLength = table.getLength();
 	
-	int blockIndex = tail / BLOCKSIZE;
 	//the record can't fit in the remain size of this block
 	//set the tail to the start of next block
-	if (blockIndex * BLOCKSIZE < tail + tableLength)
+	int blockIndex = tail / BLOCKSIZE;
+	if ((blockIndex + 1) * BLOCKSIZE < tail + tableLength)
 		tail = (blockIndex + 1) * BLOCKSIZE;
 
 	BYTE* buffer = new BYTE[tableLength];	//a buffer to store the record
@@ -121,20 +121,23 @@ void RecordManager::insertValues(const std::string& tableName, const list<std::s
 	vector<Data> tableVec = table.getTableVec();
 	list<string>::const_iterator it = values.cbegin();
 	BYTE* tmp = nullptr;
-	for (auto iter : tableVec)	//foreach attribute in the table
+	for (auto attribute : tableVec)	//foreach attribute in the table
 	{
 		stringstream ss;
 		ss << *it;
-		int attributeLength = iter.getLength();
-		switch (iter.getType())
+		int intNum;
+		string str = *it;
+		int attributeLength = attribute.getLength();
+		switch (attribute.getType())
 		{
 		case INT:
-			int intNum;
 			ss >> intNum;
 			memcpy(buffer + offset, &intNum, attributeLength);
 			break;
 		case CHAR:
-			memcpy(buffer + offset, (*it).c_str(), attributeLength);
+			while (str.length() < attributeLength)
+				str += " ";
+			memcpy(buffer + offset, (str).c_str(), attributeLength);
 			break;
 		case FLOAT:
 			float floatNum;
@@ -145,9 +148,11 @@ void RecordManager::insertValues(const std::string& tableName, const list<std::s
 			break;
 		}
 		offset += attributeLength;
+		it++;
 	}
 	bmPtr->writeARecord(buffer, tableLength, tableName, tail);	//insert the record
-	bmPtr->writeARecord((BYTE*)(tail + tableLength), 4, tableName, 0);	//update the tail of the record
+	tail += tableLength;
+	bmPtr->writeARecord((BYTE*)(&tail), 4, tableName, 0);	//update the tail of the record
 	delete[] buffer;
 }
 

@@ -16,6 +16,9 @@ public:
 	void deleteValues(const std::string& tableName, std::list<Expression>& expressions);
 	void selectValues(const std::list<std::string>& attributeNames, const std::string& tableName, const Table& table, RECORDBUFFER& recordBuffer);
 	void selectValues(const std::list<std::string>& attributeNames, const std::string& tableName, const Table& table, std::list<Expression>& expressions, RECORDBUFFER& recordBuffer);
+	
+	//for test
+	BufferManager* getBmPtr(){ return bmPtr; }
 private:
 	BufferManager* bmPtr;
 };

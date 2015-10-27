@@ -232,8 +232,9 @@ int BufferManager::fetchABlock(const string& fileName, const ADDRESS& tag)
 void BufferManager::writeABlock(const int& blockIndex)
 {
 	string fileName = blocks[blockIndex].getFileName();
-	FILE* fp = fopen(fileName.c_str(), "ab+");
-	fseek(fp, blocks[blockIndex].getTag()*BLOCKSIZE, 0);
+	FILE* fp = fopen(fileName.c_str(), "rb+");
+	
+	fseek(fp, blocks[blockIndex].getTag()*BLOCKSIZE, SEEK_SET);
 	fwrite(blocks[blockIndex].getBlockData(), BLOCKSIZE, 1, fp);
 	fclose(fp);
 }
