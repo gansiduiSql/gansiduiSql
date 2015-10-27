@@ -99,6 +99,7 @@ RecordManager::RecordManager()
 	bmPtr = BufferManager::getBufferManager();
 }
 
+//deconstructor
 RecordManager::~RecordManager()
 {
 
@@ -110,7 +111,7 @@ RecordManager::~RecordManager()
 *@param table	the info of the table you insert into
 *@return void
 */
-void RecordManager::insertValues(const std::string& tableName, const list<std::string>& values, const Table& table)
+void RecordManager::insertValues(const string& tableName, const list<string>& values, const Table& table)
 {
 	//get the tail of the table record in the corresponding file
 	ADDRESS tail = *((int *)(bmPtr->fetchARecord(tableName, 0)));
@@ -216,13 +217,13 @@ void RecordManager::insertValues(const std::string& tableName, const list<std::s
 	delete[] buffer;
 }
 
-/*delete all values in the given table
+/*delete all values in the given table without field 'where'
 *only set the tail to BLOCKSIZE to devote that all values have been deleted
 *actually the record still in the disk
 *@param	tableName	the table you want to delete all values
 *@return void
 */
-void RecordManager::deleteValues(const std::string& tableName)
+void RecordManager::deleteValues(const string& tableName)
 {
 	//move the corresponding tail to the first block
 	//the data is still in the file but use to tail to devote the deletion
@@ -230,9 +231,83 @@ void RecordManager::deleteValues(const std::string& tableName)
 	bmPtr->writeARecord((BYTE*)(&tail), 4, tableName, 0);
 }
 
-void RecordManager::deleteValues(const std::string& tableName, std::list<Expression>& expressions)
+/*delete all values in the given table with field 'where'
+*if needed to delete a record and move the last record to overwrite it
+*move the tail above a record
+*actually the record still in the disk
+*@param	tableName the table you want to delete all values
+*@param table the info of the table you delete from
+*@param expressions a list of expression in the 'where' field and for simplity, all expression are join with logical and operator
+*@return void
+*/
+void RecordManager::deleteValues(const string& tableName, const Table& table, list<Expression>& expressions)
 {
+	map<string, int> attributeOffset; //map the attribute name to the offset in the each record
+	map<string, TYPE> attributeType;  //map the attribute name to the type in each record
+	map<string, int> attributeLength; //map the attribute name to the length in each record
 
+	//construct the three map above
+	constructMap(attributeOffset, attributeType, attributeLength, table);
+
+	//transverse all record in the file
+	int tableLength = table.getLength();
+	ADDRESS tail = *((int *)(bmPtr->fetchARecord(tableName, 0)));
+	RecordIterator it(tableLength, tail);
+	while (it.hasNext())
+	{
+		BYTE* buffer = bmPtr->fetchARecord(tableName, it.value());
+
+		bool flag = true;
+		//decide whether the record satify the expression
+		for (auto express : expressions)
+		{
+			string attributeName = express.leftOperand.operandName;
+			int off = attributeOffset[attributeName];
+			TYPE type = attributeType[attributeName];
+			int length = attributeLength[attributeName];
+			stringstream ss;
+			int intNum;
+			char *ch = new char[length + 1];
+			float floatNum;
+			switch (type)
+			{
+			case INT:
+				memcpy(&intNum, buffer + off, length);
+				ss << intNum;
+				flag = isTrue(express, ss.str(), type);
+				break;
+			case CHAR:
+				memcpy(ch, buffer + off, length);
+				ch[length] = '\0';
+				flag = isTrue(express, string(ch), type);
+				break;
+			case FLOAT:
+				memcpy(&floatNum, buffer + off, length);
+				ss << floatNum;
+				flag = isTrue(express, ss.str(), type);
+				break;
+			default:
+				break;
+			}
+			//there is a expression that not satisfied
+			if (flag == false)
+				break;
+		}
+		
+		//if the expression satisfys and move the last record to here and rewrite it
+		if (flag)
+		{
+			if (tail%BLOCKSIZE < tableLength)
+				tail -= (BLOCKSIZE%tableLength);
+			tail -= tableLength;
+			it.setTail(tail);
+			BYTE *buffer = new BYTE[tableLength];
+			memcpy(buffer, bmPtr->fetchARecord(tableName, tail), tableLength);
+			bmPtr->writeARecord(buffer, tableLength, tableName, it.value());
+		}
+
+		it = it.next();
+	}
 }
 
 /*select the a specific attribute name from the table without the field of 'where'
@@ -242,7 +317,7 @@ void RecordManager::deleteValues(const std::string& tableName, std::list<Express
 *@param recordbuffer the buffer used to return the result, all attribute is in string type
 *@return void
 */
-void RecordManager::selectValues(const std::list<std::string>& attributeNames, const std::string& tableName, const Table& table, RECORDBUFFER& recordBuffer)
+void RecordManager::selectValues(const list<string>& attributeNames, const string& tableName, const Table& table, RECORDBUFFER& recordBuffer)
 {
 	map<string, int> attributeOffset; //map the attribute name to the offset in the each record
 	map<string, TYPE> attributeType;  //map the attribute name to the type in each record
@@ -256,8 +331,8 @@ void RecordManager::selectValues(const std::list<std::string>& attributeNames, c
 	while (it.hasNext())
 	{
 		BYTE* buffer = bmPtr->fetchARecord(tableName, it.value());	//fecth the record from bufferManager
-		int index = 0;
 		//foreach attribute that you want to select
+		vector<string> vec;
 		for (auto attributeName : attributeNames)
 		{
 			int off = attributeOffset[attributeName];
@@ -274,22 +349,23 @@ void RecordManager::selectValues(const std::list<std::string>& attributeNames, c
 			case INT:
 				memcpy(&intNum, buffer + off, length);
 				ss << intNum;
-				recordBuffer[index].push_back(ss.str());
+				vec.push_back(ss.str());
 				break;
 			case CHAR:
 				memcpy(ch, buffer + off, length);
-				recordBuffer[index].push_back(string(ch));
+				ch[length] = '\0';
+				vec.push_back(string(ch));
 				break;
 			case FLOAT:
 				memcpy(&floatNum, buffer + off, length);
 				ss << floatNum;
-				recordBuffer[index].push_back(ss.str());
+				vec.push_back(ss.str());
 				break;
 			default:
 				break;
 			}
 		}
-		index++;
+		recordBuffer.push_back(vec);
 		it = it.next();
 	}
 }
@@ -302,7 +378,7 @@ void RecordManager::selectValues(const std::list<std::string>& attributeNames, c
 *@param recordbuffer the buffer used to return the result, all attribute is in string type
 *@return void
 */
-void RecordManager::selectValues(const std::list<std::string>& attributeNames, const std::string& tableName, const Table& table, std::list<Expression>& expressions, RECORDBUFFER& recordBuffer)
+void RecordManager::selectValues(const list<string>& attributeNames, const string& tableName, const Table& table, list<Expression>& expressions, RECORDBUFFER& recordBuffer)
 {
 	map<string, int> attributeOffset; //map the attribute name to the offset in the each record
 	map<string, TYPE> attributeType;  //map the attribute name to the type in each record
@@ -318,8 +394,8 @@ void RecordManager::selectValues(const std::list<std::string>& attributeNames, c
 	{
 		BYTE* buffer = bmPtr->fetchARecord(tableName, it.value());
 
-		int index = 0;
 		bool flag = true;
+		//decide whether the record satify the expression
 		for (auto express : expressions)
 		{
 			string attributeName = express.leftOperand.operandName;
@@ -328,7 +404,7 @@ void RecordManager::selectValues(const std::list<std::string>& attributeNames, c
 			int length = attributeLength[attributeName];
 			stringstream ss;
 			int intNum;
-			string s;
+			char *ch = new char[length + 1];
 			float floatNum;
 			switch (type)
 			{
@@ -338,8 +414,9 @@ void RecordManager::selectValues(const std::list<std::string>& attributeNames, c
 				flag = isTrue(express, ss.str(), type);
 				break;
 			case CHAR:
-				memcpy(&s, buffer + off, length);
-				flag = isTrue(express, s, type);
+				memcpy(ch, buffer + off, length);
+				ch[length] = '\0';
+				flag = isTrue(express, string(ch), type);
 				break;
 			case FLOAT:
 				memcpy(&floatNum, buffer + off, length);
@@ -349,12 +426,15 @@ void RecordManager::selectValues(const std::list<std::string>& attributeNames, c
 			default:
 				break;
 			}
+			//there is a expression that not satisfied
 			if (flag == false)
 				break;
 		}
 
+		//all expresion satified and add that record into the result
 		if (flag)
 		{
+			vector<string> vec;
 			for (auto attributeName : attributeNames)
 			{
 				int off = attributeOffset[attributeName];
@@ -369,22 +449,22 @@ void RecordManager::selectValues(const std::list<std::string>& attributeNames, c
 				case INT:
 					memcpy(&intNum, buffer + off, length);
 					ss << intNum;
-					recordBuffer[index].push_back(ss.str());
+					vec.push_back(ss.str());
 					break;
 				case CHAR:
 					memcpy(&s, buffer + off, length);
-					recordBuffer[index].push_back(s);
+					vec.push_back(s);
 					break;
 				case FLOAT:
 					memcpy(&floatNum, buffer + off, length);
 					ss << floatNum;
-					recordBuffer[index].push_back(ss.str());
+					vec.push_back(ss.str());
 					break;
 				default:
 					break;
 				}
-				index++;
 			}
+			recordBuffer.push_back(vec);
 		}
 		it = it.next();
 	}
