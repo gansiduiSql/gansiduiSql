@@ -209,12 +209,12 @@ int BufferManager::fetchABlock(const string& fileName, const ADDRESS& tag)
 	if (openedFileName != fileName&&openedFilePtr != NULL)
 	{
 		fclose(openedFilePtr);
-		openedFilePtr = fopen(fileName.c_str(), "rb+");
+		openedFilePtr = fopen(fileName.c_str(), "rb+");	
 	}
 	//no file is open and open the needed file
 	if (openedFilePtr == NULL)
 		openedFilePtr = fopen(fileName.c_str(), "rb+");
-
+	openedFileName = fileName;
 	//read the corresponding file data into a 4K buffer
 	BYTE buffer[BLOCKSIZE];
 	fseek(openedFilePtr, tag*BLOCKSIZE, 0);

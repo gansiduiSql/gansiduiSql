@@ -5,6 +5,39 @@
 #include <list>
 #include "../BufferManager/BufferManager.h"
 #include "../Definition.h"
+#include <exception>
+
+class InsertException : public std::exception
+{
+private:
+	std::string errlog;
+public:
+	InsertException(string attributeName){ errlog = "Insert error! " + attributeName + " is a primary(unique) key!"; }
+};
+
+class RecordIterator
+{
+public:
+	RecordIterator(int len, int tail){ nowOffset = BLOCKSIZE; recordLength = len; this->tail = tail; }
+	RecordIterator(int off, int len, int tail){ nowOffset = off; recordLength = len; this->tail = tail; }
+	int setTail(int tail){ this->tail = tail; }
+	RecordIterator& next(){
+		nowOffset += recordLength;
+		if (nowOffset%BLOCKSIZE + recordLength > BLOCKSIZE)
+			nowOffset = (nowOffset / BLOCKSIZE + 1)*BLOCKSIZE;
+		return *this;
+	}
+	bool hasNext(){
+		if ((nowOffset + recordLength) <= tail)
+			return true;
+		return false;
+	}
+	int value(){ return nowOffset; }
+private:
+	int nowOffset;
+	int recordLength;
+	int tail;
+};
 
 class RecordManager
 {

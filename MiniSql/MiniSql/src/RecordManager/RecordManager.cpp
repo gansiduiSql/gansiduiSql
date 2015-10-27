@@ -52,7 +52,7 @@ bool isTrue(const Expression express, const string& value, TYPE type)
 	float floatLeft, floatRight;
 	string strLeft, strRight;
 	stringstream ss;
-	ss << value << " " << express.rightOperand.oprandName;
+	ss << value << " " << express.rightOperand.operandName;
 
 	switch (type)
 	{
@@ -104,12 +104,73 @@ RecordManager::~RecordManager()
 
 }
 
+/*insert values into a table 
+*@param tableName the table name that you insert into
+*@param values	a list values in order that you want insert into the table
+*@param table	the info of the table you insert into
+*@return void
+*/
 void RecordManager::insertValues(const std::string& tableName, const list<std::string>& values, const Table& table)
 {
 	//get the tail of the table record in the corresponding file
 	ADDRESS tail = *((int *)(bmPtr->fetchARecord(tableName, 0)));
 	int tableLength = table.getLength();
 	
+	/*check whether the insert value has the same value with the existed record
+	*traverse all record in the file and check whether it is the same
+	*if there is a same value in primary(unique) key, throw an exception
+	*/
+	vector<Data> tableVec = table.getTableVec();
+	list<string>::const_iterator it = values.cbegin();
+	RecordIterator iter(tableLength, tail);
+	while (iter.hasNext())
+	{
+		stringstream ss;
+		ss << *it;
+		BYTE* buffer = bmPtr->fetchARecord(tableName, iter.value());
+		int off = 0;
+		for (auto& field : tableVec)
+		{
+			//the attribute is not a primary and unique key
+			if (!field.isPrimary() && !field.isUnique())
+				continue;
+			int len = field.getLength();
+			int intNum;
+			float floatNum;
+			char *ch = new char[len + 1];
+			string s;
+			switch (field.getType())
+			{
+			case INT:
+				memcpy(&intNum, buffer + off, len);
+				int insertNum;
+				ss >> insertNum;
+				if (insertNum == intNum)
+					throw InsertException(field.getAttribute());
+				break;
+			case CHAR:
+				memcpy(ch, buffer + off, len);
+				ch[len] = '\0';
+				s = string(ch);
+				if (s == ss.str())
+					throw InsertException(field.getAttribute());
+				break;
+			case FLOAT:
+				memcpy(&floatNum, buffer + off, len);
+				float insertNum;
+				ss >> insertNum;
+				if (floatNum == insertNum)
+					throw InsertException(field.getAttribute());
+				break;
+			default:
+				break;
+			}
+			delete[] ch;
+		}
+		iter = iter.next();
+	}
+
+
 	//the record can't fit in the remain size of this block
 	//set the tail to the start of next block
 	int blockIndex = tail / BLOCKSIZE;
@@ -118,8 +179,7 @@ void RecordManager::insertValues(const std::string& tableName, const list<std::s
 
 	BYTE* buffer = new BYTE[tableLength];	//a buffer to store the record
 	ADDRESS offset = 0;
-	vector<Data> tableVec = table.getTableVec();
-	list<string>::const_iterator it = values.cbegin();
+	it = values.cbegin();
 	BYTE* tmp = nullptr;
 	for (auto attribute : tableVec)	//foreach attribute in the table
 	{
@@ -166,7 +226,8 @@ void RecordManager::deleteValues(const std::string& tableName)
 {
 	//move the corresponding tail to the first block
 	//the data is still in the file but use to tail to devote the deletion
-	bmPtr->writeARecord((BYTE*)(4096), 4, tableName, 0);
+	int tail = BLOCKSIZE;
+	bmPtr->writeARecord((BYTE*)(&tail), 4, tableName, 0);
 }
 
 void RecordManager::deleteValues(const std::string& tableName, std::list<Expression>& expressions)
@@ -174,20 +235,29 @@ void RecordManager::deleteValues(const std::string& tableName, std::list<Express
 
 }
 
+/*select the a specific attribute name from the table without the field of 'where'
+*@param attributeName  a list of attribute name that you want to select
+*@param tableName	the table name you select from
+*@param table	the table info stored in catalog
+*@param recordbuffer the buffer used to return the result, all attribute is in string type
+*@return void
+*/
 void RecordManager::selectValues(const std::list<std::string>& attributeNames, const std::string& tableName, const Table& table, RECORDBUFFER& recordBuffer)
 {
 	map<string, int> attributeOffset; //map the attribute name to the offset in the each record
-	map<string, TYPE> attributeType;
-	map<string, int> attributeLength;
+	map<string, TYPE> attributeType;  //map the attribute name to the type in each record
+	map<string, int> attributeLength; //map the attribute name to the length in each record
 	
+	//construct the three map above
 	constructMap(attributeOffset, attributeType, attributeLength, table);
 
-	ADDRESS tail = *((int *)(bmPtr->fetchARecord(tableName, 0)));
-	ADDRESS it = BLOCKSIZE;
-	while (it < tail)
+	ADDRESS tail = *((int *)(bmPtr->fetchARecord(tableName, 0)));	//get the tail of the table
+	RecordIterator it(table.getLength(), tail);
+	while (it.hasNext())
 	{
-		BYTE* buffer = bmPtr->fetchARecord(tableName, it);
+		BYTE* buffer = bmPtr->fetchARecord(tableName, it.value());	//fecth the record from bufferManager
 		int index = 0;
+		//foreach attribute that you want to select
 		for (auto attributeName : attributeNames)
 		{
 			int off = attributeOffset[attributeName];
@@ -195,8 +265,10 @@ void RecordManager::selectValues(const std::list<std::string>& attributeNames, c
 			int length = attributeLength[attributeName];
 			stringstream ss;
 			int intNum;
-			string s;
+			char *ch = new char[length + 1];
 			float floatNum;
+			//swith the type of the attribute
+			//push the into the recordbuffer in string type to return
 			switch (type)
 			{
 			case INT:
@@ -205,8 +277,8 @@ void RecordManager::selectValues(const std::list<std::string>& attributeNames, c
 				recordBuffer[index].push_back(ss.str());
 				break;
 			case CHAR:
-				memcpy(&s, buffer + off, length);
-				recordBuffer[index].push_back(s);
+				memcpy(ch, buffer + off, length);
+				recordBuffer[index].push_back(string(ch));
 				break;
 			case FLOAT:
 				memcpy(&floatNum, buffer + off, length);
@@ -216,39 +288,41 @@ void RecordManager::selectValues(const std::list<std::string>& attributeNames, c
 			default:
 				break;
 			}
-			index++;
 		}
-
-		/*move it to the begin to the next record start
-		*if a record can't fit in the remain size in this block
-		*move the it to the begin of next block
-		*cause by the record can't stored in two blocks
-		*/
-		it += table.getLength();
-		int blockIndex = it / BLOCKSIZE;
-		if (blockIndex*BLOCKSIZE - it < table.getLength())
-			it = (blockIndex + 1)*BLOCKSIZE;
+		index++;
+		it = it.next();
 	}
 }
 
+/*select the a specific attribute name from the table with the field of 'where'
+*@param attributeName  a list of attribute name that you want to select
+*@param tableName	the table name you select from
+*@param table	the table info stored in catalog
+*@param expressions a list of expression in the 'where' field and for simplity, all expression are join with logical and operator
+*@param recordbuffer the buffer used to return the result, all attribute is in string type
+*@return void
+*/
 void RecordManager::selectValues(const std::list<std::string>& attributeNames, const std::string& tableName, const Table& table, std::list<Expression>& expressions, RECORDBUFFER& recordBuffer)
 {
 	map<string, int> attributeOffset; //map the attribute name to the offset in the each record
-	map<string, TYPE> attributeType;
-	map<string, int> attributeLength;
+	map<string, TYPE> attributeType;  //map the attribute name to the type in each record
+	map<string, int> attributeLength; //map the attribute name to the length in each record
 
+	//construct the three map above
 	constructMap(attributeOffset, attributeType, attributeLength, table);
-
+	
+	//transverse all record in the file
 	ADDRESS tail = *((int *)(bmPtr->fetchARecord(tableName, 0)));
-	ADDRESS it = BLOCKSIZE;
-	while (it < tail)
+	RecordIterator it(table.getLength(), tail);
+	while (it.hasNext())
 	{
-		BYTE* buffer = bmPtr->fetchARecord(tableName, it);
+		BYTE* buffer = bmPtr->fetchARecord(tableName, it.value());
+
 		int index = 0;
 		bool flag = true;
 		for (auto express : expressions)
 		{
-			string attributeName = express.leftOperand.oprandName;
+			string attributeName = express.leftOperand.operandName;
 			int off = attributeOffset[attributeName];
 			TYPE type = attributeType[attributeName];
 			int length = attributeLength[attributeName];
@@ -312,15 +386,6 @@ void RecordManager::selectValues(const std::list<std::string>& attributeNames, c
 				index++;
 			}
 		}
-
-		/*move it to the begin to the next record start
-		*if a record can't fit in the remain size in this block
-		*move the it to the begin of next block
-		*cause by the record can't stored in two blocks
-		*/
-		it += table.getLength();
-		int blockIndex = it / BLOCKSIZE;
-		if (blockIndex*BLOCKSIZE - it < table.getLength())
-			it = (blockIndex + 1)*BLOCKSIZE;
+		it = it.next();
 	}
 }
