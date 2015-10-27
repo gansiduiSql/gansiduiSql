@@ -70,5 +70,22 @@ TYPE stringToTYPE(std::string s)
 	else if (s == "char")
 		return CHAR;
 	else 
-		return UNDEFINED;
+		return TYPE::UNDEFINED;
+}
+
+OPERATOR stringToOperand(std::string s)
+{
+	if (s == "==")
+		return EQUAL;
+	else if (s == ">")
+		return GREATER;
+	else if (s == "<")
+		return LESS;
+	else if (s == "!=" || s == "<>")
+		return NOTEQUAL;
+	else if (s == ">=")
+		return GREATER_AND_EQUAL;
+	else if (s == "<=")
+		return LESS_AND_EQUAL;
+	else return OPERATOR::UNDEFINED;
 }

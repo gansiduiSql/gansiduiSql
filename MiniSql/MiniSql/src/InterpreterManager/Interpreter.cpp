@@ -75,7 +75,7 @@ void Interpreter::createTableParser(Iterator& begin, Iterator end){
 		//read type
 		s = readWord(begin, end);
 		TYPE type = stringToTYPE(s);
-		if (type == UNDEFINED)
+		if (type == TYPE::UNDEFINED)
 			throw GrammarError("undefined type: " + s);
 		else if (type == CHAR) {
 			readWord(begin, end, IsString("("));
@@ -107,7 +107,18 @@ void Interpreter::createTableParser(Iterator& begin, Iterator end){
 	vStatementBlock.push_back(pSB);
 }
 void Interpreter::createIndexParser(Iterator& begin, Iterator end) {
-	readWord(begin, end, IsVariableName());
+	string indexName = readWord(begin, end, IsVariableName());
+	readWord(begin, end, IsString("on"));
+	string tableName = readWord(begin, end, IsVariableName());
+	readWord(begin, end, IsString("("));
+	string attributeName = readWord(begin, end, IsVariableName());
+	readWord(begin, end, IsString(")"));
+	try {
+		readWord(begin, end);
+	}catch (EndOfString &e) {
+		shared_ptr<StatementBlock> pSB(new CreateIndexBlock(indexName, tableName, attributeName));
+		vStatementBlock.push_back(pSB);
+	}throw GrammarError("create index illegal format");
 }
 void Interpreter::dropTableParser(Iterator& begin, Iterator end) {
 	auto s = readWord(begin, end, IsNum());
@@ -119,21 +130,65 @@ void Interpreter::dropIndexParser(Iterator& begin, Iterator end) {
 	shared_ptr<StatementBlock> pSB(new DropIndexBlock(s));
 	vStatementBlock.push_back(pSB);
 }
-void Interpreter::selectParser(Iterator& begin, Iterator end);
-void Interpreter::insertParser(Iterator& begin, Iterator end);
+void Interpreter::selectParser(Iterator& begin, Iterator end) {
+	list<string> attributeList;
+	string s = readWord(begin, end, IsChar('*'));
+	if (s.length() == 0) {
+		while (true) {
+			try {
+				s = readWord(begin, end, IsVariableName());
+				attributeList.push_back(s);
+				s = readWord(begin, end);
+				if (s == "where")break;
+			}catch (EndOfString& e) {
+				throw GrammarError("This statement is not complete.");
+			}
+		}
+	}
+	list<Expression> expList = readExp(begin, end);
+	readToEnd(begin, end);
+}
+
+void Interpreter::insertParser(Iterator& begin, Iterator end){
+	list<string> values;
+	readWord(begin, end, IsString("into"));
+	string tableName = readWord(begin, end, IsVariableName());
+	readWord(begin, end, IsString("values"));
+	readWord(begin, end, IsString("("));
+	while(true){
+		string s = readWord(begin, end, IsChar(')'));
+		if(s.length()==1)break;
+		s = readWord(begin, end, IsChar('\''));
+		if(s.length()==1){
+			s = readWord(begin, end, IsCharArray());
+		}else{
+			s = readWord(begin, end);
+		}
+		values.push_back(s);
+		string s = readWord(begin, end, IsChar(')'));
+		if(s.length()==1)break;
+		readWord(begin, end, IsString(","));
+	}
+	shared_ptr<StatementBlock> pSB(new InsertTableBlock(tableName, values));
+	vStatementBlock.push_back(pSB);
+}
 void Interpreter::deleteParser(Iterator& begin, Iterator end){
 	readWord(begin, end, IsString("from"));
-	auto s = readWord(begin, end, IsVariableName());
-	auto tableName = s;
+	string s = readWord(begin, end, IsVariableName());
+	string tableName = s;
 	
 	try{
 		s = readWord(begin, end);
 	}catch(EndOfString e){
 		shared_ptr<StatementBlock> pSB(new DeleteBlock(tableName));
+		vStatementBlock.push_back(pSB);
 		return;
 	}
 	if(s!="where")
 		throw GrammarError("illegal delete operation");
+	auto exps = readExp(begin, end);
+	shared_ptr<StatementBlock> pSB(new DeleteBlock(tableName,));
+	vStatementBlock.push_back(pSB);
 	
 }
 void Interpreter::quitParser(Iterator& begin, Iterator end) {
