@@ -43,7 +43,7 @@ IndexManager::~IndexManager()
 * @throw IndexNotExistException
 * @post The BplusTree in memory and Index file on disk will be deleted
 */
-void IndexManager::dropIndex(const string indexName)
+void IndexManager::dropIndex(const string &indexName)
 {
 	/*Delete the BPlusTree in the index Library*/
 	delete indexLibrary[indexName];
@@ -65,15 +65,15 @@ void IndexManager::dropIndex(const string indexName)
 * @throw IndexNotExistException
 * @post A index is created and store in .index file
 */
-void IndexManager::createIndex(const string indexName, const Data attribute, const int recordLength, const string fileName)
+void IndexManager::createIndex(const string &indexName, Data &attribute, const int &recordLength, const string &fileName)
 {/*storing index wait to be completed*/
 	/*Calculate the fan-out of BPlusTree so that each leaf node's size is a block*/
 	int bPlusFanOut;
 	switch (attribute.getType())
 	{
 	case CHAR:bPlusFanOut = (BLOCKSIZE - 4) / (attribute.getLength() + sizeof(ADDRESS)); break;
-	case INT:bPlusFanOut = (BLOCKSIZE - 4) / (INT_STRING_SIZE + sizeof(ADDRESS)); break;
-	case FLOAT:bPlusFanOut = (BLOCKSIZE - 4) / (FLOAT_INTEGER_SIZE + FLOAT_DECIMAL_SIZE + sizeof(ADDRESS)); break;
+	case INT:bPlusFanOut = (BLOCKSIZE - 4) / (1 + INT_STRING_SIZE + sizeof(ADDRESS)); break;
+	case FLOAT:bPlusFanOut = (BLOCKSIZE - 4) / (1 + FLOAT_INTEGER_SIZE + FLOAT_DECIMAL_SIZE+1 + sizeof(ADDRESS)); break;
 	default:
 		exception ex;
 		throw ex;
@@ -86,18 +86,19 @@ void IndexManager::createIndex(const string indexName, const Data attribute, con
 	ADDRESS endOffset = getEndOffset(fileName);
 
 	/*Get record from bufferManager and create index*/
-	for (ADDRESS recordOffset = HEADER_BLOCK_OFFSET; recordOffset <= endOffset; recordOffset += recordLength)
+	for (ADDRESS recordOffset = HEADER_BLOCK_OFFSET; recordOffset < endOffset; recordOffset += recordLength)
 	{
-		BYTE* recordData = bufferManager->fetchARecord(fileName, recordOffset) + attribute.getOffset();/*point to the start of the attribute*/
+		BYTE* recordData = bufferManager->fetchARecord(fileName, recordOffset + attribute.getOffset());/*point to the start of the attribute*/
 		string recordString = "";
-		string tmpRecordString = "";
+		char* tmpRecordString = new char[attribute.getLength()+1];
 		int tmpRecordInt = 0;
 		float tmpRecordFloat = 0;
 		stringstream ss;
 		switch (attribute.getType())
 		{
 		case CHAR:
-			memcpy(&tmpRecordString, recordData, attribute.getLength());
+			memcpy(tmpRecordString, recordData, attribute.getLength());
+			tmpRecordString[attribute.getLength()] = 0;
 			recordString = tmpRecordString;
 			newIndex->addKey(recordOffset, recordString);
 			break;
@@ -123,7 +124,7 @@ void IndexManager::createIndex(const string indexName, const Data attribute, con
 /* @brief create a B+ tree from existing index files at the ctor of IndexManager
 * @param indexName
 */
-void IndexManager::createIndexFromFile(const string indexName)
+void IndexManager::createIndexFromFile(const string &indexName)
 {
 	/*Read indexfile header*/
 	INDEXFILEHEADER infh = *(INDEXFILEHEADER *)(bufferManager->fetchARecord(indexName, 0));
@@ -140,18 +141,17 @@ void IndexManager::createIndexFromFile(const string indexName)
 /* @brief save the information of index to indexfile
 * @param indexName
 */
-void IndexManager::saveIndexToFile(const string indexName, TYPE type)
+void IndexManager::saveIndexToFile(const string &indexName, const TYPE &type)
 {
 	INDEXFILEHEADER infh;
 	/*Generate indexfile header*/
-	int i;
+	unsigned int i;
 	for (i = 0; i < indexName.length(); i++)
 		infh.indexName[i] = indexName[i];
 	infh.indexName[i] = 0;
 	infh.type = type;
 	/*Travser leafnode and store data*/
-	BPlusTreeIndex* index = indexLibrary[indexName];
-	BPlusLeaf currentLeaf = index->returnFirstLeafNode();
+	BPlusLeaf currentLeaf = indexLibrary[indexName]->returnFirstLeafNode();
 	infh.fanOut = currentLeaf->getKeyNum();/*my fan out is defined by key number*/
 	ADDRESS curser = HEADER_BLOCK_OFFSET;
 	int  elementCount;
@@ -183,7 +183,7 @@ void IndexManager::saveIndexToFile(const string indexName, TYPE type)
 * @throw IndexNotExistException
 * @post The value is inserted to the B+ tree index
 */
-void IndexManager::insertValues(const string indexName, const string indexKey, const ADDRESS recordOffset)
+void IndexManager::insertValues(const string &indexName, const string &indexKey, const ADDRESS &recordOffset)
 {
 	if (indexLibrary[indexKey]->getAttributeType() == INT)
 		indexLibrary[indexKey]->addKey(recordOffset, toAlignedInt(indexKey));
@@ -203,8 +203,8 @@ void IndexManager::insertValues(const string indexName, const string indexKey, c
 * @throw IndexNotExistException
 * @post Values statisfy the expression is deleted
 */
-void IndexManager::deleteValues(const string indexName, list<Expression> expressions,
-	const string fileName, const int recordLength, TYPE type)
+void IndexManager::deleteValues(const string &indexName, list<Expression> expressions,
+	const string &fileName, const int& recordLength,const TYPE &type)
 {
 	bound upperbound;
 	bound lowerbound;
@@ -212,7 +212,7 @@ void IndexManager::deleteValues(const string indexName, list<Expression> express
 	analysisExpression(lowerbound, upperbound, equal, expressions, type);
 	if (equal)
 	{
-		deleteRecordFromFile(indexName, indexLibrary[indexName]->findKey(upperbound.value), recordLength, fileName);/*delete the record from data file*/
+		deleteRecordFromFile(fileName, indexLibrary[indexName]->findKey(upperbound.value), recordLength);/*delete the record from data file*/
 		indexLibrary[indexName]->removeKey(upperbound.value);/*remove it from the Index*/
 	}
 	else
@@ -225,14 +225,14 @@ void IndexManager::deleteValues(const string indexName, list<Expression> express
 		if (lowerbound.equal)/*The delete the remaining keys from the head node*/
 		for (int i = currentLeaf->indexOf(lowerbound.value); i < currentLeaf->getElementCount() - 1; i++)/*from the key to the last node*/
 		{
-			deleteRecordFromFile(indexName, currentLeaf->getPtrToChild(i), recordLength, fileName);/*deleted the record from data file*/
+			deleteRecordFromFile(fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
 			keyContainer[elementCount] = currentLeaf->getKeyValue(i);
 			elementCount++;
 		}
 		else
 		for (int i = currentLeaf->indexOf(lowerbound.value) + 1; i < currentLeaf->getElementCount() - 1; i++)/*from the next key to the last node*/
 		{
-			deleteRecordFromFile(indexName, currentLeaf->getPtrToChild(i), recordLength, fileName);/*deleted the record from data file*/
+			deleteRecordFromFile(fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
 			keyContainer[elementCount] = currentLeaf->getKeyValue(i);
 			elementCount++;
 		}
@@ -241,7 +241,7 @@ void IndexManager::deleteValues(const string indexName, list<Expression> express
 		{  /*delete every record except that of the head node and the last node from the file, but not from the tree, instead record every deleted key*/
 			for (int i = 0; i < currentLeaf->getElementCount(); i++)
 			{
-				deleteRecordFromFile(indexName, currentLeaf->getPtrToChild(i), recordLength, fileName);/*deleted the record from data file*/
+				deleteRecordFromFile(fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
 				keyContainer[elementCount] = currentLeaf->getKeyValue(i);
 				elementCount++;
 			}
@@ -250,34 +250,35 @@ void IndexManager::deleteValues(const string indexName, list<Expression> express
 		if (upperbound.equal)/*The delete the remaining keys from the end node*/
 		for (int i = 0; i <= endLeaf->indexOf(upperbound.value); i++)/*from start to the upperbound key*/
 		{
-			deleteRecordFromFile(indexName, currentLeaf->getPtrToChild(i), recordLength, fileName);/*deleted the record from data file*/
+			deleteRecordFromFile(fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
 			keyContainer[elementCount] = currentLeaf->getKeyValue(i);
 			elementCount++;
 		}
 		else
 		for (int i = 0; i < endLeaf->indexOf(upperbound.value); i++)/*from start to the previous key of upper bound*/
 		{
-			deleteRecordFromFile(indexName, currentLeaf->getPtrToChild(i), recordLength, fileName);/*deleted the record from data file*/
+			deleteRecordFromFile(fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
 			keyContainer[elementCount] = currentLeaf->getKeyValue(i);
 			elementCount++;
 		}
 
-		for (int i = 0; i < keyContainer.size(); i++)
+		for (unsigned int i = 0; i < keyContainer.size(); i++)
 			indexLibrary[indexName]->removeKey(keyContainer[i]);
 	}
 }
 
 /* @brief select the values specified by expression and indexName
+* @param fileName The name of the file
 * @param indexName The name of the index
 * @param expression The expression that specify the deletion
-* @param fileName The name of the file
+* @param recordBuffer The buffer to put the selected value
 * @param type The object type of attribute
 * @pre Index exists
 * @return void
 * @throw IndexNotExistException
 * @post Values statisfy the expression is selected
 */
-void IndexManager::selectValues(const string indexName, list<Expression> expressions, RECORDBUFFER recordBuffer, TYPE type)
+void IndexManager::selectValues(const string &indexName, list<Expression> expressions, RECORDBUFFER recordBuffer, const string &fileName, const int &recordLength, const TYPE &type)
 {
 	bound upperbound;
 	bound lowerbound;
@@ -285,7 +286,7 @@ void IndexManager::selectValues(const string indexName, list<Expression> express
 	analysisExpression(lowerbound, upperbound, equal, expressions, type);
 	if (equal)
 	{
-		
+		bufferManager->fetchARecord(fileName, indexLibrary[indexName]->findKey(upperbound.value));
 	}
 	else
 	{
@@ -327,7 +328,7 @@ void IndexManager::selectValues(const string indexName, list<Expression> express
 /* @brief Get the offset of the last record
 * @return ADDRESS
 */
-ADDRESS IndexManager::getEndOffset(const string fileName)
+ADDRESS IndexManager::getEndOffset(const string &fileName)
 {
 	return *(ADDRESS *)bufferManager->fetchARecord(fileName, 0);
 }
@@ -335,7 +336,7 @@ ADDRESS IndexManager::getEndOffset(const string fileName)
 /* @brief Get the offset of the last record
 * @return void
 */
-void IndexManager::renewEndOffset(const string fileName, const int recordLength)
+void IndexManager::renewEndOffset(const string &fileName, const int &recordLength)
 {
 	ADDRESS renewedOffset = getEndOffset(fileName) - recordLength;
 	bufferManager->writeARecord((BYTE *)&renewedOffset, recordLength, fileName, HEADER_BLOCK_OFFSET);
@@ -468,7 +469,7 @@ void IndexManager::analysisExpression(bound &dstLowerBound, bound &dstUpperBound
 * @param fileName Name of the DBdata file
 * @return void
 */
-void IndexManager::deleteRecordFromFile(const string indexName, const int recordOffset, const int recordLength, const string fileName)
+void IndexManager::deleteRecordFromFile(const string &fileName, const int &recordOffset, const int &recordLength)
 {
 	renewEndOffset(fileName, recordLength); /*renewedOffset=endOffset - recordLength*/
 	bufferManager->writeARecord(bufferManager->fetchARecord(fileName, getEndOffset(fileName)), recordLength, fileName, recordOffset);/*Write the last record of data on the space of the deleted record*/
@@ -504,10 +505,29 @@ string IndexManager::toAlignedInt(string s)
 */
 string IndexManager::toAlignedFloat(string s)
 {
-	/*WaitToBeCompleted*/
+	bool positive = true;
+	if (s[0] == '-')
+	{
+		positive = false;
+		s = s.substr(1);
+	}
+	if (s.find('.') == -1)
+		s = s + '.';
 	while (s.find_first_of('.') <= FLOAT_DECIMAL_SIZE)
 		s = "0" + s;
-	while (s.length() < FLOAT_DECIMAL_SIZE + FLOAT_INTEGER_SIZE + 1)
+	while (s.length()<FLOAT_INTEGER_SIZE + FLOAT_DECIMAL_SIZE + 1)
 		s = s + "0";
-	return s;
+	if (positive)
+		return "+" + s;
+	else
+		return "-" + s;
+}
+
+/* @brief  Traverse the B+ tree
+* @param indexName The name of B+ Tree
+* @return void
+*/
+void IndexManager::traverseTree(const string& indexName)
+{
+	indexLibrary[indexName]->traverseTree();
 }
