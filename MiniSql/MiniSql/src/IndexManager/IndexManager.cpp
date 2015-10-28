@@ -17,6 +17,7 @@ IndexManager::IndexManager()
 /* @brief Constructor of IndexManager. In API Catalog read
 * catalog file first and construct IM with indexNames
 * @param indexName List of index that exists
+* @pre indexfile already exists
 */
 IndexManager::IndexManager(list<string> indexName)
 {
@@ -123,9 +124,9 @@ void IndexManager::createIndex(const string &indexName, Data &attribute, const i
 }
 
 /* @brief create a B+ tree from existing index files at the ctor of IndexManager
-* @param indexName
+* @param indexName Name of the index
 */
-void IndexManager::createIndexFromFile(const string &indexName)throw(exception)
+void IndexManager::createIndexFromFile(const string &indexName)
 {
 	/*Read indexfile header*/
 	try
@@ -147,7 +148,8 @@ void IndexManager::createIndexFromFile(const string &indexName)throw(exception)
 }
 
 /* @brief save the information of index to indexfile
-* @param indexName
+* @param indexName Name of the index
+* @param type TYPE of the attribute where index is created
 */
 void IndexManager::saveIndexToFile(const string &indexName, const TYPE &type)
 {
@@ -164,7 +166,7 @@ void IndexManager::saveIndexToFile(const string &indexName, const TYPE &type)
 	BPlusLeaf currentLeaf = indexLibrary[indexName]->returnFirstLeafNode();
 	infh.fanOut = currentLeaf->getKeyNum();/*my fan out is defined by key number*/
 	ADDRESS curser = HEADER_BLOCK_OFFSET;
-	int  elementCount=0;
+	int  elementCount = 0;
 
 	bufferManager->createFile(indexName);
 	while (currentLeaf != NULL)/*traverse to the end leaf*/
@@ -211,30 +213,43 @@ void IndexManager::insertValues(const string &indexName, const string &indexKey,
 * @param indexName The name of the index
 * @param expression The expression that specify the deletion
 * @param fileName The name of the file
-* @param type The object type of attribute
+* @param recordLength Length of the record
 * @pre Index exists
 * @return void
 * @throw IndexNotExistException
 * @post Values statisfy the expression is deleted
 */
 void IndexManager::deleteValues(const string &indexName, list<Expression> expressions,
-	const string &fileName, const int& recordLength, const TYPE &type)
+	const string &fileName, const int& recordLength)
 {
+	BPlusTreeIndex* currentIndex = indexLibrary[indexName];
 	bound upperbound;
 	bound lowerbound;
 	bool equal = false;
-	analysisExpression(lowerbound, upperbound, equal, expressions, type);
+	bool lowerFlagAdded = false;
+	bool upperFlagAdded = false;
+	analysisExpression(lowerbound, upperbound, equal, expressions, currentIndex->getAttributeType());
 	if (equal)
 	{
-		deleteRecordFromFile(indexName, fileName, indexLibrary[indexName]->findKey(upperbound.value), recordLength);/*delete the record from data file*/
-		indexLibrary[indexName]->removeKey(upperbound.value);/*remove it from the Index*/
+		deleteRecordFromFile(indexName, fileName, currentIndex->findKey(upperbound.value), recordLength);/*delete the record from data file*/
+		currentIndex->removeKey(upperbound.value);/*remove it from the Index*/
 	}
 	else
 	{
+		if (currentIndex->findKey(lowerbound.value) == -1)/*If lower or upperbound not exist*/
+		{
+			currentIndex->addKey(-1, lowerbound.value);/*add a key as a flag and after process delete it*/
+			lowerFlagAdded = true;
+		}
+		if (currentIndex->findKey(upperbound.value) == -1)
+		{
+			currentIndex->addKey(-1, upperbound.value);
+			upperFlagAdded = true;
+		}
 		vector<string> keyContainer;
-		BPlusLeaf currentLeaf = indexLibrary[indexName]->returnLeafNode(lowerbound.value);
-		BPlusLeaf endLeaf = indexLibrary[indexName]->returnLeafNode(upperbound.value);
-		if (currentLeaf == endLeaf)
+		BPlusLeaf currentLeaf = currentIndex->returnLeafNode(lowerbound.value);
+		BPlusLeaf endLeaf = currentIndex->returnLeafNode(upperbound.value);
+		if (currentLeaf == endLeaf)/*If the start Node and the same node is the same*/
 		{
 			int start = currentLeaf->indexOf(lowerbound.value);
 			int end = currentLeaf->indexOf(upperbound.value);
@@ -242,13 +257,13 @@ void IndexManager::deleteValues(const string &indexName, list<Expression> expres
 				start++;
 			if (upperbound.equal == false)
 				end--;
-			for (int i = start; i <= end; i++)
+			for (int i = start; i <= end; i++)/*Only have to process this node*/
 			{
 				deleteRecordFromFile(indexName, fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
 				keyContainer.push_back(currentLeaf->getKeyValue(i));
 			}
 		}
-		else
+		else/*if the start and end go through serveral nodes*/
 		{
 			if (lowerbound.equal)/*The delete the remaining keys from the head node*/
 			for (int i = currentLeaf->indexOf(lowerbound.value); i < currentLeaf->getElementCount(); i++)/*from the key to the last node*/
@@ -286,7 +301,11 @@ void IndexManager::deleteValues(const string &indexName, list<Expression> expres
 			}
 		}
 		for (unsigned int i = 0; i < keyContainer.size(); i++)
-			indexLibrary[indexName]->removeKey(keyContainer[i]);
+			currentIndex->removeKey(keyContainer[i]);/*remove all the keys from index*/
+		if (lowerFlagAdded)/*If a lowerbound flag is added*/
+			currentIndex->removeKey(lowerbound.value);/*delete it*/
+		if (upperFlagAdded)/*if an upperbound flag is added*/
+			currentIndex->removeKey(upperbound.value);/*delete it*/
 	}
 }
 
@@ -294,61 +313,93 @@ void IndexManager::deleteValues(const string &indexName, list<Expression> expres
 * @param fileName The name of the file
 * @param indexName The name of the index
 * @param expression The expression that specify the deletion
-* @param recordBuffer The buffer to put the selected value
-* @param type The object type of attribute
 * @pre Index exists
 * @return void
 * @throw IndexNotExistException
 * @post Values statisfy the expression is selected
 */
-void IndexManager::selectValues(const string &indexName, list<Expression> expressions, RECORDBUFFER recordBuffer, const string &fileName, const int &recordLength, const TYPE &type)
+	void IndexManager::selectValues(const string &indexName, Table& table, list<Expression> expressions, RECORDBUFFER recordBuffer, const string &fileName)
 {
+	BPlusTreeIndex* currentIndex = indexLibrary[indexName];
 	bound upperbound;
 	bound lowerbound;
 	bool equal = false;
-	analysisExpression(lowerbound, upperbound, equal, expressions, type);
+	bool lowerFlagAdded = false;
+	bool upperFlagAdded = false;
+	analysisExpression(lowerbound, upperbound, equal, expressions, currentIndex->getAttributeType());
 	if (equal)
 	{
-		bufferManager->fetchARecord(fileName, indexLibrary[indexName]->findKey(upperbound.value));
+		BYTE* recordData = bufferManager->fetchARecord(fileName, currentIndex->findKey(upperbound.value));
+		
 	}
 	else
 	{
-		BPlusLeaf currentLeaf = indexLibrary[indexName]->returnLeafNode(lowerbound.value);
-		BPlusLeaf endLeaf = indexLibrary[indexName]->returnLeafNode(upperbound.value);
-		/*The remaining part of beginLeaf*/
-		if (lowerbound.equal)
-		for (int i = currentLeaf->indexOf(lowerbound.value); i < currentLeaf->getElementCount() - 1; i++)/*from the key to the last node*/
+		if (currentIndex->findKey(lowerbound.value) == -1)/*If lower or upperbound not exist*/
 		{
-
+			currentIndex->addKey(-1, lowerbound.value);/*add a key as a flag and after process delete it*/
+			lowerFlagAdded = true;
 		}
-		else
-		for (int i = currentLeaf->indexOf(lowerbound.value) + 1; i < currentLeaf->getElementCount() - 1; i++)/*from the next key to the last node*/
+		if (currentIndex->findKey(upperbound.value) == -1)
 		{
-
+			currentIndex->addKey(-1, upperbound.value);
+			upperFlagAdded = true;
 		}
-
-		for (; currentLeaf != endLeaf; currentLeaf = currentLeaf->getPtrToSinling())
+		BPlusLeaf currentLeaf = currentIndex->returnLeafNode(lowerbound.value);
+		BPlusLeaf endLeaf = currentIndex->returnLeafNode(upperbound.value);
+		if (currentLeaf == endLeaf)/*If the start Node and the same node is the same*/
 		{
-			for (int i = 0; i < currentLeaf->getElementCount(); i++)
+			int start = currentLeaf->indexOf(lowerbound.value);
+			int end = currentLeaf->indexOf(upperbound.value);
+			if (lowerbound.equal == false)
+				start++;
+			if (upperbound.equal == false)
+				end--;
+			for (int i = start; i <= end; i++)/*Only have to process this node*/
 			{
-
+				
 			}
 		}
-		/*The remaining part of endLeaf*/
-		if (upperbound.equal)
-		for (int i = 0; i <= endLeaf->indexOf(upperbound.value); i++)
+		else/*if the start and end go through serveral nodes*/
 		{
+			if (lowerbound.equal)/*The delete the remaining keys from the head node*/
+			for (int i = currentLeaf->indexOf(lowerbound.value); i < currentLeaf->getElementCount(); i++)/*from the key to the last node*/
+			{
+				
+			}
+			else
+			for (int i = currentLeaf->indexOf(lowerbound.value) + 1; i < currentLeaf->getElementCount(); i++)/*from the next key to the last node*/
+			{
+				
+			}
+			currentLeaf = currentLeaf->getPtrToSinling();
+			for (; currentLeaf != endLeaf; currentLeaf = currentLeaf->getPtrToSinling())
+			{  /*delete every record except that of the head node and the last node from the file, but not from the tree, instead record every deleted key*/
+				for (int i = 0; i < currentLeaf->getElementCount(); i++)
+				{
+					
+				}
+			}
 
+			if (upperbound.equal)/*The delete the remaining keys from the end node*/
+			for (int i = 0; i <= endLeaf->indexOf(upperbound.value); i++)/*from start to the upperbound key*/
+			{
+			
+			}
+			else
+			for (int i = 0; i < endLeaf->indexOf(upperbound.value); i++)/*from start to the previous key of upper bound*/
+			{
+				
+			}
 		}
-		else
-		for (int i = 0; i < endLeaf->indexOf(upperbound.value); i++)
-		{
-
-		}
+		if (lowerFlagAdded)/*If a lowerbound flag is added*/
+			currentIndex->removeKey(lowerbound.value);/*delete it*/
+		if (upperFlagAdded)/*if an upperbound flag is added*/
+			currentIndex->removeKey(upperbound.value);/*delete it*/
 	}
 }
 
 /* @brief Get the offset of the last record
+* @param fileName
 * @return ADDRESS
 */
 ADDRESS IndexManager::getEndOffset(const string &fileName)
@@ -357,6 +408,8 @@ ADDRESS IndexManager::getEndOffset(const string &fileName)
 }
 
 /* @brief Get the offset of the last record
+* @param fileName
+* @param recordLength
 * @return void
 */
 void IndexManager::renewEndOffset(const string &fileName, const int &recordLength)
@@ -486,7 +539,8 @@ void IndexManager::analysisExpression(bound &dstLowerBound, bound &dstUpperBound
 }
 
 /* @brief Delete the record on file and put the last record into the deleted position
-* @param indexName Name
+* @param indexName
+* @param fileName
 * @param recordOffset The offset of the record to be deleted
 * @param recordLength Length of the record
 * @param fileName Name of the DBdata file
@@ -502,7 +556,7 @@ void IndexManager::deleteRecordFromFile(const string &indexName, const string &f
 		return;
 	}
 
-	BYTE* endRecordKey = bufferManager->fetchARecord(fileName, getEndOffset(fileName)-recordLength+indexLibrary[indexName]->getOffsetInRecord());
+	BYTE* endRecordKey = bufferManager->fetchARecord(fileName, getEndOffset(fileName) - recordLength + indexLibrary[indexName]->getOffsetInRecord());
 	string recordString = "";
 	char* tmpRecordString = new char[currentIndex->getAttributeLength() + 1];
 	int tmpRecordInt = 0;
@@ -594,4 +648,15 @@ void IndexManager::traverseTree(const string& indexName)
 		indexLibrary[indexName]->traverseTree();
 	else
 		throw new exception;
+}
+
+/* @brief  Convert the data to coresponding string and push to record buffer 
+* @param table the relation
+* @param recordData the pointer of the record
+* @param recordLength the length of the record
+* @return void
+*/
+void IndexManager::pushToRecordbuffer(const Table &table, const BYTE* recordData, const int &recordLength)
+{
+
 }
