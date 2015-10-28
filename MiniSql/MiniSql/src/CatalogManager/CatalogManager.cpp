@@ -16,6 +16,7 @@ CatalogManager::CatalogManager()
 {
 	bm = BufferManager::getBufferManager();
 	bm->createFile("index.index");
+	bm->createFile("table.table");
 }
 
 CatalogManager::~CatalogManager()
@@ -176,4 +177,17 @@ BYTE* CatalogManager::readString(std::string& s, BYTE* ptr)
 {
 	s = string((char*)ptr);
 	return ptr + FIX_LENGTH;
+}
+
+void CatalogManager::regTable(std::string & s)
+{
+	if (isTableExist(s))throw
+	BYTE* buffer = bm->fetchARecord("table.table", 0);
+	BYTE* tPtr = buffer;
+	while(!isEnd(tPtr)){
+		tPtr += FIX_LENGTH;
+	}
+	strcpy((char *)tPtr, s.c_str());
+
+	return nullptr;
 }

@@ -33,4 +33,6 @@ private:
 	int state2;
 };
 
+
+class 
 #endif

@@ -23,6 +23,9 @@ private:
 	BYTE* saveData(const Data& data, BYTE* ptr);
 	BYTE* readData(Data& data, BYTE* ptr);
 	BYTE* readString(std::string& s, BYTE* ptr);
+	void regTable(std::string& s);
+	void deRegTable(std::string& s);
+	bool isTableExist(std::string& s);
 	bool isEnd(BYTE* ptr);
 };
 
