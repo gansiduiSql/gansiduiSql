@@ -15,6 +15,7 @@ CatalogManager * CatalogManager::getCatalogManager()
 CatalogManager::CatalogManager()
 {
 	bm = BufferManager::getBufferManager();
+	bm->createFile("index.index");
 }
 
 CatalogManager::~CatalogManager()
@@ -24,8 +25,14 @@ CatalogManager::~CatalogManager()
 void CatalogManager::createTableCatalog(const Table& table)
 {
 	string tableName = table.getTableName();
-	BYTE* buffer = bm->fetchARecord(tableName + ".log", 0);
+	//create a table data file
 	bm->createFile(tableName);
+	int tail = BLOCKSIZE;
+	bm->writeARecord((BYTE*)&tail, sizeof(int), tableName, 0);
+	//create a table log data file
+	bm->createFile(tableName + "log");
+	BYTE* buffer = bm->fetchARecord(tableName + ".log", 0);
+	
 	const char* cTableName = table.getTableName().c_str();
 	const vector<Data>& tableVec = table.getTableVec();
 	
@@ -43,12 +50,7 @@ void CatalogManager::createTableCatalog(const Table& table)
 }
 void CatalogManager::deleteTableCatalog(const std::string& tableName)
 {
-	BYTE* buffer = bm->fetchARecord(tableName + ".log", 0);
-
-	if (buffer == NULL)
-		throw runtime_error("The table does not exist!");
-
-	memset(buffer, 0, BLOCKSIZE);
+	bm->deleteFile(tableName + ".log");
 }
 Table CatalogManager::getTable(const std::string& tableName)
 {
@@ -58,7 +60,7 @@ Table CatalogManager::getTable(const std::string& tableName)
 		throw runtime_error("The table does not exist!");
 	
 	BYTE* tPtr = buffer;
-	tPtr += 64;
+	tPtr += FIX_LENGTH;
 
 	vector<Data> tableVec;
 	Data tmpData;
@@ -108,6 +110,7 @@ void CatalogManager::deleteIndexCatalog(const std::string& indexName)
 	BYTE* tPtr = buffer, *deletedPtr, *headPtr;
 	string sIndexName, sAttributeName, sTableName;
 	bool flag = false;
+	headPtr = deletedPtr= 0;
 	while (!isEnd(tPtr))
 	{
 		headPtr = tPtr;

@@ -6,15 +6,15 @@
 #include <vector>
 #include "..\Definition.h"
 #include "..\CatalogManager\CatalogManager.h"
-#include "..\RecordManager\RecordManager.h"
-#include "..\IndexManager\IndexManager.h"
+//#include "..\RecordManager\RecordManager.h"
+//#include "..\IndexManager\IndexManager.h"
 
 class API
 {
 private:
 	CatalogManager cm;
-	RecordManager rm;
-	IndexManager im;
+	//RecordManager rm;
+	//IndexManager im;
 public:
 	void createTableCmd(const Table& table);
 	void dropTableCmd(const std::string& tableName);

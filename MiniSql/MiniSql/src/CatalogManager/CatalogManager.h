@@ -7,7 +7,7 @@
 class BufferManager;
 
 class CatalogManager{
-public:
+public: 
 	static CatalogManager *getCatalogManager();
 	CatalogManager();
 	~CatalogManager();
