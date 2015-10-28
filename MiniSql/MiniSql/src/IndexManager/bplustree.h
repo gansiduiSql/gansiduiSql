@@ -107,9 +107,11 @@ class BPlusTreeIndex
 private:
     BPlusPointer Root;
     int MAXKEYNUMBER;
+	int offset;
+	int length;
 	TYPE type;
 public:
-    BPlusTreeIndex(int maxKeyNum, TYPE type);
+    BPlusTreeIndex(int maxKeyNum, int attributeLength, int offserInRecord, TYPE type);
     ~BPlusTreeIndex();
     void addKey(RecordPointer p, ElementType s);
     void removeKey(ElementType s);
@@ -118,6 +120,8 @@ public:
 	BPlusLeaf returnFirstLeafNode();
     void traverseTree();
 	TYPE getAttributeType(){ return type; }
+	int getOffsetInRecord(){ return offset; }
+	int getAttributeLength(){ return length; }
 };
 
 

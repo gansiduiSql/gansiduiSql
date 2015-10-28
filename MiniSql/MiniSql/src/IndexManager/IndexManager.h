@@ -25,6 +25,8 @@ typedef map<string, BPlusTreeIndex*>::iterator ITER;
 typedef struct{
 	BYTE indexName[32];
 	TYPE type;
+	int attributeLength;
+	int offsetInRecord;
 	int fanOut;
 	int elementCount;
 }INDEXFILEHEADER;
@@ -41,7 +43,7 @@ private:
 	BufferManager * bufferManager;
 	ADDRESS getEndOffset(const string &fileName);
 	void renewEndOffset(const string &fileName, const int &recordLength);
-	void deleteRecordFromFile(const string &fileName, const int &recordOffset, const int &recordLength);
+	void deleteRecordFromFile(const string& indexName, const string &fileName, const ADDRESS &recordOffset, const int &recordLength);
 	void analysisExpression(bound &dstLowerBound, bound &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const TYPE &type);/*Function tested*/
 	void createIndexFromFile(const string &indexName)throw(exception);
 	void saveIndexToFile(const string &indexName, const TYPE &type);
