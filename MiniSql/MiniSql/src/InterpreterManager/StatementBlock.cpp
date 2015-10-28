@@ -214,8 +214,13 @@ bool CheckType::isInt(const std::string & s) {
 		return false;
 	}return true;
 }
-
+/*
 bool CheckType::isAttribute(const std::string & s)
 {
-	return false;
+	vector<Data> v = pTable->getTableVec();
+	auto iter = std::find_if(v.begin(), v.end(), [=](vector<Data>::iterator d) {
+		return d->getAttribute() == s;
+	});
+	return iter != v.end();
 }
+*/

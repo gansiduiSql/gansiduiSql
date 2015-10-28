@@ -229,7 +229,7 @@ void Interpreter::selectParser(Iterator& begin, Iterator end) {
 @format insert into [TABLE] values([VALUE TUPLE])
 */
 void Interpreter::insertParser(Iterator& begin, Iterator end){
-	list<string> values;
+	vector <string> values;
 	readWord(begin, end, IsString("into")); //read into
 	string tableName = readWord(begin, end, IsVariableName()); //read tableName
 	readWord(begin, end, IsString("values"));//read values
@@ -248,7 +248,7 @@ void Interpreter::insertParser(Iterator& begin, Iterator end){
 		readWord(begin, end, IsString(","));
 	}
 	readToEnd(begin, end);
-	shared_ptr<StatementBlock> pSB(new InsertTableBlock(tableName, values));
+	shared_ptr<StatementBlock> pSB(new InsertTableBlock(tableName,values));
 	vStatementBlock.push_back(pSB);
 }
 

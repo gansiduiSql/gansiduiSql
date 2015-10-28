@@ -137,6 +137,7 @@ public:
 	bool isString(const std::string& s);
 	bool isFloat(const std::string& s);
 	bool isInt(const std::string& s);
+	bool isAttribute(const std::string& s);
 private:
 	Table* pTable;
 }

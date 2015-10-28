@@ -223,7 +223,7 @@ void CatalogManager::load()
 		tables.insert(tableName);
 	}
 	buffer = bm->fetchARecord("table.table", 0);
-	BYTE* buffer = bm->fetchARecord("index.index", 0);
+	 buffer = bm->fetchARecord("index.index", 0);
 	tPtr = buffer;
 	string sIndexName, sAttributeName, sTableName;
 	while (!isEnd(tPtr))

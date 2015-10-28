@@ -7,7 +7,7 @@
 #include <string>
 #include <list>
 #include <functional>
-
+;
 std::string readWord(std::string::iterator& sIter, std::string::iterator end, std::function<bool(char)> f = [](char c)->bool {
 	return isalnum(c) || c == '_' || c == '.';
 });
