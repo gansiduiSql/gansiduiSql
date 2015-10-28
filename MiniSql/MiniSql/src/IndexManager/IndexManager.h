@@ -25,6 +25,8 @@ typedef map<string, BPlusTreeIndex*>::iterator ITER;
 typedef struct{
 	BYTE indexName[32];
 	TYPE type;
+	int attributeLength;
+	int offsetInRecord;
 	int fanOut;
 	int elementCount;
 }INDEXFILEHEADER;
@@ -41,29 +43,23 @@ private:
 	BufferManager * bufferManager;
 	ADDRESS getEndOffset(const string &fileName);
 	void renewEndOffset(const string &fileName, const int &recordLength);
-	void deleteRecordFromFile(const string &fileName, const int &recordOffset, const int &recordLength);
+	void deleteRecordFromFile(const string& indexName, const string &fileName, const ADDRESS &recordOffset, const int &recordLength);
 	void analysisExpression(bound &dstLowerBound, bound &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const TYPE &type);/*Function tested*/
-	void createIndexFromFile(const string &indexName)throw(exception);
+	void createIndexFromFile(const string &indexName);
 	void saveIndexToFile(const string &indexName, const TYPE &type);
+	void pushToRecordbuffer(const Table &table,const BYTE* recordData,const int &recordLength);
 	string toAlignedInt(string s);/*Function tested*/
 	string toAlignedFloat(string s);/*Function tested*/
 public:
-	IndexManager();
-	/*Tested Working Normally*/
-	IndexManager(list<string> indexName);
-	/*Tested Working Normally*/
-	~IndexManager();
-	/*Tested Working Normally*/
-	void createIndex(const string &indexName, Data &attribute, const int &recordLength, const string &fileName);/*create Index of a relation*/
-	/*Tested Working Normally for CreateIndex on primary-key and for CreateIndex for unique key, Cautious, if you create an unique index on an integer or float, do not use IM to process where A<xx A>xx query*/
-	void dropIndex(const string &indexName); /*delet/drop index indexfile and index in this function*/
-	/*Tested Working Normally*/
-	void deleteValues(const string &indexName, list<Expression> expressions, const string &fileName, const int &recordLength, const TYPE &type);
-	void selectValues(const string &indexName, list<Expression> expressions, RECORDBUFFER recordBuffer, const string &fileName, const int &recordLength,const TYPE &type);
-	void insertValues(const string &indexName, const string &indexKey, const ADDRESS &recordOffset);/*insert indexkey to bplus tree after insertion with RM*/
-	/*Tested Working Normally*/
-	void traverseTree(const string &indexName);
-	/*Tested Working Normally*/
+	IndexManager();/*Tested Working Normally*/
+	IndexManager(list<string> indexName);/*Tested Working Normally*/
+	~IndexManager();/*Tested Working Normally*/
+	void createIndex(const string &indexName, Data &attribute, const int &recordLength, const string &fileName);/*create Index of a relation*//*Tested Working Normally for CreateIndex on primary-key and for CreateIndex for unique key, Cautious, if you create an unique index on an integer or float, do not use IM to process where A<xx A>xx query*/
+	void dropIndex(const string &indexName); /*delet/drop index indexfile and index in this function*//*Tested Working Normally*/
+	void deleteValues(const string &indexName, list<Expression> expressions, const string &fileName, const int &recordLength);/*Deleteing values works fine but writing the file will cause extra data to be added*/
+	void selectValues(const string &indexName, Table& table, list<Expression> expressions, RECORDBUFFER recordBuffer, const string &fileName);
+	void insertValues(const string &indexName, const string &indexKey, const ADDRESS &recordOffset);/*insert indexkey to bplus tree after insertion with RM*//*Tested Working Normally*/
+	void traverseTree(const string &indexName);/*Tested Working Normally*/
 };
 
 #endif
