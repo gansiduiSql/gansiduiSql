@@ -79,6 +79,7 @@ private:
 	std::string attribute;
 	TYPE type;
 	int length;
+	int offset;
 	bool uniqueFlag;
 	bool primaryFlag;
 public:
@@ -94,7 +95,8 @@ public:
 	void setUnique(bool flag) { uniqueFlag = flag; }
 	bool isPrimary()const { return primaryFlag; }
 	void setPrimary(bool flag) { primaryFlag = flag; }
-
+	void setOffset(const int off){ offset = off; }
+	int getOffset(){ return offset; }
 	~Data(){}
 };
 
