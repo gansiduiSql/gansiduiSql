@@ -50,7 +50,7 @@ enum TYPE
 };
 
 TYPE stringToTYPE(std::string s);
-OPERATOR stringToOperand(std::string s);
+OPERATOR stringToOperator(std::string s);
 
 class Table
 {

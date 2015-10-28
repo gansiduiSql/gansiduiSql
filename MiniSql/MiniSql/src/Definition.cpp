@@ -73,7 +73,7 @@ TYPE stringToTYPE(std::string s)
 		return TYPE::UNDEFINEDTYPE;
 }
 
-OPERATOR stringToOperand(std::string s)
+OPERATOR stringToOperator(std::string s)
 {
 	if (s == "==")
 		return EQUAL;
