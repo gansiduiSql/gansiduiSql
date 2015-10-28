@@ -92,9 +92,8 @@ void IndexManager::createIndex(const string &indexName, Data &attribute, const i
 	{
 		BYTE* recordData;
 		if ((recordOffset / 4096 + 1) * 4096 - recordOffset < recordLength&&recordOffset % 4096 != 0)
-			recordOffset = (recordOffset / 4096 + 1) * 4096;
-		else
-			recordData = bufferManager->fetchARecord(fileName, recordOffset + attribute.getOffset());/*point to the start of the attribute*/
+			recordOffset = (recordOffset / 4096 + 1) * 4096;/*eliminate the tail of a block*/
+		recordData = bufferManager->fetchARecord(fileName, recordOffset + attribute.getOffset());/*point to the start of the attribute*/
 		string recordString = "";
 		char* tmpRecordString = new char[attribute.getLength() + 1];
 		int tmpRecordInt = 0;
@@ -141,7 +140,7 @@ void IndexManager::createIndexFromFile(const string &indexName)
 		for (int i = 0; i < infh.elementCount; i++)
 		{
 			if ((curser / 4096 + 1) * 4096 - curser < infh.attributeLength&&curser % 4096 != 0)
-				curser = (curser / 4096 + 1) * 4096;
+				curser = (curser / 4096 + 1) * 4096;/*eliminate the tail of a block*/
 				string keyValue = (char *)bufferManager->fetchARecord(indexName, curser + sizeof(int));
 			indexLibrary[indexName]->addKey(*(int *)bufferManager->fetchARecord(indexName, curser), keyValue);
 			curser += keyValue.length() + 1 + sizeof(int);
@@ -165,7 +164,7 @@ void IndexManager::saveIndexToFile(const string &indexName, const TYPE &type)
 	for (i = 0; i < indexName.length(); i++)
 		infh.indexName[i] = indexName[i];
 	infh.indexName[i] = 0;/*Write the indexName to the header*/
-	infh.attributeLength = indexLibrary[indexName]->getAttributeLength();
+	infh.attributeLength = indexLibrary[indexName]->getAttributeLength()+1;
 	infh.offsetInRecord = indexLibrary[indexName]->getOffsetInRecord();
 	infh.type = type;/*Write the keyValue type to the header*/
 	/*Travser leafnode and store data*/
@@ -179,11 +178,13 @@ void IndexManager::saveIndexToFile(const string &indexName, const TYPE &type)
 	{
 		for (int i = 0; i < currentLeaf->getElementCount(); i++)
 		{/*for each node, store offset and keyvalue*/
-			RecordPointer recordPointer = currentLeaf->getPtrToChild(i);
+			ADDRESS recordPointer = currentLeaf->getPtrToChild(i);
 			ElementType keyValue = currentLeaf->getKeyValue(i);
+			if ((curser / 4096 + 1) * 4096 - curser < (infh.attributeLength+sizeof(ADDRESS))&&curser % 4096 != 0)
+				curser = (curser / 4096 + 1) * 4096;/*eliminate the tail of a block*/
 			keyValue += '\0';
 			bufferManager->writeARecord((BYTE *)&recordPointer, sizeof(recordPointer), indexName, curser);
-			curser += sizeof(RecordPointer);
+			curser += sizeof(ADDRESS);
 			bufferManager->writeARecord((BYTE *)keyValue.c_str(), keyValue.length(), indexName, curser);
 			curser += keyValue.length();
 			elementCount++;
@@ -402,12 +403,18 @@ ADDRESS IndexManager::getEndOffset(const string &fileName)
 /* @brief Get the offset of the last record
 * @param fileName
 * @param recordLength
-* @return void
+* @return ADDRESS address of the renewed Offset
 */
-void IndexManager::renewEndOffset(const string &fileName, const int &recordLength)
+ADDRESS IndexManager::renewEndOffset(const string &fileName, const int &recordLength)
 {
-	ADDRESS renewedOffset = getEndOffset(fileName) - recordLength;
+	ADDRESS endOffset = getEndOffset(fileName);
+	ADDRESS renewedOffset;
+	if (endOffset % 4096 == 0)/*If the first record is reached*/
+		renewedOffset = endOffset - (4096 - 4096 / recordLength*recordLength) - recordLength;/*eliminate the tail and minus the record length*/
+	else
+		renewedOffset = endOffset - recordLength;
 	bufferManager->writeARecord((BYTE *)&renewedOffset, recordLength, fileName, 0);
+	return renewedOffset;
 }
 
 /* @brief Analyze given expression and set the lower or upperbound of this expression
@@ -547,8 +554,8 @@ void IndexManager::deleteRecordFromFile(const string &indexName, const string &f
 		renewEndOffset(fileName, recordLength);
 		return;
 	}
-
-	BYTE* endRecordKey = bufferManager->fetchARecord(fileName, getEndOffset(fileName) - recordLength + indexLibrary[indexName]->getOffsetInRecord());
+	ADDRESS renewedEndOffset = renewEndOffset(fileName, recordLength); /*renewedOffset=endOffset - recordLength*/
+	BYTE* endRecordKey = bufferManager->fetchARecord(fileName, renewedEndOffset + indexLibrary[indexName]->getOffsetInRecord());
 	string recordString = "";
 	char* tmpRecordString = new char[currentIndex->getAttributeLength() + 1];
 	int tmpRecordInt = 0;
@@ -577,8 +584,7 @@ void IndexManager::deleteRecordFromFile(const string &indexName, const string &f
 	default:
 		break;
 	}
-	bufferManager->writeARecord(bufferManager->fetchARecord(fileName, getEndOffset(fileName) - recordLength), recordLength, fileName, recordOffset);/*Write the last record of data on the space of the deleted record*/
-	renewEndOffset(fileName, recordLength); /*renewedOffset=endOffset - recordLength*/
+	bufferManager->writeARecord(bufferManager->fetchARecord(fileName, renewedEndOffset), recordLength, fileName, recordOffset);/*Write the last record of data on the space of the deleted record*/
 }
 
 /* @brief  Casting Int to string, the string length INT_STRING_SIZE
@@ -648,7 +654,7 @@ void IndexManager::traverseTree(const string& indexName)
 * @param recordLength the length of the record
 * @return void
 */
-void IndexManager::pushToRecordbuffer(const Table &table, RECORDBUFFER &recordBuffer, const RecordPointer &address, const string &fileName)
+void IndexManager::pushToRecordbuffer(const Table &table, RECORDBUFFER &recordBuffer, const ADDRESS &address, const string &fileName)
 {
 	vector<Data> dataVec = table.getTableVec();
 	vector<Data>::iterator iter;

@@ -42,12 +42,12 @@ private:
 	map<string, BPlusTreeIndex*> indexLibrary;
 	BufferManager * bufferManager;
 	ADDRESS getEndOffset(const string &fileName);
-	void renewEndOffset(const string &fileName, const int &recordLength);
+	ADDRESS renewEndOffset(const string &fileName, const int &recordLength);
 	void deleteRecordFromFile(const string& indexName, const string &fileName, const ADDRESS &recordOffset, const int &recordLength);
 	void analysisExpression(bound &dstLowerBound, bound &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const TYPE &type);/*Function tested*/
 	void createIndexFromFile(const string &indexName);
 	void saveIndexToFile(const string &indexName, const TYPE &type);
-	void pushToRecordbuffer(const Table &table, RECORDBUFFER &recordBuffer, const RecordPointer &address, const string &fileName);
+	void pushToRecordbuffer(const Table &table, RECORDBUFFER &recordBuffer, const ADDRESS &address, const string &fileName);
 	string toAlignedInt(string s);/*Function tested*/
 	string toAlignedFloat(string s);/*Function tested*/
 public:
