@@ -1,3 +1,10 @@
+/*RecordManager.cpp
+*implenment the function defined in RecordManager.h
+*@author wang_kejie@foxmail.com
+*@date 2015/10/18
+*@version 1.0
+*/
+
 #include "RecordManager.h"
 #include <sstream>
 #include <map>
@@ -74,6 +81,12 @@ bool isTrue(const Expression express, const string& value, TYPE type)
 	}
 }
 
+/*construct three maps from the attribute name to the offset, type, length of the attribute
+*@param	attriuteOffset	a map that map the attribute to the offset
+*@param	attriuteType	a map that map the attribute to the type
+*@param	attriuteLength	a map that map the attribute to the length
+*@return void
+*/
 void constructMap(map<string, int>& attributeOffset, map<string, TYPE>& attributeType, map<string, int>& attributeLength, const Table& table)
 {
 	int offset = 0;

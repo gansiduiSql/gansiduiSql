@@ -1,3 +1,12 @@
+/*RecordManager.h
+*@class RecorManager contains a list of interface for select, insert, delete
+*@class RecordIterator is an iteartor for a successive visit of the record
+*@exception the exception when insert a value conflict to the primary(unique) value in the record
+*@author wang_kejie@foxmail.com
+*@date 2015/10/18
+*@version 1.0
+*/
+
 #ifndef _RECORDERMANAGER_H_
 #define _RECORDERMANAGER_H_
 
@@ -7,6 +16,7 @@
 #include "../Definition.h"
 #include <exception>
 
+//the exception when insert a value conflict to the primary(unique) value in the record
 class InsertException : public std::exception
 {
 private:
