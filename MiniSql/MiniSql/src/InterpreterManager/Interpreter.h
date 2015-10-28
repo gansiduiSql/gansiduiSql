@@ -14,9 +14,11 @@ class StatementBlock;
 class Interpreter
 {
 public:
-	Interpreter();
-	~Interpreter();
-	void execute(std::string sql);
+	Interpreter() {};
+	~Interpreter() {};
+	void parse(const std::string& sql);
+	void print();
+	void excute();
 
 private:
 	typedef std::string::iterator Iterator;
@@ -32,7 +34,7 @@ private:
 	void quitParser(Iterator& begin, Iterator end);
 	
 	std::vector<std::shared_ptr<StatementBlock>> vStatementBlock;
-	CatalogManager *ptrCatalogManager;
-	API api;
+	//CatalogManager *ptrCatalogManager;
+	//API api;
 };
 #endif

@@ -1,5 +1,7 @@
 #include "Functor.h"
 #include "../Exception.h"
+#include "../Definition.h"
+#include <iostream>
 
 using namespace std;
 typedef std::string::iterator Iterator;
@@ -9,10 +11,12 @@ string readWord(Iterator& sIter, Iterator end, std::function<bool(char)> f)
 	Iterator tIter = sIter;
 	if (isEnd(tIter,end))
 		return "";
-	while (*tIter == ' ' || *tIter == '\t' || *tIter == '\r' || *tIter == '\n') {
+	char c = *tIter;
+	while (c == ' ' || c == '\t' || c == '\r' ||c == '\n') {
 		tIter++;
 		if (isEnd(tIter, end))
 			return "";
+		c = *tIter;
 	}
 	Iterator tmpIter = tIter;
 	while (!isEnd(tIter, end) && f(*tIter)) {
@@ -34,6 +38,8 @@ std::list<Expression>
 			 tmpExp.leftOperand.operandName = s;
 			 
 			 s = readWord(begin, end, IsOperator());
+			 OPERATOR opr = stringToOperator(s);
+			 tmpExp.op = opr;
 			 s = readWord(begin, end, IsAlnum);
 			 tmpExp.rightOperand.operandName = s;
 			 ret.push_back(tmpExp);
@@ -43,6 +49,10 @@ std::list<Expression>
 	 }
 	 return move(ret);
  }
+
+bool IsAlnum(char c) {
+	return isalnum(c) || c == '_'||c=='.'||c=='\'';
+}
 
 void readToEnd(std::string::iterator& begin, std::string::iterator end){
 	try{
@@ -62,20 +72,22 @@ bool IsVariableName::operator()(char c) {
 	else {
 		return isalnum(c) || c == '_';
 	}
-
 }
 
 bool IsString::operator()(char c) {
-	if (iter == s.end() || *iter != c) {
+	if (i == s.length())return false;
+	if (s[i] != c) {
 		throw GrammarError("dismatch: " + s);
 		return false;
 	}
-	iter++;
+	i++;
 	return true;
 }
 
-bool isEnd(std::string::iterator& begin, std::string::iterator& end) {
-	if (begin == end) {
+bool isEnd(std::string::iterator& begin, std::string::iterator end) {
+	int i = end - begin;
+	if (end == begin) {
+		int b;
 		throw EndOfString();
 		return true;
 	}

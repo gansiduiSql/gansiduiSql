@@ -2,28 +2,29 @@
 #define _FUNCTOR_H_
 
 #include "../Definition.h"
+#include "../Exception.h"
 #include <memory>
 #include <string>
 #include <list>
 #include <functional>
 
 std::string readWord(std::string::iterator& sIter, std::string::iterator end, std::function<bool(char)> f = [](char c)->bool {
-	return isalnum(c) || c == '_';
+	return isalnum(c) || c == '_' || c == '.';
 });
 
 
 std::list<Expression>
  readExp(std::string::iterator& sIter, std::string::iterator end);
 
-void readToEnd(std::string::iterator& begin, std::string end);
+void readToEnd(std::string::iterator& begin, std::string::iterator end);
 class IsString {
 public:
-	IsString(std::string s) :s(s), iter(s.begin()) {}
+	IsString(std::string s) :s(s),i(0) { }
 	bool operator()(char c);
 
 private:
 	std::string s;
-	std::string::iterator iter;
+	int i;
 };
 
 class IsVariableName {
@@ -55,9 +56,8 @@ private:
 	int i;
 };
 
-auto IsAlnum = [](char c)->bool{
-	return isalnum(c)||c=='_';
-};
+bool IsAlnum(char c);
+
 
 class IsChar{
 public:
@@ -115,33 +115,27 @@ private:
 
 class IsCharArray {
 public:
-	IsCharArray():flagConvert(false),flagBrace(0){}
+	IsCharArray():flagConvert(false),braceFlag(false){}
 	bool operator()(char ch) {
-		if (flagBrace == 0) {
-			if (ch == '\"') {
-				flagBrace = 1;
-				return true;
-			}
+		if (braceFlag)return false;
+		if (flagConvert) {
+			if (ch == '\'')return true;
 			else return false;
+		};
+		if (ch == '\\') {
+			flagConvert = true;
+			return true;
 		}
-		else if (flagBrace == 1) {
-			if (flagConvert) {
-				flagConvert = false;
-				return true;
-			};
-			if (ch == '\\') {
-				flagConvert = true;
-				return true;
-			}
-			if (ch == '\"') {
-				return false;
-			}	
-	}
+		if (ch == '\'') {
+			braceFlag=true;
+			return true;
+		}
+		return true;
 	}
 private:
 	bool flagConvert;
-	int flagBrace;
+	bool braceFlag;
 };
 
-bool isEnd(std::string::iterator& begin, std::string::iterator& end);
+bool isEnd(std::string::iterator& begin, std::string::iterator end);
 #endif
