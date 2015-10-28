@@ -1,0 +1,32 @@
+#ifndef _CATALOGMANAGER_H_
+#define _CATALOGMANAGER_H_
+
+#include "../Definition.h"
+#include <string>
+
+class BufferManager;
+
+class CatalogManager{
+public: 
+	static CatalogManager *getCatalogManager();
+	CatalogManager();
+	~CatalogManager();
+	void createTableCatalog(const Table& table);
+	void deleteTableCatalog(const std::string& tableName);
+	Table getTable(const std::string& tableName);
+	std::string getIndexName(const std::string& attribute, const std::string& tableName);
+	std::string getFileNameFromIndexName(const std::string& indexName, const std::string& fileName);
+	
+	void deleteIndexCatalog(const std::string& indexName);
+private: 
+	BufferManager* bm;
+	BYTE* saveData(const Data& data, BYTE* ptr);
+	BYTE* readData(Data& data, BYTE* ptr);
+	BYTE* readString(std::string& s, BYTE* ptr);
+	void regTable(std::string& s);
+	void deRegTable(std::string& s);
+	bool isTableExist(std::string& s);
+	bool isEnd(BYTE* ptr);
+};
+
+#endif
