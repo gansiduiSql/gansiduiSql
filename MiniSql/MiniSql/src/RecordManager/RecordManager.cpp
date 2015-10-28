@@ -124,7 +124,7 @@ void RecordManager::insertValues(const string& tableName, const list<string>& va
 	vector<Data> tableVec = table.getTableVec();
 	list<string>::const_iterator it = values.cbegin();
 	RecordIterator iter(tableLength, tail);
-	while (iter.hasNext())
+	/*while (iter.hasNext())
 	{
 		stringstream ss;
 		ss << *it;
@@ -171,7 +171,7 @@ void RecordManager::insertValues(const string& tableName, const list<string>& va
 		}
 		iter = iter.next();
 	}
-
+	*/
 
 	//the record can't fit in the remain size of this block
 	//set the tail to the start of next block
@@ -267,6 +267,7 @@ void RecordManager::deleteValues(const string& tableName, const Table& table, li
 			TYPE type = attributeType[attributeName];
 			int length = attributeLength[attributeName];
 			stringstream ss;
+			string s;
 			int intNum;
 			char *ch = new char[length + 1];
 			float floatNum;
@@ -280,7 +281,8 @@ void RecordManager::deleteValues(const string& tableName, const Table& table, li
 			case CHAR:
 				memcpy(ch, buffer + off, length);
 				ch[length] = '\0';
-				flag = isTrue(express, string(ch), type);
+				s = string(ch);
+				flag = isTrue(express, s.substr(0, s.find_first_of(' ')), type);
 				break;
 			case FLOAT:
 				memcpy(&floatNum, buffer + off, length);
@@ -312,6 +314,8 @@ void RecordManager::deleteValues(const string& tableName, const Table& table, li
 
 		it = it.next();
 	}
+
+	bmPtr->writeARecord((BYTE*)(&tail), sizeof(int), tableName, 0);
 }
 
 /*select the a specific attribute name from the table without the field of 'where'
@@ -407,6 +411,7 @@ void RecordManager::selectValues(const list<string>& attributeNames, const strin
 			TYPE type = attributeType[attributeName];
 			int length = attributeLength[attributeName];
 			stringstream ss;
+			string s;
 			int intNum;
 			char *ch = new char[length + 1];
 			float floatNum;
@@ -420,7 +425,8 @@ void RecordManager::selectValues(const list<string>& attributeNames, const strin
 			case CHAR:
 				memcpy(ch, buffer + off, length);
 				ch[length] = '\0';
-				flag = isTrue(express, string(ch), type);
+				s = string(ch);
+				flag = isTrue(express, s.substr(0, s.find_first_of(' ')), type);
 				break;
 			case FLOAT:
 				memcpy(&floatNum, buffer + off, length);
