@@ -136,7 +136,15 @@ void DeleteBlock::execute()
 
 void DeleteBlock::check()
 {
-
+	auto pcb = CatalogManager::getCatalogManager();
+	if(!pcb->isTableExist(tableName))
+		throw CatalogError("The table does not exist");
+	Table table = pcb->getTable(tableName);
+	CheckType ct(&table);
+	for (auto &exp : exps) {
+		exp.leftOperand
+	}
+	
 }
 
 void DeleteBlock::print()
@@ -214,13 +222,12 @@ bool CheckType::isInt(const std::string & s) {
 		return false;
 	}return true;
 }
-/*
+
 bool CheckType::isAttribute(const std::string & s)
 {
 	vector<Data> v = pTable->getTableVec();
-	auto iter = std::find_if(v.begin(), v.end(), [=](vector<Data>::iterator d) {
-		return d->getAttribute() == s;
+	auto iter = std::find_if(v.begin(), v.end(), [=](const Data& d) {
+		return d.getAttribute() == s;
 	});
 	return iter != v.end();
 }
-*/

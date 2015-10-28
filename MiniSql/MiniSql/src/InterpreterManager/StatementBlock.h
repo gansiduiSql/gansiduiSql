@@ -140,5 +140,8 @@ public:
 	bool isAttribute(const std::string& s);
 private:
 	Table* pTable;
-}
+};
+
+
+
 #endif
