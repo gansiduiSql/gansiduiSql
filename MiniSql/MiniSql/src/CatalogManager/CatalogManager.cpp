@@ -15,7 +15,7 @@ CatalogManager * CatalogManager::getCatalogManager()
 CatalogManager::CatalogManager()
 {
 	bm = BufferManager::getBufferManager();
-	loadTable();
+	load();
 }
 
 CatalogManager::~CatalogManager()
@@ -52,28 +52,31 @@ void CatalogManager::createTableCatalog(const Table& table)
 }
 void CatalogManager::deleteTableCatalog(const std::string& tableName)
 {
+	tableLoaded.erase(tableName);
 	deRegTable(tableName);
 	bm->deleteFile(tableName + ".log");
 }
 Table CatalogManager::getTable(const std::string& tableName)
 {
+	if (tableLoaded.find(tableName) != tableLoaded.end()) 
+		return tableLoaded[tableName];
 	BYTE* buffer = bm->fetchARecord(tableName + ".log", 0);
-	
 	if (buffer == NULL)
 		throw runtime_error("The table does not exist!");
-	
 	BYTE* tPtr = buffer;
 	tPtr += FIX_LENGTH;
 
 	vector<Data> tableVec;
 	Data tmpData;
-
 	while (!isEnd(tPtr))
 	{
 		tPtr=readData(tmpData,tPtr);
 		tableVec.push_back(tmpData);
 	}
-	return Table(tableName, tableVec);
+
+	Table ret(tableName, tableVec);
+	tableLoaded[tableName] = ret;
+	return ret;
 }
 std::string	CatalogManager::getIndexName(const std::string& attribute, const std::string& tableName)
 {
@@ -93,7 +96,7 @@ std::string	CatalogManager::getIndexName(const std::string& attribute, const std
 }
 std::string	CatalogManager::getFileNameFromIndexName(const std::string& indexName, const std::string& tableName)
 {
-	BYTE* buffer = bm->fetchARecord("index.index", 0);
+	BYTE* buffer = bm ->fetchARecord("index.index", 0);
 	BYTE* tPtr = buffer;
 	string sIndexName, sAttributeName, sTableName;
 	while (!isEnd(tPtr))
@@ -126,6 +129,7 @@ void CatalogManager::createIndexCatalog(const std::string & indexName, const std
 	*tPtr = 0xff;
 
 	bm->writeARecord(buffer, BLOCKSIZE, "index.index", 0);
+	indices[indexName][tableName] = attributeName;
 }
 void CatalogManager::deleteIndexCatalog(const std::string& indexName)
 {
@@ -157,11 +161,28 @@ void CatalogManager::deleteIndexCatalog(const std::string& indexName)
 		if(headPtr==tPtr)
 			memcpy(deletedPtr, headPtr, FIX_LENGTH * 3);
 		*headPtr = 0xff;
+		indices.erase(indexName);
 	}
 	else
 	throw CatalogError("This index does not exist.");
 
 	bm->writeARecord(buffer, BLOCKSIZE, "index.index", 0);
+	indices.erase(indexName);
+}
+
+bool CatalogManager::isIndexExist(const std::string & indexName)
+{
+	return indices.find(indexName) != indices.end();
+}
+
+bool CatalogManager::checkIndexTableAttribute(const std::string & indexName, const std::string & tableName, const std::string & attributeName)
+{
+	if (indices.find(indexName) != indices.end()) {
+		auto& tmp = indices[indexName];
+		if (tmp.find(tableName) != tmp.end())
+			return true;
+	}
+	return false;
 }
 
 BYTE* CatalogManager::saveData(const Data& data, BYTE* ptr)
@@ -192,7 +213,7 @@ BYTE* CatalogManager::readData(Data& data, BYTE* ptr)
 	return (BYTE*)iPtr;
 }
 
-void CatalogManager::loadTable()
+void CatalogManager::load()
 {
 	BYTE* buffer = bm->fetchARecord("table.table", 0);
 	BYTE* tPtr = buffer;
@@ -200,6 +221,17 @@ void CatalogManager::loadTable()
 	while (!isEnd(tPtr)) {
 		tPtr = readString(tableName, tPtr);
 		tables.insert(tableName);
+	}
+	buffer = bm->fetchARecord("table.table", 0);
+	 buffer = bm->fetchARecord("index.index", 0);
+	tPtr = buffer;
+	string sIndexName, sAttributeName, sTableName;
+	while (!isEnd(tPtr))
+	{
+		tPtr = readString(sIndexName, tPtr);
+		tPtr = readString(sTableName, tPtr);
+		tPtr = readString(sAttributeName, tPtr);
+		indices[sIndexName][sTableName] = sAttributeName;
 	}
 }
 
