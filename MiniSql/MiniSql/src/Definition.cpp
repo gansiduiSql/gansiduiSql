@@ -16,7 +16,17 @@ Table::Table(const std::string& tableName, std::vector<Data>& tableVec)
 	}
 }
 
-void Data::setType(TYPE type) 
+void Table::setTableVec(const std::vector<Data>& tableVec)
+{ 
+	this->tableVec = tableVec; 
+	this->length = 0;
+	for (auto& data : this->tableVec)
+	{
+		this->length += data.getLength();
+	}
+}
+
+void Data::setType(TYPE type)
 { 
 	this->type = type; 
 	if (type == INT)

@@ -19,6 +19,7 @@ BufferManager::BufferManager()
 {
 	openedFilePtr = NULL;
 	openedFileName = "";
+	blocks = new Block[BLOCKNUM];
 }
 
 //default deconstructor
@@ -37,6 +38,7 @@ BufferManager::~BufferManager()
 	}
 	if (openedFilePtr != NULL)
 		fclose(openedFilePtr);
+	delete[] blocks;
 }
 
 /*return a pointer that points to static BufferManager*/

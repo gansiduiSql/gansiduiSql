@@ -62,7 +62,7 @@ private:
 private:
 	FILE *openedFilePtr;
 	std::string openedFileName;
-	Block blocks[BLOCKNUM];
+	Block *blocks;
 	ArrayList substitutionQue;
 };
 

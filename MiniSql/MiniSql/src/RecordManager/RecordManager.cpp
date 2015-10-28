@@ -1,3 +1,10 @@
+/*RecordManager.cpp
+*implenment the function defined in RecordManager.h
+*@author wang_kejie@foxmail.com
+*@date 2015/10/18
+*@version 1.0
+*/
+
 #include "RecordManager.h"
 #include <sstream>
 #include <map>
@@ -74,6 +81,12 @@ bool isTrue(const Expression express, const string& value, TYPE type)
 	}
 }
 
+/*construct three maps from the attribute name to the offset, type, length of the attribute
+*@param	attriuteOffset	a map that map the attribute to the offset
+*@param	attriuteType	a map that map the attribute to the type
+*@param	attriuteLength	a map that map the attribute to the length
+*@return void
+*/
 void constructMap(map<string, int>& attributeOffset, map<string, TYPE>& attributeType, map<string, int>& attributeLength, const Table& table)
 {
 	int offset = 0;
@@ -124,7 +137,7 @@ void RecordManager::insertValues(const string& tableName, const list<string>& va
 	vector<Data> tableVec = table.getTableVec();
 	list<string>::const_iterator it = values.cbegin();
 	RecordIterator iter(tableLength, tail);
-	while (iter.hasNext())
+	/*while (iter.hasNext())
 	{
 		stringstream ss;
 		ss << *it;
@@ -153,14 +166,15 @@ void RecordManager::insertValues(const string& tableName, const list<string>& va
 				memcpy(ch, buffer + off, len);
 				ch[len] = '\0';
 				s = string(ch);
-				if (s == ss.str())
+				//int index = s.find_first_of(' ');
+				if (s.substr(0, s.find_first_of(' ')) == ss.str())
 					throw InsertException(field.getAttribute());
 				break;
 			case FLOAT:
 				memcpy(&floatNum, buffer + off, len);
-				float insertNum;
-				ss >> insertNum;
-				if (floatNum == insertNum)
+				float insertNumf;
+				ss >> insertNumf;
+				if (floatNum == insertNumf)
 					throw InsertException(field.getAttribute());
 				break;
 			default:
@@ -170,7 +184,7 @@ void RecordManager::insertValues(const string& tableName, const list<string>& va
 		}
 		iter = iter.next();
 	}
-
+	*/
 
 	//the record can't fit in the remain size of this block
 	//set the tail to the start of next block
@@ -266,6 +280,7 @@ void RecordManager::deleteValues(const string& tableName, const Table& table, li
 			TYPE type = attributeType[attributeName];
 			int length = attributeLength[attributeName];
 			stringstream ss;
+			string s;
 			int intNum;
 			char *ch = new char[length + 1];
 			float floatNum;
@@ -279,7 +294,8 @@ void RecordManager::deleteValues(const string& tableName, const Table& table, li
 			case CHAR:
 				memcpy(ch, buffer + off, length);
 				ch[length] = '\0';
-				flag = isTrue(express, string(ch), type);
+				s = string(ch);
+				flag = isTrue(express, s.substr(0, s.find_first_of(' ')), type);
 				break;
 			case FLOAT:
 				memcpy(&floatNum, buffer + off, length);
@@ -291,7 +307,10 @@ void RecordManager::deleteValues(const string& tableName, const Table& table, li
 			}
 			//there is a expression that not satisfied
 			if (flag == false)
+			{
+				it = it.next();
 				break;
+			}
 		}
 		
 		//if the expression satisfys and move the last record to here and rewrite it
@@ -308,6 +327,8 @@ void RecordManager::deleteValues(const string& tableName, const Table& table, li
 
 		it = it.next();
 	}
+
+	bmPtr->writeARecord((BYTE*)(&tail), sizeof(int), tableName, 0);
 }
 
 /*select the a specific attribute name from the table without the field of 'where'
@@ -403,6 +424,7 @@ void RecordManager::selectValues(const list<string>& attributeNames, const strin
 			TYPE type = attributeType[attributeName];
 			int length = attributeLength[attributeName];
 			stringstream ss;
+			string s;
 			int intNum;
 			char *ch = new char[length + 1];
 			float floatNum;
@@ -416,7 +438,8 @@ void RecordManager::selectValues(const list<string>& attributeNames, const strin
 			case CHAR:
 				memcpy(ch, buffer + off, length);
 				ch[length] = '\0';
-				flag = isTrue(express, string(ch), type);
+				s = string(ch);
+				flag = isTrue(express, s.substr(0, s.find_first_of(' ')), type);
 				break;
 			case FLOAT:
 				memcpy(&floatNum, buffer + off, length);
@@ -428,7 +451,10 @@ void RecordManager::selectValues(const list<string>& attributeNames, const strin
 			}
 			//there is a expression that not satisfied
 			if (flag == false)
+			{
+				it = it.next();
 				break;
+			}
 		}
 
 		//all expresion satified and add that record into the result
@@ -442,8 +468,10 @@ void RecordManager::selectValues(const list<string>& attributeNames, const strin
 				int length = attributeLength[attributeName];
 				stringstream ss;
 				int intNum;
-				string s;
+				char *ch = new char[length + 1];
 				float floatNum;
+				//swith the type of the attribute
+				//push the into the recordbuffer in string type to return
 				switch (type)
 				{
 				case INT:
@@ -452,8 +480,9 @@ void RecordManager::selectValues(const list<string>& attributeNames, const strin
 					vec.push_back(ss.str());
 					break;
 				case CHAR:
-					memcpy(&s, buffer + off, length);
-					vec.push_back(s);
+					memcpy(ch, buffer + off, length);
+					ch[length] = '\0';
+					vec.push_back(string(ch));
 					break;
 				case FLOAT:
 					memcpy(&floatNum, buffer + off, length);
@@ -465,7 +494,7 @@ void RecordManager::selectValues(const list<string>& attributeNames, const strin
 				}
 			}
 			recordBuffer.push_back(vec);
+			it = it.next();
 		}
-		it = it.next();
 	}
 }

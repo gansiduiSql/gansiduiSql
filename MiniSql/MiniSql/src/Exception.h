@@ -34,5 +34,11 @@ private:
 };
 
 
-class 
+class CatalogError : public std::exception {
+public:
+	CatalogError(std::string s):errorInfo(s){}
+	const char *what()const { return errorInfo.c_str(); }
+private:
+	std::string errorInfo;
+};
 #endif
