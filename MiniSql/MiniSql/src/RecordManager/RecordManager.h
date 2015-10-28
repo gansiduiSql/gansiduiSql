@@ -12,7 +12,8 @@ class InsertException : public std::exception
 private:
 	std::string errlog;
 public:
-	InsertException(string attributeName){ errlog = "Insert error! " + attributeName + " is a primary(unique) key!"; }
+	InsertException(const std::string attributeName){ errlog = "Insert error! " + attributeName + " is a primary(unique) key!"; }
+	virtual const char* what(){ return errlog.c_str(); }
 };
 
 class RecordIterator
@@ -20,7 +21,7 @@ class RecordIterator
 public:
 	RecordIterator(int len, int tail){ nowOffset = BLOCKSIZE; recordLength = len; this->tail = tail; }
 	RecordIterator(int off, int len, int tail){ nowOffset = off; recordLength = len; this->tail = tail; }
-	int setTail(int tail){ this->tail = tail; }
+	void setTail(int tail){ this->tail = tail; }
 	RecordIterator& next(){
 		nowOffset += recordLength;
 		if (nowOffset%BLOCKSIZE + recordLength > BLOCKSIZE)

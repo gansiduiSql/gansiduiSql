@@ -153,14 +153,15 @@ void RecordManager::insertValues(const string& tableName, const list<string>& va
 				memcpy(ch, buffer + off, len);
 				ch[len] = '\0';
 				s = string(ch);
-				if (s == ss.str())
+				//int index = s.find_first_of(' ');
+				if (s.substr(0, s.find_first_of(' ')) == ss.str())
 					throw InsertException(field.getAttribute());
 				break;
 			case FLOAT:
 				memcpy(&floatNum, buffer + off, len);
-				float insertNum;
-				ss >> insertNum;
-				if (floatNum == insertNum)
+				float insertNumf;
+				ss >> insertNumf;
+				if (floatNum == insertNumf)
 					throw InsertException(field.getAttribute());
 				break;
 			default:
@@ -291,7 +292,10 @@ void RecordManager::deleteValues(const string& tableName, const Table& table, li
 			}
 			//there is a expression that not satisfied
 			if (flag == false)
+			{
+				it = it.next();
 				break;
+			}
 		}
 		
 		//if the expression satisfys and move the last record to here and rewrite it
@@ -428,7 +432,10 @@ void RecordManager::selectValues(const list<string>& attributeNames, const strin
 			}
 			//there is a expression that not satisfied
 			if (flag == false)
+			{
+				it = it.next();
 				break;
+			}
 		}
 
 		//all expresion satified and add that record into the result
@@ -442,8 +449,10 @@ void RecordManager::selectValues(const list<string>& attributeNames, const strin
 				int length = attributeLength[attributeName];
 				stringstream ss;
 				int intNum;
-				string s;
+				char *ch = new char[length + 1];
 				float floatNum;
+				//swith the type of the attribute
+				//push the into the recordbuffer in string type to return
 				switch (type)
 				{
 				case INT:
@@ -452,8 +461,9 @@ void RecordManager::selectValues(const list<string>& attributeNames, const strin
 					vec.push_back(ss.str());
 					break;
 				case CHAR:
-					memcpy(&s, buffer + off, length);
-					vec.push_back(s);
+					memcpy(ch, buffer + off, length);
+					ch[length] = '\0';
+					vec.push_back(string(ch));
 					break;
 				case FLOAT:
 					memcpy(&floatNum, buffer + off, length);
@@ -465,7 +475,7 @@ void RecordManager::selectValues(const list<string>& attributeNames, const strin
 				}
 			}
 			recordBuffer.push_back(vec);
+			it = it.next();
 		}
-		it = it.next();
 	}
 }
