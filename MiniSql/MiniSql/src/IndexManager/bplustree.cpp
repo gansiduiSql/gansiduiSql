@@ -454,6 +454,8 @@ BPlusTreeLeaf::~BPlusTreeLeaf()
 
 BPlusPointer BPlusTreeLeaf::addKey(RecordPointer p, ElementType s)
 {
+	if (this->containsKey(s))
+		this->ptrToChild[indexOf(s)] = p;/*If already has the key, updates its pointer*/
 	insertKey(p, s, LEFT);
 	return this->ptrToParent == NULL ? this : this->ptrToParent;;
 }
@@ -736,7 +738,7 @@ void BPlusTreeLeaf::traverse(int level)
 /// \param BPlusTreeIndex
 ///
 ////////////////////////////////////////////////////////////////////////////////////////
-BPlusTreeIndex::BPlusTreeIndex(int maxKeyNum, TYPE type) :MAXKEYNUMBER(maxKeyNum), type(type)
+BPlusTreeIndex::BPlusTreeIndex(int maxKeyNum, int attributeLength, int offsetInFile, TYPE type) :MAXKEYNUMBER(maxKeyNum),length(attributeLength),offset(offsetInFile),type(type)
 {
 	Root = new BPlusTreeLeaf(MAXKEYNUMBER);
 }

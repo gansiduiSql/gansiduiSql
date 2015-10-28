@@ -33,7 +33,7 @@ IndexManager::~IndexManager()
 	{
 		saveIndexToFile(iter->first, iter->second->getAttributeType());
 		delete iter->second;
-		indexLibrary.erase(iter);
+		//indexLibrary.erase(iter);
 	}
 }
 /* @brief Drop the index named string indexName, delete the BplusTree
@@ -82,7 +82,7 @@ void IndexManager::createIndex(const string &indexName, Data &attribute, const i
 	}
 
 	/*Create an index B+ Tree and insert it to index library*/
-	BPlusTreeIndex *newIndex = new BPlusTreeIndex(bPlusFanOut, attribute.getType());
+	BPlusTreeIndex *newIndex = new BPlusTreeIndex(bPlusFanOut, attribute.getLength(), attribute.getOffset(), attribute.getType());
 	indexLibrary[indexName] = newIndex;
 	ADDRESS endOffset = getEndOffset(fileName);
 
@@ -131,7 +131,7 @@ void IndexManager::createIndexFromFile(const string &indexName)throw(exception)
 	try
 	{
 		INDEXFILEHEADER infh = *(INDEXFILEHEADER *)(bufferManager->fetchARecord(indexName, 0));
-		indexLibrary[indexName] = new BPlusTreeIndex(infh.fanOut, infh.type);
+		indexLibrary[indexName] = new BPlusTreeIndex(infh.fanOut, infh.attributeLength, infh.offsetInRecord, infh.type);
 		ADDRESS curser = HEADER_BLOCK_OFFSET;
 		for (int i = 0; i < infh.elementCount; i++)
 		{
@@ -157,12 +157,14 @@ void IndexManager::saveIndexToFile(const string &indexName, const TYPE &type)
 	for (i = 0; i < indexName.length(); i++)
 		infh.indexName[i] = indexName[i];
 	infh.indexName[i] = 0;/*Write the indexName to the header*/
+	infh.attributeLength = indexLibrary[indexName]->getAttributeLength();
+	infh.offsetInRecord = indexLibrary[indexName]->getOffsetInRecord();
 	infh.type = type;/*Write the keyValue type to the header*/
 	/*Travser leafnode and store data*/
 	BPlusLeaf currentLeaf = indexLibrary[indexName]->returnFirstLeafNode();
 	infh.fanOut = currentLeaf->getKeyNum();/*my fan out is defined by key number*/
 	ADDRESS curser = HEADER_BLOCK_OFFSET;
-	int  elementCount;
+	int  elementCount=0;
 
 	bufferManager->createFile(indexName);
 	while (currentLeaf != NULL)/*traverse to the end leaf*/
@@ -224,7 +226,7 @@ void IndexManager::deleteValues(const string &indexName, list<Expression> expres
 	analysisExpression(lowerbound, upperbound, equal, expressions, type);
 	if (equal)
 	{
-		deleteRecordFromFile(fileName, indexLibrary[indexName]->findKey(upperbound.value), recordLength);/*delete the record from data file*/
+		deleteRecordFromFile(indexName, fileName, indexLibrary[indexName]->findKey(upperbound.value), recordLength);/*delete the record from data file*/
 		indexLibrary[indexName]->removeKey(upperbound.value);/*remove it from the Index*/
 	}
 	else
@@ -232,48 +234,57 @@ void IndexManager::deleteValues(const string &indexName, list<Expression> expres
 		vector<string> keyContainer;
 		BPlusLeaf currentLeaf = indexLibrary[indexName]->returnLeafNode(lowerbound.value);
 		BPlusLeaf endLeaf = indexLibrary[indexName]->returnLeafNode(upperbound.value);
-		int elementCount = 0;
-
-		if (lowerbound.equal)/*The delete the remaining keys from the head node*/
-		for (int i = currentLeaf->indexOf(lowerbound.value); i < currentLeaf->getElementCount() - 1; i++)/*from the key to the last node*/
+		if (currentLeaf == endLeaf)
 		{
-			deleteRecordFromFile(fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
-			keyContainer[elementCount] = currentLeaf->getKeyValue(i);
-			elementCount++;
-		}
-		else
-		for (int i = currentLeaf->indexOf(lowerbound.value) + 1; i < currentLeaf->getElementCount() - 1; i++)/*from the next key to the last node*/
-		{
-			deleteRecordFromFile(fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
-			keyContainer[elementCount] = currentLeaf->getKeyValue(i);
-			elementCount++;
-		}
-
-		for (; currentLeaf != endLeaf; currentLeaf = currentLeaf->getPtrToSinling())
-		{  /*delete every record except that of the head node and the last node from the file, but not from the tree, instead record every deleted key*/
-			for (int i = 0; i < currentLeaf->getElementCount(); i++)
+			int start = currentLeaf->indexOf(lowerbound.value);
+			int end = currentLeaf->indexOf(upperbound.value);
+			if (lowerbound.equal == false)
+				start++;
+			if (upperbound.equal == false)
+				end--;
+			for (int i = start; i <= end; i++)
 			{
-				deleteRecordFromFile(fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
-				keyContainer[elementCount] = currentLeaf->getKeyValue(i);
-				elementCount++;
+				deleteRecordFromFile(indexName, fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
+				keyContainer.push_back(currentLeaf->getKeyValue(i));
 			}
 		}
-
-		if (upperbound.equal)/*The delete the remaining keys from the end node*/
-		for (int i = 0; i <= endLeaf->indexOf(upperbound.value); i++)/*from start to the upperbound key*/
-		{
-			deleteRecordFromFile(fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
-			keyContainer[elementCount] = currentLeaf->getKeyValue(i);
-			elementCount++;
-		}
 		else
-		for (int i = 0; i < endLeaf->indexOf(upperbound.value); i++)/*from start to the previous key of upper bound*/
 		{
-			deleteRecordFromFile(fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
-			keyContainer[elementCount] = currentLeaf->getKeyValue(i);
-			elementCount++;
-		}
+			if (lowerbound.equal)/*The delete the remaining keys from the head node*/
+			for (int i = currentLeaf->indexOf(lowerbound.value); i < currentLeaf->getElementCount(); i++)/*from the key to the last node*/
+			{
+				deleteRecordFromFile(indexName, fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
+				keyContainer.push_back(currentLeaf->getKeyValue(i));
+			}
+			else
+			for (int i = currentLeaf->indexOf(lowerbound.value) + 1; i < currentLeaf->getElementCount(); i++)/*from the next key to the last node*/
+			{
+				deleteRecordFromFile(indexName, fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
+				keyContainer.push_back(currentLeaf->getKeyValue(i));
+			}
+			currentLeaf = currentLeaf->getPtrToSinling();
+			for (; currentLeaf != endLeaf; currentLeaf = currentLeaf->getPtrToSinling())
+			{  /*delete every record except that of the head node and the last node from the file, but not from the tree, instead record every deleted key*/
+				for (int i = 0; i < currentLeaf->getElementCount(); i++)
+				{
+					deleteRecordFromFile(indexName, fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
+					keyContainer.push_back(currentLeaf->getKeyValue(i));
+				}
+			}
 
+			if (upperbound.equal)/*The delete the remaining keys from the end node*/
+			for (int i = 0; i <= endLeaf->indexOf(upperbound.value); i++)/*from start to the upperbound key*/
+			{
+				deleteRecordFromFile(indexName, fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
+				keyContainer.push_back(currentLeaf->getKeyValue(i));
+			}
+			else
+			for (int i = 0; i < endLeaf->indexOf(upperbound.value); i++)/*from start to the previous key of upper bound*/
+			{
+				deleteRecordFromFile(indexName, fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
+				keyContainer.push_back(currentLeaf->getKeyValue(i));
+			}
+		}
 		for (unsigned int i = 0; i < keyContainer.size(); i++)
 			indexLibrary[indexName]->removeKey(keyContainer[i]);
 	}
@@ -351,7 +362,7 @@ ADDRESS IndexManager::getEndOffset(const string &fileName)
 void IndexManager::renewEndOffset(const string &fileName, const int &recordLength)
 {
 	ADDRESS renewedOffset = getEndOffset(fileName) - recordLength;
-	bufferManager->writeARecord((BYTE *)&renewedOffset, recordLength, fileName, HEADER_BLOCK_OFFSET);
+	bufferManager->writeARecord((BYTE *)&renewedOffset, recordLength, fileName, 0);
 }
 
 /* @brief Analyze given expression and set the lower or upperbound of this expression
@@ -474,17 +485,54 @@ void IndexManager::analysisExpression(bound &dstLowerBound, bound &dstUpperBound
 	return;
 }
 
-/* @brief Delete file on the DBdata file and renew the header block in file
+/* @brief Delete the record on file and put the last record into the deleted position
 * @param indexName Name
 * @param recordOffset The offset of the record to be deleted
 * @param recordLength Length of the record
 * @param fileName Name of the DBdata file
 * @return void
 */
-void IndexManager::deleteRecordFromFile(const string &fileName, const int &recordOffset, const int &recordLength)
+void IndexManager::deleteRecordFromFile(const string &indexName, const string &fileName, const ADDRESS &recordOffset, const int &recordLength)
 {
+	/*Insert the keyvalue of end record to Index*/
+	BPlusTreeIndex* currentIndex = indexLibrary[indexName];
+	if (recordOffset == getEndOffset(fileName) - recordLength)
+	{
+		renewEndOffset(fileName, recordLength);
+		return;
+	}
+
+	BYTE* endRecordKey = bufferManager->fetchARecord(fileName, getEndOffset(fileName)-recordLength+indexLibrary[indexName]->getOffsetInRecord());
+	string recordString = "";
+	char* tmpRecordString = new char[currentIndex->getAttributeLength() + 1];
+	int tmpRecordInt = 0;
+	float tmpRecordFloat = 0;
+	stringstream ss;
+	switch (currentIndex->getAttributeType())
+	{
+	case CHAR:
+		memcpy(tmpRecordString, endRecordKey, currentIndex->getAttributeLength());
+		tmpRecordString[currentIndex->getAttributeLength()] = 0;
+		recordString = tmpRecordString;
+		currentIndex->addKey(recordOffset, recordString); /*Renew the offset of the last record*/
+		break;
+	case INT:
+		memcpy(&tmpRecordInt, endRecordKey, sizeof(int));
+		ss << tmpRecordInt;
+		ss >> recordString;
+		currentIndex->addKey(recordOffset, toAlignedInt(recordString));
+		break;
+	case FLOAT:
+		memcpy(&tmpRecordFloat, endRecordKey, sizeof(float));
+		ss << tmpRecordFloat;
+		ss >> recordString;
+		currentIndex->addKey(recordOffset, toAlignedFloat(recordString));
+		break;
+	default:
+		break;
+	}
+	bufferManager->writeARecord(bufferManager->fetchARecord(fileName, getEndOffset(fileName) - recordLength), recordLength, fileName, recordOffset);/*Write the last record of data on the space of the deleted record*/
 	renewEndOffset(fileName, recordLength); /*renewedOffset=endOffset - recordLength*/
-	bufferManager->writeARecord(bufferManager->fetchARecord(fileName, getEndOffset(fileName)), recordLength, fileName, recordOffset);/*Write the last record of data on the space of the deleted record*/
 }
 
 /* @brief  Casting Int to string, the string length INT_STRING_SIZE
