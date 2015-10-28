@@ -60,10 +60,10 @@ public:
 	const std::string& getTableName()const { return tableName; }
 	void setTableName(const std::string& tableName) { this->tableName = tableName; }
 	const std::vector<Data>& getTableVec()const { return tableVec; }
-	void setTableVec(const std::vector<Data>& tableVec) { this->tableVec = tableVec; }
+	void setTableVec(const std::vector<Data>& tableVec);
 	int getPrimaryKeyIndex()const { return primaryKeyIndex; }
 	void setPrimaryKeyIndex(int primaryKeyIndex) { this->primaryKeyIndex = primaryKeyIndex; }
-	int getLength()const { return length; }
+	int getLength()const{return length;}
 	void pushData(Data& data) { tableVec.push_back(data); }
 	~Table(){}
 private:
@@ -84,7 +84,8 @@ private:
 	bool primaryFlag;
 public:
 	Data(){}
-	Data(const std::string& attribute, TYPE type, int length, bool isUnique, bool isPrimary);
+	Data(const std::string& attribute, TYPE type, int length, bool isUnique, bool isPrimary)
+		:attribute(attribute), type(type), length(length), uniqueFlag(isUnique) ,primaryFlag(isPrimary){};
 	const std::string& getAttribute()const { return attribute; }
 	void setAttribute(const std::string& attr) { attribute = attr; }
 	TYPE getType()const { return type; }
