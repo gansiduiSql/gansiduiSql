@@ -19,7 +19,7 @@ public:
 	std::string getIndexName(const std::string& attribute, const std::string& tableName);
 	std::string getFileNameFromIndexName(const std::string& indexName, const std::string& fileName);
 	void createIndexCatalog(const std::string& indexName, const std::string& tableName, const std::string& attributeName);
-	vector<std::string> getIndexVecFromTableName(const std::string& tableName);
+	std::vector<std::string> getIndexVecFromTableName(const std::string& tableName);
 	void deleteIndexCatalog(const std::string& indexName);
 	bool isIndexExist(const std::string& indexName);
 	bool isTableExist(const std::string& tableName);
