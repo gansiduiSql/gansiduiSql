@@ -90,7 +90,11 @@ void IndexManager::createIndex(const string &indexName, Data &attribute, const i
 	/*Get record from bufferManager and create index*/
 	for (ADDRESS recordOffset = HEADER_BLOCK_OFFSET; recordOffset < endOffset; recordOffset += recordLength)
 	{
-		BYTE* recordData = bufferManager->fetchARecord(fileName, recordOffset + attribute.getOffset());/*point to the start of the attribute*/
+		BYTE* recordData;
+		if ((recordOffset / 4096 + 1) * 4096 - recordOffset < recordLength&&recordOffset % 4096 != 0)
+			recordOffset = (recordOffset / 4096 + 1) * 4096;
+		else
+			recordData = bufferManager->fetchARecord(fileName, recordOffset + attribute.getOffset());/*point to the start of the attribute*/
 		string recordString = "";
 		char* tmpRecordString = new char[attribute.getLength() + 1];
 		int tmpRecordInt = 0;
@@ -136,7 +140,9 @@ void IndexManager::createIndexFromFile(const string &indexName)
 		ADDRESS curser = HEADER_BLOCK_OFFSET;
 		for (int i = 0; i < infh.elementCount; i++)
 		{
-			string keyValue = (char *)bufferManager->fetchARecord(indexName, curser + sizeof(int));
+			if ((curser / 4096 + 1) * 4096 - curser < infh.attributeLength&&curser % 4096 != 0)
+				curser = (curser / 4096 + 1) * 4096;
+				string keyValue = (char *)bufferManager->fetchARecord(indexName, curser + sizeof(int));
 			indexLibrary[indexName]->addKey(*(int *)bufferManager->fetchARecord(indexName, curser), keyValue);
 			curser += keyValue.length() + 1 + sizeof(int);
 		}
