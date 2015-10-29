@@ -139,11 +139,11 @@ void IndexManager::createIndexFromFile(const string &indexName)
 		ADDRESS curser = HEADER_BLOCK_OFFSET;
 		for (int i = 0; i < infh.elementCount; i++)
 		{
-			if ((curser / 4096 + 1) * 4096 - curser < infh.attributeLength + sizeof(int) && curser % 4096 != 0)
+			if ((curser / 4096 + 1) * 4096 - curser < infh.attributeLength + 1 + sizeof(ADDRESS) && curser % 4096 != 0)
 				curser = (curser / 4096 + 1) * 4096;/*eliminate the tail of a block*/
-			string keyValue = (char *)bufferManager->fetchARecord(indexName, curser + sizeof(int));
-			indexLibrary[indexName]->addKey(*(int *)bufferManager->fetchARecord(indexName, curser), keyValue);
-			curser += infh.attributeLength + sizeof(int);
+			string keyValue = (char *)bufferManager->fetchARecord(indexName, curser + sizeof(ADDRESS));
+			indexLibrary[indexName]->addKey(*(ADDRESS *)bufferManager->fetchARecord(indexName, curser), keyValue);
+			curser += infh.attributeLength + 1 + sizeof(ADDRESS);
 		}
 	}
 	catch (exception ex)
@@ -164,7 +164,7 @@ void IndexManager::saveIndexToFile(const string &indexName, const TYPE &type)
 	for (i = 0; i < indexName.length(); i++)
 		infh.indexName[i] = indexName[i];
 	infh.indexName[i] = 0;/*Write the indexName to the header*/
-	infh.attributeLength = indexLibrary[indexName]->getAttributeLength() + 1;
+	infh.attributeLength = indexLibrary[indexName]->getAttributeLength();
 	infh.offsetInRecord = indexLibrary[indexName]->getOffsetInRecord();
 	infh.type = type;/*Write the keyValue type to the header*/
 	/*Travser leafnode and store data*/
@@ -180,13 +180,13 @@ void IndexManager::saveIndexToFile(const string &indexName, const TYPE &type)
 		{/*for each node, store offset and keyvalue*/
 			ADDRESS recordPointer = currentLeaf->getPtrToChild(i);
 			ElementType keyValue = currentLeaf->getKeyValue(i);
-			if ((curser / 4096 + 1) * 4096 - curser < (infh.attributeLength + sizeof(ADDRESS)) && curser % 4096 != 0)
+			if ((curser / 4096 + 1) * 4096 - curser < (infh.attributeLength + 1 + sizeof(ADDRESS)) && curser % 4096 != 0)
 				curser = (curser / 4096 + 1) * 4096;/*eliminate the tail of a block*/
 			keyValue += '\0';
 			bufferManager->writeARecord((BYTE *)&recordPointer, sizeof(recordPointer), indexName, curser);
 			curser += sizeof(ADDRESS);
 			bufferManager->writeARecord((BYTE *)keyValue.c_str(), keyValue.length(), indexName, curser);
-			curser += keyValue.length();
+			curser += infh.attributeLength + 1;
 			elementCount++;
 		}
 		currentLeaf = currentLeaf->getPtrToSinling();/*Go to next node*/

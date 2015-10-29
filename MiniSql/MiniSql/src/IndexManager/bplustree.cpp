@@ -28,7 +28,7 @@ BPlusTreeNode::~BPlusTreeNode()
 	delete[] keyValue;
 }
 
-BPlusPointer BPlusTreeNode::addKey(RecordPointer p, ElementType s)
+BPlusPointer BPlusTreeNode::addKey(ADDRESS p, ElementType s)
 {
 	returnLeafNode(s)->addKey(p, s);
 	if (this->ptrToParent != NULL)
@@ -46,7 +46,7 @@ BPlusPointer BPlusTreeNode::removeKey(ElementType s)
 		return this;
 }
 
-RecordPointer BPlusTreeNode::findKey(ElementType s)
+ADDRESS BPlusTreeNode::findKey(ElementType s)
 {
 	return returnLeafNode(s)->findKey(s);
 }
@@ -439,7 +439,7 @@ void BPlusTreeNode::setParentNode(BPlusPointer p)
 ////////////////////////////////////////////////////////////////////////////////////////
 BPlusTreeLeaf::BPlusTreeLeaf(int keyNumber) :BPlusTreeNode(keyNumber)
 {
-	ptrToChild = new RecordPointer[KEYNUM];
+	ptrToChild = new ADDRESS[KEYNUM];
 	for (int i = 0; i < KEYNUM; i++)
 	{
 		ptrToChild[i] = NULL;
@@ -452,7 +452,7 @@ BPlusTreeLeaf::~BPlusTreeLeaf()
 	delete[] ptrToChild;
 }
 
-BPlusPointer BPlusTreeLeaf::addKey(RecordPointer p, ElementType s)
+BPlusPointer BPlusTreeLeaf::addKey(ADDRESS p, ElementType s)
 {
 	if (this->containsKey(s))
 		this->ptrToChild[indexOf(s)] = p;/*If already has the key, updates its pointer*/
@@ -460,7 +460,7 @@ BPlusPointer BPlusTreeLeaf::addKey(RecordPointer p, ElementType s)
 	return this->ptrToParent == NULL ? this : this->ptrToParent;;
 }
 
-void BPlusTreeLeaf::insertKey(RecordPointer p, ElementType s, int direction)
+void BPlusTreeLeaf::insertKey(ADDRESS p, ElementType s, int direction)
 {
 	bool newParentCreated = false;
 	if (isFull())                             //若该node已满
@@ -475,7 +475,7 @@ void BPlusTreeLeaf::insertKey(RecordPointer p, ElementType s, int direction)
 		newNode->setParentNode(this->ptrToParent);          //指向父节点
 
 		ElementType* tmpKeyValue = new ElementType[KEYNUM + 1];          //创建两个多一个位置的数组
-		RecordPointer* tmpPtr = new RecordPointer[KEYNUM + 1];
+		ADDRESS* tmpPtr = new ADDRESS[KEYNUM + 1];
 
 		for (int i = 0; i < KEYNUM; i++)                 //将Key全部移出
 		{
@@ -558,7 +558,7 @@ BPlusPointer BPlusTreeLeaf::removeKey(ElementType s)
 	else return ptrToParent;
 }
 
-BPlusPointer BPlusTreeLeaf::deleteKey(RecordPointer p)
+BPlusPointer BPlusTreeLeaf::deleteKey(ADDRESS p)
 {
 	int position = indexOf(p);
 	int i;
@@ -609,7 +609,7 @@ BPlusPointer BPlusTreeLeaf::deleteKey(RecordPointer p)
 	return this;
 }
 
-RecordPointer BPlusTreeLeaf::findKey(ElementType s)
+ADDRESS BPlusTreeLeaf::findKey(ElementType s)
 {
 	for (int i = 0; keyValue[i] != ""; i++)
 	{
@@ -621,7 +621,7 @@ RecordPointer BPlusTreeLeaf::findKey(ElementType s)
 
 void BPlusTreeLeaf::reDistributePtr(BPlusLeaf sibPtr)
 {
-	RecordPointer* tmpPtr = new RecordPointer[POINTERNUM * 2];
+	ADDRESS* tmpPtr = new ADDRESS[POINTERNUM * 2];
 	ElementType* tmpKeyValue = new ElementType[KEYNUM * 2];
 	int SIBELEMENT = sibPtr->getElementCount();
 	int THISELEMENT = ELEMENTCOUNT;
@@ -693,12 +693,12 @@ void BPlusTreeLeaf::makeEmpty()
 	}
 }
 
-RecordPointer BPlusTreeLeaf::getPtrToChild(int index)
+ADDRESS BPlusTreeLeaf::getPtrToChild(int index)
 {
 	return ptrToChild[index];
 }
 
-int BPlusTreeLeaf::indexOf(RecordPointer s)
+int BPlusTreeLeaf::indexOf(ADDRESS s)
 {
 	int i;
 	for (i = 0; i < KEYNUM; i++)
@@ -748,7 +748,7 @@ BPlusTreeIndex::~BPlusTreeIndex()
 	delete Root;
 }
 
-void BPlusTreeIndex::addKey(RecordPointer p, ElementType s)
+void BPlusTreeIndex::addKey(ADDRESS p, ElementType s)
 {
 	try
 	{
@@ -772,7 +772,7 @@ void BPlusTreeIndex::removeKey(ElementType s)
 	}
 }
 
-RecordPointer BPlusTreeIndex::findKey(ElementType s)
+ADDRESS BPlusTreeIndex::findKey(ElementType s)
 {
 	if (s == "-ffff_ffff" || s == "ffff_ffff")
 		return -2;
