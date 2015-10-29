@@ -5,17 +5,47 @@
 #include <cstring>
 using namespace std;
 #define FIX_LENGTH 16
-
+/*
+@name: getCatalogManager
+@function: return a unique ptr to CatalogManager
+*/
 CatalogManager * CatalogManager::getCatalogManager()
 {
 	static CatalogManager cm;
 	return &cm;
 }
 
+/*
+@name: CatalogManager
+@func: get ptr to bufferManager and load table info and index info
+*/
 CatalogManager::CatalogManager()
 {
 	bm = BufferManager::getBufferManager();
 	load();
+}
+
+
+void CatalogManager::createIndex(const std::string & indexName, const std::string & tableName, const std::string & attributeName)
+{
+	BYTE* buffer = bm->fetchARecord("index.index", 0);
+	BYTE* tPtr = buffer;
+	string sIndexName, sAttributeName, sTableName;
+	while (!isEnd(tPtr))
+	{
+		tPtr = readString(sIndexName, tPtr);
+		tPtr = readString(sTableName, tPtr);
+		tPtr = readString(sAttributeName, tPtr);
+		if (sIndexName == indexName/* || sTableName == tableName&&sAttributeName == attributeName*/)
+			throw CatalogError("cannot create the index(" + indexName + ") ");
+	}
+	tPtr = saveString(indexName, tPtr);
+	tPtr = saveString(tableName, tPtr);
+	tPtr = saveString(attributeName, tPtr);
+	*tPtr = 0xff;
+
+	bm->writeARecord(buffer, BLOCKSIZE, "index.index", 0);
+	indices[indexName][tableName] = attributeName;
 }
 
 CatalogManager::~CatalogManager()
@@ -80,16 +110,12 @@ Table CatalogManager::getTable(const std::string& tableName)
 }
 std::string	CatalogManager::getIndexName(const std::string& attribute, const std::string& tableName)
 {
-	BYTE* buffer = bm->fetchARecord("index.index", 0);
-	BYTE* tPtr = buffer;
-	string sIndexName,sAttributeName,sTableName;
-	while (!isEnd(tPtr))
-	{
-		tPtr = readString(sIndexName, tPtr);
-		tPtr = readString(sTableName, tPtr);
-		tPtr = readString(sAttributeName, tPtr);
-		if (sTableName == tableName&&sAttributeName == attribute)
-			return sIndexName;
+	for (auto& map1 : indices) {
+		for (auto& map2 : map1.second) {
+			if (map2.first == tableName&& map2.second == attribute) {
+				return map1.first;
+			}
+		}
 	}
 	throw CatalogError("This index does not exist.");
 	return "";
@@ -110,26 +136,17 @@ std::string	CatalogManager::getFileNameFromIndexName(const std::string& indexNam
 	throw CatalogError("This file does not exist.");
 	return "";
 }
+
 void CatalogManager::createIndexCatalog(const std::string & indexName, const std::string & tableName, const std::string & attributeName)
 {
-	BYTE* buffer = bm->fetchARecord("index.index", 0);
-	BYTE* tPtr = buffer;
-	string sIndexName, sAttributeName, sTableName;
-	while (!isEnd(tPtr))
-	{
-		tPtr = readString(sIndexName, tPtr);
-		tPtr = readString(sTableName, tPtr);
-		tPtr = readString(sAttributeName, tPtr);
-		if (sIndexName == indexName/* || sTableName == tableName&&sAttributeName == attributeName*/)
-			throw CatalogError("cannot create the index(" + indexName + ") ");
-	}
-	tPtr = saveString(indexName, tPtr);
-	tPtr = saveString(tableName, tPtr);
-	tPtr = saveString(attributeName, tPtr);
-	*tPtr = 0xff;
+	string s;
+	if (isIndexExist(indexName))
+		throw CatalogError("this index exists");
+	s = this->getIndexName(attributeName, tableName);
+	if (s[0] == '$')
+			deleteIndexCatalog(s);
 
-	bm->writeARecord(buffer, BLOCKSIZE, "index.index", 0);
-	indices[indexName][tableName] = attributeName;
+	createIndex(indexName, tableName, attributeName);
 }
 vector<std::string> CatalogManager::getIndexVecFromTableName(const std::string & tableName)
 {
@@ -186,11 +203,11 @@ bool CatalogManager::isIndexExist(const std::string & indexName)
 	return indices.find(indexName) != indices.end();
 }
 
-bool CatalogManager::isIndexExist(const std::string & tableName, const std::string & indexName)
+bool CatalogManager::isIndexExist(const std::string & tableName, const std::string & attrName)
 {
 	for (auto& map1 : indices) {
 		for (auto& map2 : map1.second) {
-			if (map2.first == tableName&& map2.second == indexName) {
+			if (map1.first[0]!='$'&& map2.first == tableName&& map2.second == attrName) {
 				return true;
 			}
 		}

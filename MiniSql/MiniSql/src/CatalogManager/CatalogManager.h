@@ -32,6 +32,7 @@ private:
 	std::map<std::string, Table> tableLoaded;
 
 	CatalogManager();
+	void createIndex(const std::string& indexName, const std::string& tableName, const std::string& attributeName);
 	BYTE* saveData(const Data& data, BYTE* ptr);
 	BYTE* readData(Data& data, BYTE* ptr);
 	BYTE* readString(std::string& s, BYTE* ptr);

@@ -66,11 +66,18 @@ void readToEnd(std::string::iterator& begin, std::string::iterator end){
 bool IsVariableName::operator()(char c) {
 	if (i == 0) {
 		i++;
-		if (!isalpha(c) && !c == '_')
+		if (isalpha(c) || c == '_')
+			return true;
+		else
 			throw GrammarError("illegal name");
+		return false;
+
 	}
 	else {
-		return isalnum(c) || c == '_';
+		if(isalnum(c) || c == '_')
+			return true;
+		else
+			return false;
 	}
 }
 

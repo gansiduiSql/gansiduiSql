@@ -19,6 +19,9 @@ public:
 	~Interpreter() {};
 	void readInput(const std::string& s);
 	void executeFile(const std::string& fileName);
+	void executeSql(const std::string& sql) {
+		parse(sql); check(); execute();
+	}
 	void parse(const std::string& sql);
 	void print();
 	void check();

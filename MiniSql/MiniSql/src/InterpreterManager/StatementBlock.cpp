@@ -1,6 +1,7 @@
 #include "StatementBlock.h"
 #include "../CatalogManager/CatalogManager.h"
 #include "../Exception.h"
+#include "../API/API.h"
 #include "Interpreter.h"
 #include <iostream>
 #include <set>
