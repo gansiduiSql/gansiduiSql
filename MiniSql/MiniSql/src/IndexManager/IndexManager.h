@@ -42,24 +42,26 @@ private:
 	map<string, BPlusTreeIndex*> indexLibrary;
 	BufferManager * bufferManager;
 	ADDRESS getEndOffset(const string &fileName);
+	ADDRESS getNextToEndOffset(const string &fileName, const int &recordLength);
 	void renewEndOffset(const string &fileName, const int &recordLength);
 	void deleteRecordFromFile(const string& indexName, const string &fileName, const ADDRESS &recordOffset, const int &recordLength);
-	void analysisExpression(bound &dstLowerBound, bound &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const TYPE &type);/*Function tested*/
-	void createIndexFromFile(const string &indexName);
+	void analysisExpression(bound &dstLowerBound, bound &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const TYPE &type);
+	void createIndexFromFile(const string &indexName);/*Bug exists*/
 	void saveIndexToFile(const string &indexName, const TYPE &type);
-	void pushToRecordbuffer(const Table &table, RECORDBUFFER &recordBuffer, const RecordPointer &address, const string &fileName);
-	string toAlignedInt(string s);/*Function tested*/
-	string toAlignedFloat(string s);/*Function tested*/
+	void pushToRecordbuffer(const Table &table, RECORDBUFFER &recordBuffer, const ADDRESS &address, const string &fileName);
+	string toAlignedInt(string s);
+	string toAlignedFloat(string s);
 public:
-	IndexManager();/*Tested Working Normally*/
-	IndexManager(list<string> indexName);/*Tested Working Normally*/
-	~IndexManager();/*Tested Working Normally*/
-	void createIndex(const string &indexName, Data &attribute, const int &recordLength, const string &fileName);/*create Index of a relation*//*Tested Working Normally for CreateIndex on primary-key and for CreateIndex for unique key, Cautious, if you create an unique index on an integer or float, do not use IM to process where A<xx A>xx query*/
-	void dropIndex(const string &indexName); /*delet/drop index indexfile and index in this function*//*Tested Working Normally*/
-	void deleteValues(const string &indexName, list<Expression> expressions, const string &fileName, const int &recordLength);/*BUG OF INCOMPLETE RECORD, Deleteing values works fine but writing the file will cause extra data to be added*/
+	IndexManager();
+	IndexManager(list<string> indexName);
+	~IndexManager();
+	void createIndex(const string &indexName, Data &attribute, const int &recordLength, const string &fileName);/*create Index of a relation Cautious, if you create an unique index on an integer or float, do not use IM to process where A<xx A>xx query*/
+	void dropIndex(const string &indexName); /*delet/drop index indexfile and index in this function*/
+	void deleteValues(const string &indexName, list<Expression> expressions, const string &fileName, const int &recordLength);
+	void deleteValuesAll(const string &indexName);
 	void selectValues(const string &indexName, Table& table, list<Expression> expressions, RECORDBUFFER &recordBuffer, const string &fileName);
-	void insertValues(const string &indexName, const string &indexKey, const ADDRESS &recordOffset);/*insert indexkey to bplus tree after insertion with RM*//*Tested Working Normally*/
-	void traverseTree(const string &indexName);/*Tested Working Normally*/
+	void insertValues(const string &indexName, const string &indexKey, const ADDRESS &recordOffset);/*insert indexkey to bplus tree after insertion with RM*/
+	void traverseTree(const string &indexName);
 	static IndexManager* getIndexManagerPtr(){ static IndexManager im; return &im; }
 };
 

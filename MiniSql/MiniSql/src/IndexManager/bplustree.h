@@ -17,7 +17,7 @@ class Record;
 class BPlusTreeLeaf;
 typedef BPlusTreeNode* BPlusPointer;
 typedef BPlusTreeLeaf* BPlusLeaf;
-typedef int RecordPointer;
+typedef int ADDRESS;
 
 enum{
         LEFT,RIGHT
@@ -44,7 +44,7 @@ public:
     virtual ~BPlusTreeNode();//virtual distructor, delete dynamic allocated ptrToChild and keyValue
 
 	//Insertion
-    virtual BPlusPointer addKey(RecordPointer p, ElementType s);//recursively add key until to the left
+    virtual BPlusPointer addKey(ADDRESS p, ElementType s);//recursively add key until to the left
 	virtual void insertKey(BPlusPointer p, ElementType s, int direction);//insert element in the node, if direction is LEFT, p lies left of s, if RIGHT p lies right of s also implement spliting nodes and correct pointers
 	virtual void insertPtr(BPlusPointer p);//insert pointer to the next NON_NULL positon delete key from node, will recursive goes up
 	//Deletion
@@ -53,7 +53,7 @@ public:
 	virtual void reDistributePtr(BPlusPointer sibPtr);//used when deleting, redistrubute the keyvalues
 	BPlusPointer deleteKey(BPlusPointer p, ElementType s);
 	//Search
-	virtual RecordPointer findKey(ElementType s);
+	virtual ADDRESS findKey(ElementType s);
 	virtual BPlusLeaf returnLeafNode(ElementType s);
 	virtual BPlusLeaf returnFirstLeafNode();
 	virtual BPlusLeaf returnLastLeafNode();
@@ -76,30 +76,30 @@ public:
 class BPlusTreeLeaf : public BPlusTreeNode
 {
 private:
-    RecordPointer* ptrToChild;
+    ADDRESS* ptrToChild;
     BPlusTreeLeaf* ptrToSibling;
 
 public:
     BPlusTreeLeaf(int keyNumber);
     ~BPlusTreeLeaf();
-    BPlusPointer addKey(RecordPointer p, ElementType s);
+    BPlusPointer addKey(ADDRESS p, ElementType s);
     BPlusPointer removeKey(ElementType s); 
-    BPlusPointer deleteKey(RecordPointer p);
+    BPlusPointer deleteKey(ADDRESS p);
 	BPlusLeaf returnLeafNode(ElementType s);
 	BPlusLeaf returnFirstLeafNode();
 	BPlusLeaf returnLastLeafNode();
 	BPlusLeaf getPtrToSinling(){ return ptrToSibling; }
-	void insertKey(RecordPointer p, ElementType s, int direction);
-    void deletePtr(RecordPointer p);
+	void insertKey(ADDRESS p, ElementType s, int direction);
+    void deletePtr(ADDRESS p);
     void reDistributePtr(BPlusLeaf sibPtr);
     void makeEmpty();
 	void traverse(int level);
     void insertPtrToSibling(BPlusLeaf p);
-    int indexOf(RecordPointer s);
+    int indexOf(ADDRESS s);
     int indexOf(ElementType s);
     
-	RecordPointer getPtrToChild(int index);
-	RecordPointer findKey(ElementType s);
+	ADDRESS getPtrToChild(int index);
+	ADDRESS findKey(ElementType s);
 };
 
 class BPlusTreeIndex
@@ -113,15 +113,16 @@ private:
 public:
     BPlusTreeIndex(int maxKeyNum, int attributeLength, int offserInRecord, TYPE type);
     ~BPlusTreeIndex();
-    void addKey(RecordPointer p, ElementType s);
+    void addKey(ADDRESS p, ElementType s);
     void removeKey(ElementType s);
-    RecordPointer findKey(ElementType s);
+    ADDRESS findKey(ElementType s);
 	BPlusLeaf returnLeafNode(ElementType s);
 	BPlusLeaf returnFirstLeafNode();
     void traverseTree();
-	TYPE getAttributeType(){ return type; }
+	int getMaxKeyNum(){ return MAXKEYNUMBER; }
 	int getOffsetInRecord(){ return offset; }
 	int getAttributeLength(){ return length; }
+	TYPE getAttributeType(){ return type; }
 };
 
 
