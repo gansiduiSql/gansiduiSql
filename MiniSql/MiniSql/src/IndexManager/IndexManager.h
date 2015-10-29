@@ -58,6 +58,7 @@ public:
 	void createIndex(const string &indexName, Data &attribute, const int &recordLength, const string &fileName);/*create Index of a relation Cautious, if you create an unique index on an integer or float, do not use IM to process where A<xx A>xx query*/
 	void dropIndex(const string &indexName); /*delet/drop index indexfile and index in this function*/
 	void deleteValues(const string &indexName, list<Expression> expressions, const string &fileName, const int &recordLength);
+	void deleteValuesAll(const string &indexName);
 	void selectValues(const string &indexName, Table& table, list<Expression> expressions, RECORDBUFFER &recordBuffer, const string &fileName);
 	void insertValues(const string &indexName, const string &indexKey, const ADDRESS &recordOffset);/*insert indexkey to bplus tree after insertion with RM*/
 	void traverseTree(const string &indexName);

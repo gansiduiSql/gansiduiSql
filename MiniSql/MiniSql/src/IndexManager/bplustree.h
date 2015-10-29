@@ -119,9 +119,10 @@ public:
 	BPlusLeaf returnLeafNode(ElementType s);
 	BPlusLeaf returnFirstLeafNode();
     void traverseTree();
-	TYPE getAttributeType(){ return type; }
+	int getMaxKeyNum(){ return MAXKEYNUMBER; }
 	int getOffsetInRecord(){ return offset; }
 	int getAttributeLength(){ return length; }
+	TYPE getAttributeType(){ return type; }
 };
 
 
