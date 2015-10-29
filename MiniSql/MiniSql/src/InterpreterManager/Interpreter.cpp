@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iostream>
 #include <memory>
+#include <algorithm>
 using namespace std;
 typedef std::string::iterator Iterator;
 
@@ -21,6 +22,68 @@ std::vector<std::string> Interpreter::split(std::string s, std::string::value_ty
 	return move(ret);
 }
 
+
+void Interpreter::readInput(const string & s)
+{
+	static bool inQuota = false;
+	auto iter1 = s.begin();
+	auto iter2 = iter1;
+	for (; iter2 != s.end(); iter2++) {
+		if (*iter2 == '\'') {
+			inQuota == ~inQuota;
+		}
+		if (!inQuota) {
+			if (*iter2 == ';') {
+				tmpStoredSql += string(iter1, iter2);
+				try {
+					parse(tmpStoredSql);
+				}
+				catch (exception& e) {
+					printOut(e.what());
+				}
+				check();execute();
+				iter1 = iter2 + 1;
+				tmpStoredSql.clear();
+			}
+		}
+	}
+	tmpStoredSql += string(iter1, iter2);
+}
+
+void Interpreter::executeFile(const std::string & fileName)
+{
+	ifstream is(fileName);
+	if (!is.is_open()) {
+		throw runtime_error("file(" + fileName + ") can not be open");
+	}
+	string s;
+	bool inQuota = false;
+	while (getline(is, s)) {
+		auto iter1 = s.begin();
+		auto iter2 = iter1;
+		for (; iter2 != s.end(); iter2++) {
+			if (*iter2 == '\'') {
+				inQuota == ~inQuota;
+			}
+			if (!inQuota) {
+				if (*iter2 == ';') {
+					tmpStoredSql += string(iter1, iter2);
+					try {
+						parse(tmpStoredSql);
+					}
+					catch (exception& e) {
+						printOut(e.what());
+						throw runtime_error("error occur when run the file");
+					}
+					check();execute();
+					iter1 = iter2 + 1;
+					tmpStoredSql.clear();
+				}
+			}
+		}
+		tmpStoredSql += string(iter1, iter2);
+	}
+}
 
 void Interpreter::parse(const string& sql){
 	
@@ -44,14 +107,16 @@ void Interpreter::parse(const string& sql){
 			createIndexParser(begin, end);
 		else throw GrammarError("Syntax error in create opertion");
 	}
-	else if(s == "drop"){
+	else if (s == "drop") {
 		s = readWord(begin, end);
-		if(s == "table")
+		if (s == "table")
 			dropTableParser(begin, end);
-		else if(s == "index")
+		else if (s == "index")
 			dropIndexParser(begin, end);
 		else throw GrammarError("Syntax error in drop operation");
 	}
+	else if (s == "execfile")
+		execfileParser(begin, end);
 	else throw GrammarError("Undefined operation: "+s);
 
 
@@ -64,11 +129,32 @@ void Interpreter::print()
 	}
 }
 
-void Interpreter::excute()
+void Interpreter::check()
 {
+	bool flag = true;
 	for (auto& vsb : vStatementBlock) {
-		vsb->execute();
+		try{
+			vsb->check();
+		}
+		catch (exception& e) {
+			printOut(e.what());
+			flag = false;
+		}
 	}
+
+	if (!flag)vStatementBlock.clear();
+}
+
+void Interpreter::execute()
+{
+	try {
+		for (auto& vsb : vStatementBlock) {
+			vsb->execute();		
+		}
+	}catch(exception& e){
+			printOut(e.what());
+	}
+	vStatementBlock.clear();
 }
 
 void Interpreter::createTableParser(Iterator& begin, Iterator end){
@@ -291,4 +377,12 @@ void Interpreter::quitParser(Iterator& begin, Iterator end) {
 		return;
 	}
 	throw GrammarError("Words are forbidden to be followed by quit");
+}
+
+void Interpreter::execfileParser(Iterator & begin, Iterator end)
+{
+	string s = readWord(begin, end, IsCharArray());
+	readToEnd(begin, end);
+	shared_ptr<StatementBlock> pSB(new execBlock(s,this));
+	vStatementBlock.push_back(pSB);
 }

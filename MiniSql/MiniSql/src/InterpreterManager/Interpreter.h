@@ -8,17 +8,21 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <fstream>
 
 class StatementBlock;
 
 class Interpreter
 {
 public:
-	Interpreter() {};
+	Interpreter(std::function<void(std::string)> printOut):printOut(printOut) {};
 	~Interpreter() {};
+	void readInput(const std::string& s);
+	void executeFile(const std::string& fileName);
 	void parse(const std::string& sql);
 	void print();
-	void excute();
+	void check();
+	void execute();
 
 private:
 	typedef std::string::iterator Iterator;
@@ -32,9 +36,12 @@ private:
 	void insertParser(Iterator& begin, Iterator end);
 	void deleteParser(Iterator& begin, Iterator end);
 	void quitParser(Iterator& begin, Iterator end);
+	void execfileParser(Iterator& begin, Iterator end);
 	
 	std::vector<std::shared_ptr<StatementBlock>> vStatementBlock;
-	//CatalogManager *ptrCatalogManager;
+	CatalogManager *ptrCatalogManager;
 	//API api;
+	std::string tmpStoredSql;
+	std::function<void(std::string)> printOut;
 };
 #endif

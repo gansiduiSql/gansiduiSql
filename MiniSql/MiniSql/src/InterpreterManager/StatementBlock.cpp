@@ -1,6 +1,7 @@
 #include "StatementBlock.h"
 #include "../CatalogManager/CatalogManager.h"
 #include "../Exception.h"
+#include "Interpreter.h"
 #include <iostream>
 #include <set>
 #include <algorithm>
@@ -304,11 +305,7 @@ bool CheckType::isInt(const std::string & s) {
 
 bool CheckType::isAttribute(const std::string & s)
 {
-	vector<Data> v = pTable->getTableVec();
-	auto iter = std::find_if(v.begin(), v.end(), [=](const Data& d) {
-		return d.getAttribute() == s;
-	});
-	return iter != v.end();
+	return pTable->isAttribute(s);
 }
 
 TYPE CheckType::isWhatType(const std::string & s)
@@ -340,4 +337,8 @@ bool compareExp(const std::string& left, const std::string& right, TYPE type, OP
 	}
 
 	return false;
+}
+void execBlock::execute() 
+{
+	ip->executeFile(fileName);
 }

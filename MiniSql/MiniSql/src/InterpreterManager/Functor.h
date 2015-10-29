@@ -119,8 +119,8 @@ public:
 	bool operator()(char ch) {
 		if (braceFlag)return false;
 		if (flagConvert) {
-			if (ch == '\'')return true;
-			else return false;
+			flagConvert = false;
+			return true;
 		};
 		if (ch == '\\') {
 			flagConvert = true;
