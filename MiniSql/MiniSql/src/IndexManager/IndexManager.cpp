@@ -260,9 +260,9 @@ void IndexManager::deleteValues(const string &indexName, list<Expression> expres
 		{
 			int start = currentLeaf->indexOf(lowerbound.value);
 			int end = currentLeaf->indexOf(upperbound.value);
-			if (lowerbound.equal == false)
+			if (lowerbound.equal == false||lowerFlagAdded)
 				start++;
-			if (upperbound.equal == false)
+			if (upperbound.equal == false||upperFlagAdded)
 				end--;
 			for (int i = start; i <= end; i++)/*Only have to process this node*/
 			{
@@ -272,7 +272,7 @@ void IndexManager::deleteValues(const string &indexName, list<Expression> expres
 		}
 		else/*if the start and end go through serveral nodes*/
 		{
-			if (lowerbound.equal)/*The delete the remaining keys from the head node*/
+			if (lowerbound.equal&&!lowerFlagAdded)/*The delete the remaining keys from the head node*/
 			for (int i = currentLeaf->indexOf(lowerbound.value); i < currentLeaf->getElementCount(); i++)/*from the key to the last node*/
 			{
 				deleteRecordFromFile(indexName, fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
@@ -294,7 +294,7 @@ void IndexManager::deleteValues(const string &indexName, list<Expression> expres
 				}
 			}
 
-			if (upperbound.equal)/*The delete the remaining keys from the end node*/
+			if (upperbound.equal&&!upperFlagAdded)/*The delete the remaining keys from the end node*/
 			for (int i = 0; i <= endLeaf->indexOf(upperbound.value); i++)/*from start to the upperbound key*/
 			{
 				deleteRecordFromFile(indexName, fileName, currentLeaf->getPtrToChild(i), recordLength);/*deleted the record from data file*/
@@ -355,16 +355,16 @@ void IndexManager::selectValues(const string &indexName, Table& table, list<Expr
 		{
 			int start = currentLeaf->indexOf(lowerbound.value);
 			int end = currentLeaf->indexOf(upperbound.value);
-			if (lowerbound.equal == false)
+			if (lowerbound.equal == false || lowerFlagAdded)
 				start++;
-			if (upperbound.equal == false)
+			if (upperbound.equal == false || upperFlagAdded)
 				end--;
 			for (int i = start; i <= end; i++)/*Only have to process this node*/
 				pushToRecordbuffer(table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
 		}
 		else/*if the start and end go through serveral nodes*/
 		{
-			if (lowerbound.equal)/*The delete the remaining keys from the head node*/
+			if (lowerbound.equal&&!lowerFlagAdded)/*The delete the remaining keys from the head node*/
 			for (int i = currentLeaf->indexOf(lowerbound.value); i < currentLeaf->getElementCount(); i++)/*from the key to the last node*/
 				pushToRecordbuffer(table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
 			else
@@ -377,7 +377,7 @@ void IndexManager::selectValues(const string &indexName, Table& table, list<Expr
 					pushToRecordbuffer(table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
 			}
 
-			if (upperbound.equal)/*The delete the remaining keys from the end node*/
+			if (upperbound.equal&&!upperFlagAdded)/*The delete the remaining keys from the end node*/
 			for (int i = 0; i <= endLeaf->indexOf(upperbound.value); i++)/*from start to the upperbound key*/
 				pushToRecordbuffer(table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
 			else
@@ -391,7 +391,7 @@ void IndexManager::selectValues(const string &indexName, Table& table, list<Expr
 	}
 }
 
-/* @brief Get the offset of the last record
+/* @brief Get the offset of the next record of the last record
 * @param fileName
 * @return ADDRESS
 */
@@ -403,18 +403,27 @@ ADDRESS IndexManager::getEndOffset(const string &fileName)
 /* @brief Get the offset of the last record
 * @param fileName
 * @param recordLength
+* @return ADDRESS
+*/
+ADDRESS IndexManager::getNextToEndOffset(const string &fileName,const int &recordLength)
+{
+	ADDRESS endOffset =  *(ADDRESS *)bufferManager->fetchARecord(fileName, 0);
+	if (endOffset % 4096 == 0)/*If the first record is reached*/
+		return endOffset - (4096 - 4096 / recordLength*recordLength) - recordLength;/*eliminate the tail and minus the record length*/
+	else
+		return endOffset - recordLength;
+}
+
+/* @brief Get the offset of the last record and write it to header
+* @param fileName
+* @param recordLength
 * @return ADDRESS address of the renewed Offset
 */
-ADDRESS IndexManager::renewEndOffset(const string &fileName, const int &recordLength)
+void IndexManager::renewEndOffset(const string &fileName, const int &recordLength)
 {
-	ADDRESS endOffset = getEndOffset(fileName);
-	ADDRESS renewedOffset;
-	if (endOffset % 4096 == 0)/*If the first record is reached*/
-		renewedOffset = endOffset - (4096 - 4096 / recordLength*recordLength) - recordLength;/*eliminate the tail and minus the record length*/
-	else
-		renewedOffset = endOffset - recordLength;
+	ADDRESS renewedOffset = getNextToEndOffset(fileName, recordLength);
 	bufferManager->writeARecord((BYTE *)&renewedOffset, recordLength, fileName, 0);
-	return renewedOffset;
+	cout << renewedOffset<<" ";
 }
 
 /* @brief Analyze given expression and set the lower or upperbound of this expression
@@ -448,21 +457,21 @@ void IndexManager::analysisExpression(bound &dstLowerBound, bound &dstUpperBound
 		case GREATER:
 			if (dstLowerBound.value == "")
 				dstLowerBound.value = bound;
-			else if (bound < dstLowerBound.value)
+			else if (bound > dstLowerBound.value)
 				dstLowerBound.value = bound;
 			dstLowerBound.equal = false;
 			break;
 		case GREATER_AND_EQUAL:
 			if (dstLowerBound.value == "")
 				dstLowerBound.value = bound;
-			else if (bound < dstLowerBound.value)
+			else if (bound > dstLowerBound.value)
 				dstLowerBound.value = bound;
 			dstLowerBound.equal = true;
 			break;
 		case LESS:
 			if (dstUpperBound.value == "")
 				dstUpperBound.value = bound;
-			else if (bound > dstUpperBound.value)
+			else if (bound < dstUpperBound.value)
 				dstUpperBound.value = bound;
 			dstUpperBound.equal = false;
 			break;
@@ -492,35 +501,38 @@ void IndexManager::analysisExpression(bound &dstLowerBound, bound &dstUpperBound
 		dstEqual = true;
 		return;
 	}
-	if (type == CHAR && (dstLowerBound.value > dstUpperBound.value || dstLowerBound.value == dstUpperBound.value && (dstLowerBound.equal == false || dstUpperBound.equal == false)))
+	if (dstLowerBound.value != "" && dstUpperBound.value != "")
 	{
-		exception ex;
-		throw ex;
-	}
-	if (type == INT || type == FLOAT)
-	{
-		if (dstLowerBound.value != ""&&dstUpperBound.value != "")
+		if (type == CHAR && (dstLowerBound.value > dstUpperBound.value || dstLowerBound.value == dstUpperBound.value && (dstLowerBound.equal == false || dstUpperBound.equal == false)))
 		{
-			if (dstLowerBound.value[0] == '-' && dstUpperBound.value[0] != '-' && dstLowerBound.value[0] != '-' && dstUpperBound.value[0] == '-')
+			exception ex;
+			throw ex;
+		}
+		if (type == INT || type == FLOAT)
+		{
+			if (dstLowerBound.value != ""&&dstUpperBound.value != "")
 			{
-				string tmp;
-				tmp = dstLowerBound.value;
-				dstLowerBound.value = dstUpperBound.value;
-				dstUpperBound.value = tmp;
-			}
-			else if (dstLowerBound.value[0] == '-' && dstUpperBound.value[0] == '-')
-			{
-				if (dstLowerBound.value > dstUpperBound.value);
-				else
+				if (dstLowerBound.value[0] == '-' && dstUpperBound.value[0] != '-' && dstLowerBound.value[0] != '-' && dstUpperBound.value[0] == '-')
+				{
+					string tmp;
+					tmp = dstLowerBound.value;
+					dstLowerBound.value = dstUpperBound.value;
+					dstUpperBound.value = tmp;
+				}
+				else if (dstLowerBound.value[0] == '-' && dstUpperBound.value[0] == '-')
+				{
+					if (dstLowerBound.value > dstUpperBound.value);
+					else
+					{
+						exception ex;
+						throw ex;
+					}
+				}
+				else if (dstLowerBound.value > dstUpperBound.value || dstLowerBound.value == dstUpperBound.value && (dstLowerBound.equal == false || dstUpperBound.equal == false))
 				{
 					exception ex;
 					throw ex;
 				}
-			}
-			else if (dstLowerBound.value > dstUpperBound.value || dstLowerBound.value == dstUpperBound.value && (dstLowerBound.equal == false || dstUpperBound.equal == false))
-			{
-				exception ex;
-				throw ex;
 			}
 		}
 	}
@@ -549,12 +561,12 @@ void IndexManager::deleteRecordFromFile(const string &indexName, const string &f
 {
 	/*Insert the keyvalue of end record to Index*/
 	BPlusTreeIndex* currentIndex = indexLibrary[indexName];
-	if (recordOffset == getEndOffset(fileName) - recordLength)
+	if (recordOffset == getNextToEndOffset(fileName, recordLength))
 	{
 		renewEndOffset(fileName, recordLength);
 		return;
 	}
-	ADDRESS renewedEndOffset = renewEndOffset(fileName, recordLength); /*renewedOffset=endOffset - recordLength*/
+	ADDRESS renewedEndOffset = getNextToEndOffset(fileName,recordLength); /*renewedOffset*/
 	BYTE* endRecordKey = bufferManager->fetchARecord(fileName, renewedEndOffset + indexLibrary[indexName]->getOffsetInRecord());
 	string recordString = "";
 	char* tmpRecordString = new char[currentIndex->getAttributeLength() + 1];
@@ -585,6 +597,7 @@ void IndexManager::deleteRecordFromFile(const string &indexName, const string &f
 		break;
 	}
 	bufferManager->writeARecord(bufferManager->fetchARecord(fileName, renewedEndOffset), recordLength, fileName, recordOffset);/*Write the last record of data on the space of the deleted record*/
+	renewEndOffset(fileName, recordLength);/*renew the end offset in header*/
 }
 
 /* @brief  Casting Int to string, the string length INT_STRING_SIZE
