@@ -139,11 +139,31 @@ void DeleteBlock::check()
 	auto pcb = CatalogManager::getCatalogManager();
 	if(!pcb->isTableExist(tableName))
 		throw CatalogError("The table does not exist");
+	if (flag == true)return;
+
 	Table table = pcb->getTable(tableName);
 	CheckType ct(&table);
+	bool tmpFlag = true;
 	for (auto &exp : exps) {
-		exp.leftOperand
+		string leftName = exp.leftOperand.operandName;
+		string rightName = exp.rightOperand.operandName;
+		TYPE typeLeft = ct.isWhatType(leftName);
+		TYPE typeRight = ct.isWhatType(rightName);
+		if (typeLeft != typeRight)throw CatalogError("unmatched type");
+		bool b1 = ct.isType(leftName, typeLeft), b2 = ct.isType(rightName, typeRight);
+		
+		//if they are all normal data
+		if (b1&&b2) {
+			if (compareExp(leftName, rightName, typeLeft, exp.op)){
+				tmpFlag &= true;
+			}
+			else doNothingFlag &= true;
+		}
+		else {
+			doNothingFlag = false;
+		}
 	}
+	flag = tmpFlag;
 	
 }
 
@@ -166,6 +186,18 @@ void SelectBlock::execute()
 
 void SelectBlock::check()
 {
+	auto pcb = CatalogManager::getCatalogManager();
+	Table table = pcb->getTable(tableName);
+	vector<Data> tableVec = table.getTableVec();
+	if (star) {
+		attributes.resize(table.getTableVec().size());
+		//std::copy()
+	}
+	for (auto& attr : attributes) {
+		if (!table.isAttribute(attr))
+			throw CatalogError("The attribute does not exist");
+	}
+
 }
 
 void SelectBlock::print()
@@ -230,4 +262,35 @@ bool CheckType::isAttribute(const std::string & s)
 		return d.getAttribute() == s;
 	});
 	return iter != v.end();
+}
+
+TYPE CheckType::isWhatType(const std::string & s)
+{	
+	if (isInt(s))
+		return INT;
+	if (isString(s)) 
+		return CHAR;
+	if (isFloat(s))
+		return FLOAT;
+	vector<Data> v = pTable->getTableVec();
+	auto iter = std::find_if(v.begin(), v.end(), [=](const Data& d) {
+		return d.getAttribute() == s;
+	});
+	if(iter == v.end())
+		throw CatalogError("no type matches " + s);
+	return iter->getType();
+}
+
+bool compareExp(const std::string& left, const std::string& right, TYPE type, OPERATOR op)
+{
+	switch (type) {
+	case INT:
+		return compareFunc<int>(op)(stoi(left),stoi(right));
+	case FLOAT:
+		return compareFunc<float>(op)(stof(left), stof(right));
+	case CHAR:
+		return compareFunc<std::string>(op)(left, right);
+	}
+
+	return false;
 }

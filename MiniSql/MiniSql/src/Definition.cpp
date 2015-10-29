@@ -1,5 +1,5 @@
 #include "Definition.h"
-
+#include <algorithm>
 using namespace std;
 
 Table::Table(const std::string& tableName, std::vector<Data>& tableVec)
@@ -24,6 +24,14 @@ void Table::setTableVec(const std::vector<Data>& tableVec)
 	{
 		this->length += data.getLength();
 	}
+}
+
+bool Table::isAttribute(const std::string & s)
+{
+	auto iter = std::find_if(tableVec.begin(), tableVec.end(), [=](const Data& d)->bool {
+		return d.getAttribute() == s;
+	});
+	return iter != tableVec.end();
 }
 
 void Data::setType(TYPE type)

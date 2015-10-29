@@ -65,6 +65,7 @@ public:
 	void setPrimaryKeyIndex(int primaryKeyIndex) { this->primaryKeyIndex = primaryKeyIndex; }
 	int getLength()const{return length;}
 	void pushData(Data& data) { tableVec.push_back(data); }
+	bool isAttribute(const std::string& s);
 	~Table(){}
 private:
 	std::string tableName;

@@ -22,6 +22,7 @@ public:
 	std::vector<std::string> getIndexVecFromTableName(const std::string& tableName);
 	void deleteIndexCatalog(const std::string& indexName);
 	bool isIndexExist(const std::string& indexName);
+	bool isIndexExist(const std::string& tableName, const std::string& indexName);
 	bool isTableExist(const std::string& tableName);
 	bool checkIndexTableAttribute(const std::string& indexName, const std::string& tableName, const std::string& attributeName);
 private: 

@@ -186,6 +186,18 @@ bool CatalogManager::isIndexExist(const std::string & indexName)
 	return indices.find(indexName) != indices.end();
 }
 
+bool CatalogManager::isIndexExist(const std::string & tableName, const std::string & indexName)
+{
+	for (auto& map1 : indices) {
+		for (auto& map2 : map1.second) {
+			if (map2.first == tableName&& map2.second == indexName) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 bool CatalogManager::checkIndexTableAttribute(const std::string & indexName, const std::string & tableName, const std::string & attributeName)
 {
 	if (indices.find(indexName) != indices.end()) {
