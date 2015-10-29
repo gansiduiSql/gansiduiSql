@@ -5,7 +5,6 @@
 * @date 2015/10/19
 */
 #include "bplustree.h"
-extern int ELEMENTNUM;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /// \brief BPlusTreeLeaf
@@ -731,7 +730,6 @@ void BPlusTreeLeaf::traverse(int level)
 	}
 	cout << " level:" << level++;
 	cout << " Element count=" << ELEMENTCOUNT << endl;
-	ELEMENTNUM += ELEMENTCOUNT;
 }
 ////////////////////////////////////////////////////////////////////////////////////////
 /// \brief BPlusTreeIndex
