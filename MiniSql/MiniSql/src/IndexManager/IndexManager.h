@@ -62,6 +62,7 @@ public:
 	void selectValues(const string &indexName, Table& table, list<Expression> expressions, RECORDBUFFER &recordBuffer, const string &fileName);
 	void insertValues(const string &indexName, const string &indexKey, const ADDRESS &recordOffset);/*insert indexkey to bplus tree after insertion with RM*/
 	void traverseTree(const string &indexName);
+	bool keyExists(const string &indexName, const string &keyValue);
 	static IndexManager* getIndexManagerPtr(){ static IndexManager im; return &im; }
 };
 

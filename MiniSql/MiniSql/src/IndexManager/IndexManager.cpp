@@ -720,3 +720,11 @@ void IndexManager::pushToRecordbuffer(const Table &table, RECORDBUFFER &recordBu
 	}
 	recordBuffer.push_back(singleRecordVec);
 }
+
+bool IndexManager::keyExists(const string &indexName, const string &keyValue)
+{
+	if (indexLibrary[indexName]->findKey(keyValue) == -1)
+		return false;
+	else
+		return true;
+}
