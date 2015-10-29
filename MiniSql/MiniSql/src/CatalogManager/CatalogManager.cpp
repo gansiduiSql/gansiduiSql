@@ -120,8 +120,8 @@ void CatalogManager::createIndexCatalog(const std::string & indexName, const std
 		tPtr = readString(sIndexName, tPtr);
 		tPtr = readString(sTableName, tPtr);
 		tPtr = readString(sAttributeName, tPtr);
-		if (sIndexName == indexName || sTableName == tableName&&sAttributeName == attributeName)
-			throw CatalogError("cannot create the index(" + indexName + ") on attribute(" + attributeName + ") table(" + tableName + ") ");
+		if (sIndexName == indexName/* || sTableName == tableName&&sAttributeName == attributeName*/)
+			throw CatalogError("cannot create the index(" + indexName + ") ");
 	}
 	tPtr = saveString(indexName, tPtr);
 	tPtr = saveString(tableName, tPtr);
@@ -130,6 +130,17 @@ void CatalogManager::createIndexCatalog(const std::string & indexName, const std
 
 	bm->writeARecord(buffer, BLOCKSIZE, "index.index", 0);
 	indices[indexName][tableName] = attributeName;
+}
+vector<std::string> CatalogManager::getIndexVecFromTableName(const std::string & tableName)
+{
+	vector<string> vRet;
+	if (indices.find(tableName) == indices.end())
+		return vRet;
+	auto mapTables = indices[tableName];
+	for (auto& content : mapTables) {
+		vRet.push_back(content.first);
+	}
+	return vRet;
 }
 void CatalogManager::deleteIndexCatalog(const std::string& indexName)
 {
@@ -173,6 +184,18 @@ void CatalogManager::deleteIndexCatalog(const std::string& indexName)
 bool CatalogManager::isIndexExist(const std::string & indexName)
 {
 	return indices.find(indexName) != indices.end();
+}
+
+bool CatalogManager::isIndexExist(const std::string & tableName, const std::string & indexName)
+{
+	for (auto& map1 : indices) {
+		for (auto& map2 : map1.second) {
+			if (map2.first == tableName&& map2.second == indexName) {
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 bool CatalogManager::checkIndexTableAttribute(const std::string & indexName, const std::string & tableName, const std::string & attributeName)

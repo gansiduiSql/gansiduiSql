@@ -61,7 +61,7 @@ private:
 
 class SelectBlock:public StatementBlock {
 public:
-	SelectBlock():star(false){}
+	SelectBlock():star(false),doNothingFlag(false){}
 	void setStar(bool star) { this->star = star; }
 	void setTableName(std::string& tableName) { this->tableName = tableName; }
 	void setAttributes(std::list<std::string>& attributes) { this-> attributes = attributes; }
@@ -72,6 +72,7 @@ public:
 	~SelectBlock(){}
 private:
 	bool star;
+	bool doNothingFlag;
 	std::list<std::string> attributes;
 	std::string tableName;
 	std::list<Expression> exps;
@@ -115,9 +116,9 @@ private:
 
 class DeleteBlock : public StatementBlock{
 public:
-	DeleteBlock(std::string tableName):tableName(tableName),flag(false){}
+	DeleteBlock(std::string tableName) :tableName(tableName), flag(false), doNothingFlag(false) {}
 	DeleteBlock(std::string tableName, std::list<Expression> exps)
-	 :tableName(tableName),exps(exps),flag(true){}
+	 :tableName(tableName),exps(exps),flag(true),doNothingFlag(false){}
 	 
 	virtual void execute();
 	virtual void check();
@@ -127,6 +128,7 @@ private:
 	std::string tableName;
 	std::list<Expression> exps;
 	bool flag;
+	bool doNothingFlag;
 };
 
 class CheckType {
@@ -138,10 +140,31 @@ public:
 	bool isFloat(const std::string& s);
 	bool isInt(const std::string& s);
 	bool isAttribute(const std::string& s);
+	TYPE isWhatType(const std::string& s);
 private:
 	Table* pTable;
 };
 
+template<typename T>
+auto compareFunc(OPERATOR oper)->bool(*)(T, T) {
+	switch (oper) {
+	case GREATER:
+		return [](T t1, T t2)->bool {return t1 > t2; };
+	case LESS:
+		return [](T t1, T t2)->bool {return t1 < t2; };
+	case EQUAL:
+		return [](T t1, T t2)->bool {return t1 == t2; };
+	case NOTEQUAL:
+		return [](T t1, T t2)->bool {return t1 != t2; };
+	case GREATER_AND_EQUAL:
+		return [](T t1, T t2)->bool {return t1 >= t2; };
+	case LESS_AND_EQUAL:
+		return [](T t1, T t2)->bool {return t1 <= t2; };
+	}
+	return nullptr;
+}
 
+
+bool compareExp(const std::string& left, const std::string& right, TYPE type, OPERATOR op);
 
 #endif
