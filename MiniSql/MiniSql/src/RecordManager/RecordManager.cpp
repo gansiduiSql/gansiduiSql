@@ -118,13 +118,18 @@ RecordManager::~RecordManager()
 
 }
 
+void RecordManager::dropTable(string tableName)
+{
+	bmPtr->deleteFile(tableName);
+}
+
 /*insert values into a table 
 *@param tableName the table name that you insert into
 *@param values	a list values in order that you want insert into the table
 *@param table	the info of the table you insert into
 *@return void
 */
-void RecordManager::insertValues(const string& tableName, const list<string>& values, const Table& table)
+ADDRESS RecordManager::insertValues(const string& tableName, const list<string>& values, const Table& table)
 {
 	//get the tail of the table record in the corresponding file
 	ADDRESS tail = *((int *)(bmPtr->fetchARecord(tableName, 0)));
@@ -226,9 +231,12 @@ void RecordManager::insertValues(const string& tableName, const list<string>& va
 		it++;
 	}
 	bmPtr->writeARecord(buffer, tableLength, tableName, tail);	//insert the record
+	int returnvalue = tail;
 	tail += tableLength;
 	bmPtr->writeARecord((BYTE*)(&tail), 4, tableName, 0);	//update the tail of the record
 	delete[] buffer;
+
+	return returnvalue;
 }
 
 /*delete all values in the given table without field 'where'
