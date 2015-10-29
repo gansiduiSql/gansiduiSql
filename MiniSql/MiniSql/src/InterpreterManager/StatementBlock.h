@@ -7,7 +7,7 @@
 #include <list>
 #include <vector>
 
-
+class Interpreter;
 // an interface 
 class StatementBlock{
 public:
@@ -130,6 +130,19 @@ private:
 	bool flag;
 	bool doNothingFlag;
 };
+
+class execBlock : public StatementBlock {
+public:
+	execBlock(std::string s,Interpreter* ip) :fileName(s),ip(ip){};
+	virtual void execute();;
+	virtual void print() {};
+	virtual void check() {};
+	virtual ~execBlock() {};
+private:
+	std::string fileName;
+	Interpreter* const ip;
+};
+
 
 class CheckType {
 public:
