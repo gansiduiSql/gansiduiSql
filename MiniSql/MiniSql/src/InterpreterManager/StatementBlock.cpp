@@ -32,6 +32,8 @@ void CreateTableBlock::check()
 
 void CreateTableBlock::execute()
 {
+	auto api = API::getAPIPtr();
+	api->createTableCmd(table);
 }
 
 void CreateTableBlock::print()

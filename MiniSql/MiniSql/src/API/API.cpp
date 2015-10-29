@@ -127,18 +127,18 @@ void API::insertValuesCmd(const list<string>& values, const Table& table)
 	{
 		if (field.isPrimary() || field.isUnique())
 		{
-			if (!cmPtr->isIndexExist())
+			if (!cmPtr->isIndexExist(table.getTableName(), field.getAttribute()))
 			{
 				string indexName = "$" + table.getTableName() + "$" + field.getAttribute();
 				imPtr->createIndex(indexName, field, table.getLength(), table.getTableName());
 				cmPtr->createIndexCatalog(indexName, table.getTableName(), field.getAttribute());
 				if (imPtr->keyExists("$" + table.getTableName() + "$" + field.getAttribute(), *it))
-					throw PriOrUniqExistException(field.getAttribute);
+					throw PriOrUniqExistException(field.getAttribute());
 			}
 			else
 			{
 				if (imPtr->keyExists(cmPtr->getIndexName(field.getAttribute(), table.getTableName()), *it))
-					throw PriOrUniqExistException(field.getAttribute);
+					throw PriOrUniqExistException(field.getAttribute());
 			}
 		}
 		it++;

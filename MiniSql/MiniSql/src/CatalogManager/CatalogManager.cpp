@@ -139,10 +139,9 @@ std::string	CatalogManager::getFileNameFromIndexName(const std::string& indexNam
 
 void CatalogManager::createIndexCatalog(const std::string & indexName, const std::string & tableName, const std::string & attributeName)
 {
-	string s;
 	if (isIndexExist(indexName))
 		throw CatalogError("this index exists");
-	s = this->getIndexName(attributeName, tableName);
+	auto s = this->getIndexName(attributeName, tableName);
 	if (s[0] == '$')
 			deleteIndexCatalog(s);
 
