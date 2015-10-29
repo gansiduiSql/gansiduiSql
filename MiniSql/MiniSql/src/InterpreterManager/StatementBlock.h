@@ -61,7 +61,7 @@ private:
 
 class SelectBlock:public StatementBlock {
 public:
-	SelectBlock():star(false){}
+	SelectBlock():star(false),doNothingFlag(false){}
 	void setStar(bool star) { this->star = star; }
 	void setTableName(std::string& tableName) { this->tableName = tableName; }
 	void setAttributes(std::list<std::string>& attributes) { this-> attributes = attributes; }
@@ -72,6 +72,7 @@ public:
 	~SelectBlock(){}
 private:
 	bool star;
+	bool doNothingFlag;
 	std::list<std::string> attributes;
 	std::string tableName;
 	std::list<Expression> exps;
@@ -115,9 +116,9 @@ private:
 
 class DeleteBlock : public StatementBlock{
 public:
-	DeleteBlock(std::string tableName) :tableName(tableName), flag(false), doNothingFlag(true) {}
+	DeleteBlock(std::string tableName) :tableName(tableName), flag(false), doNothingFlag(false) {}
 	DeleteBlock(std::string tableName, std::list<Expression> exps)
-	 :tableName(tableName),exps(exps),flag(true){}
+	 :tableName(tableName),exps(exps),flag(true),doNothingFlag(false){}
 	 
 	virtual void execute();
 	virtual void check();

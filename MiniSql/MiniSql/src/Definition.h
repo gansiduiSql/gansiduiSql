@@ -84,7 +84,7 @@ private:
 	bool uniqueFlag;
 	bool primaryFlag;
 public:
-	Data(){}
+	Data():uniqueFlag(false),primaryFlag(false){}
 	Data(const std::string& attribute, TYPE type, int length, bool isUnique, bool isPrimary)
 		:attribute(attribute), type(type), length(length), uniqueFlag(isUnique) ,primaryFlag(isPrimary){};
 	const std::string& getAttribute()const { return attribute; }

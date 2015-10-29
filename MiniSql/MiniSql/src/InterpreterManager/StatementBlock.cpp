@@ -2,12 +2,30 @@
 #include "../CatalogManager/CatalogManager.h"
 #include "../Exception.h"
 #include <iostream>
+#include <set>
 #include <algorithm>
 
 using namespace std;
 
 void CreateTableBlock::check()
 {
+	auto pcb = CatalogManager::getCatalogManager();
+	if (pcb->isTableExist(table.getTableName()))
+		throw CatalogError("The table have already exist");
+	set<string> attrSet;
+	auto tableVec = table.getTableVec();
+	for (auto &data : tableVec) {
+		attrSet.insert(data.getAttribute());
+	}
+	if (attrSet.size() != tableVec.size())
+		throw GrammarError("exist duplicated attributes");
+	string s =primaryKeyName;
+	auto iter = find_if(tableVec.begin(), tableVec.end(), [=](const Data& d)->bool {
+		return d.getAttribute() == s;
+		; });
+	if (iter == tableVec.end())
+		throw GrammarError("The name of primary key attribute does not exist");
+	iter->setPrimary(true);
 }
 
 void CreateTableBlock::execute()
@@ -143,7 +161,7 @@ void DeleteBlock::check()
 
 	Table table = pcb->getTable(tableName);
 	CheckType ct(&table);
-	bool tmpFlag = true;
+	list<Expression> tmpExps;
 	for (auto &exp : exps) {
 		string leftName = exp.leftOperand.operandName;
 		string rightName = exp.rightOperand.operandName;
@@ -155,16 +173,17 @@ void DeleteBlock::check()
 		//if they are all normal data
 		if (b1&&b2) {
 			if (compareExp(leftName, rightName, typeLeft, exp.op)){
-				tmpFlag &= true;
 			}
-			else doNothingFlag &= true;
+			else doNothingFlag = true;
 		}
 		else {
-			doNothingFlag = false;
+			tmpExps.push_back(exp);
 		}
 	}
-	flag = tmpFlag;
-	
+	if (tmpExps.empty()) {
+		flag = true;
+	}
+	exps = tmpExps;
 }
 
 void DeleteBlock::print()
@@ -189,15 +208,43 @@ void SelectBlock::check()
 	auto pcb = CatalogManager::getCatalogManager();
 	Table table = pcb->getTable(tableName);
 	vector<Data> tableVec = table.getTableVec();
+	
 	if (star) {
-		attributes.resize(table.getTableVec().size());
-		//std::copy()
+		//select *
+		attributes.clear();
+		for (auto& data : tableVec) {
+			attributes.push_back(data.getAttribute());
+		}
 	}
-	for (auto& attr : attributes) {
-		if (!table.isAttribute(attr))
-			throw CatalogError("The attribute does not exist");
+	else {
+		for (auto& attr : attributes) {
+			if (!table.isAttribute(attr))
+				throw CatalogError("The attribute does not exist");
+		}
 	}
+	if (exps.size() == 0)return;
+	CheckType ct(&table);
+	
+	std::list<Expression> expTmp;
+	for (auto &exp : exps) {
+		string leftName = exp.leftOperand.operandName;
+		string rightName = exp.rightOperand.operandName;
+		TYPE typeLeft = ct.isWhatType(leftName);
+		TYPE typeRight = ct.isWhatType(rightName);
+		if (typeLeft != typeRight)throw CatalogError("unmatched type");
+		bool b1 = ct.isType(leftName, typeLeft), b2 = ct.isType(rightName, typeRight);
 
+		//if they are all normal data
+		if (b1&&b2) {
+			if (compareExp(leftName, rightName, typeLeft, exp.op)) {
+			}
+			else doNothingFlag = true;
+		}
+		else {
+			expTmp.push_back(exp);
+		}
+	}
+	exps = expTmp;
 }
 
 void SelectBlock::print()
