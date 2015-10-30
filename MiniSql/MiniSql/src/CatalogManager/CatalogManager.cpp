@@ -158,11 +158,13 @@ void CatalogManager::createIndexCatalog(const std::string & indexName, const std
 vector<std::string> CatalogManager::getIndexVecFromTableName(const std::string & tableName)
 {
 	vector<string> vRet;
-	if (indices.find(tableName) == indices.end())
-		return vRet;
-	auto mapTables = indices[tableName];
-	for (auto& content : mapTables) {
-		vRet.push_back(content.first);
+	for (auto &content1 : indices) {
+		for (auto& content2 : indices) {
+			if (content2.first == tableName) {
+				vRet.push_back(content1.first);
+				break;
+			}
+		}
 	}
 	return vRet;
 }
