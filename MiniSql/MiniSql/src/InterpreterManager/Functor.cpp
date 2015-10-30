@@ -55,12 +55,10 @@ bool IsAlnum(char c) {
 }
 
 void readToEnd(std::string::iterator& begin, std::string::iterator end){
-	try{
-		readWord(begin, end, [](char)->bool{return false;});
-	}catch (EndOfString& e){
-		return;
+	for (; begin != end; begin++) {
+		if(*begin!=' '&&*begin!='\t'&&*begin!='\n'&&*begin!='\r')
+			throw GrammarError("redundant words found at the tail");
 	}
-	throw GrammarError("redundant words found at the tail");
 }
 
 bool IsVariableName::operator()(char c) {
