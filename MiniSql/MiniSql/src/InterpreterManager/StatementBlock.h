@@ -61,7 +61,7 @@ private:
 
 class SelectBlock:public StatementBlock {
 public:
-	SelectBlock():star(false),doNothingFlag(false){}
+	SelectBlock(Interpreter* const ip):star(false),doNothingFlag(false),ip(ip){}
 	void setStar(bool star) { this->star = star; }
 	void setTableName(std::string& tableName) { this->tableName = tableName; }
 	void setAttributes(std::list<std::string>& attributes) { this-> attributes = attributes; }
@@ -76,6 +76,7 @@ private:
 	std::list<std::string> attributes;
 	std::string tableName;
 	std::list<Expression> exps;
+	Interpreter* const ip;
 };
 
 

@@ -34,6 +34,14 @@ bool Table::isAttribute(const std::string & s)
 	return iter != tableVec.end();
 }
 
+Data Table::getData(const std::string & s)
+{
+	auto iter = std::find_if(tableVec.begin(), tableVec.end(), [=](const Data& d)->bool {
+		return d.getAttribute() == s;
+	});
+	return *iter;
+}
+
 void Data::setType(TYPE type)
 { 
 	this->type = type; 

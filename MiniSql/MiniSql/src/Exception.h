@@ -41,4 +41,9 @@ public:
 private:
 	std::string errorInfo;
 };
+
+
+class Quit {
+
+};
 #endif

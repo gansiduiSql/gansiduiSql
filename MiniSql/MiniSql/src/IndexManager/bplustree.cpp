@@ -2,7 +2,7 @@
 * @brief Implementation of B+ Tree index on a minisql System
 * @author lucas95123@outlook.com
 * @version 1.0
-* @date 2015/10/19
+* @date 2015/10/21
 */
 #include "bplustree.h"
 
@@ -90,6 +90,7 @@ void BPlusTreeNode::insertKey(BPlusPointer p, ElementType s, int direction)
 {
 	if (isFull())															  //若该node已满
 	{
+		int i=0;
 		bool newParentCreated = false;
 		if (ptrToParent == NULL)
 		{
@@ -109,8 +110,7 @@ void BPlusTreeNode::insertKey(BPlusPointer p, ElementType s, int direction)
 		for (int i = 0; i<POINTERNUM; i++)              //将指针全部移出
 			tmpPtr[i] = ptrToChild[i];
 
-		int i = firstValueBiggerThan(s);        //找到插入位点
-
+		i = firstValueBiggerThan(s);     
 		for (int j = KEYNUM; j>i; j--)                   //腾出Key插入位置
 			tmpKeyValue[j] = keyValue[j - 1];
 
