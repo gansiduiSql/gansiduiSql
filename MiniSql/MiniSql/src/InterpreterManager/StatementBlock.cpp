@@ -354,7 +354,7 @@ bool CheckType::isFloat(const std::string & s) {
 }
 
 bool CheckType::isInt(const std::string & s) {
-	if (std::regex_match(s, std::regex("^-?[1-9]\\d*$")))
+	if (std::regex_match(s, std::regex("^-?([1-9]\\d*|0)$")))
 		return true;
 	return false;
 }
