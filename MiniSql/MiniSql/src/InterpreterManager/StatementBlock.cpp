@@ -190,7 +190,7 @@ void DeleteBlock::execute()
 	auto api = API::getAPIPtr();
 	if (flag)
 		api->deleteValuesCmd(tableName);
-	//else api->deleteValuesCmd(tableName, exps);
+	else api->deleteValuesCmd(tableName, exps);
 }
 
 void DeleteBlock::check()
