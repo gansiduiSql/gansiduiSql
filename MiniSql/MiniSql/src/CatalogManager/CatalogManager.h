@@ -13,6 +13,7 @@ public:
 	static CatalogManager *getCatalogManager();
 	
 	~CatalogManager();
+	std::set<std::string> getAllTables() { return tables; }
 	void createTableCatalog(const Table& table);
 	void deleteTableCatalog(const std::string& tableName);
 	Table getTable(const std::string& tableName);
