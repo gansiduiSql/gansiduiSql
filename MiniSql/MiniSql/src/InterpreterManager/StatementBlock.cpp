@@ -58,6 +58,8 @@ void CreateTableBlock::print()
 
 void CreateIndexBlock::execute()
 {
+	auto api = API::getAPIPtr();
+	api->createIndexCmd(indexName, tableName, attributeName);
 }
 
 void CreateIndexBlock::check()
@@ -87,6 +89,13 @@ void CreateIndexBlock::print()
 
 void InsertTableBlock::execute()
 {
+	auto api = API::getAPIPtr();
+	auto cp = CatalogManager::getCatalogManager();
+	list<string> v;
+	for (auto& content : values) {
+		v.push_back(content);
+	}
+	api->insertValuesCmd(v, cp->getTable(tableName));
 }
 
 void InsertTableBlock::check()
@@ -126,6 +135,7 @@ void InsertTableBlock::print()
 
 void QuitBlock::execute()
 {
+	throw Quit();
 }
 
 void QuitBlock::check()
@@ -140,6 +150,8 @@ void QuitBlock::print()
 
 void DropTableBlock::execute()
 {
+	auto api = API::getAPIPtr();
+	api->dropTableCmd(tableName);
 }
 
 void DropTableBlock::check()
@@ -156,6 +168,8 @@ void DropTableBlock::print()
 
 void DropIndexBlock::execute()
 {
+	auto api = API::getAPIPtr();
+	api->dropIndexCmd(indexName);
 }
 
 void DropIndexBlock::check()
@@ -172,7 +186,11 @@ void DropIndexBlock::print()
 
 void DeleteBlock::execute()
 {
-	
+	if (doNothingFlag)return;
+	auto api = API::getAPIPtr();
+	if (flag)
+		api->deleteValuesCmd(tableName);
+	//else api->deleteValuesCmd(tableName, exps);
 }
 
 void DeleteBlock::check()
@@ -230,6 +248,12 @@ void DeleteBlock::print()
 
 void SelectBlock::execute()
 {
+	if (doNothingFlag)return;
+	auto api = API::getAPIPtr();
+	if (exps.size() == 0)
+		api->selectValuesCmd(attributes, tableName, ip->getRecordBuffer());
+	else
+		api->selectValuesCmd(attributes, tableName, exps, ip->getRecordBuffer());
 }
 
 void SelectBlock::check()

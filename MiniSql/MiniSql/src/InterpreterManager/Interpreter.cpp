@@ -1,12 +1,13 @@
 #include "Interpreter.h"
 #include "../Exception.h"
 #include "../CatalogManager/CatalogManager.h"
+#include "..\API\API.h"
 #include "StatementBlock.h"
 #include "Functor.h"
-#include <sstream>
 #include <iostream>
 #include <memory>
 #include <algorithm>
+#include <fstream>
 using namespace std;
 typedef std::string::iterator Iterator;
 
@@ -281,7 +282,7 @@ format select [ATTRIBUTES] from [TABLE] (where [EXPRESSIONS])
 void Interpreter::selectParser(Iterator& begin, Iterator end) {
 	list<string> attributeList;
 	
-	SelectBlock sb;
+	SelectBlock sb(this);
 
 	string s = readWord(begin, end, IsChar('*')); //read *
 	if (s.length() != 0) {

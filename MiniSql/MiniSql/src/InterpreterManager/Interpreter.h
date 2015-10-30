@@ -1,22 +1,29 @@
 #ifndef _INTERPRETER_H_
 #define _INTERPRETER_H_
 
-
-#include "..\API\API.h"
-#include "..\CatalogManager\CatalogManager.h"
+#include "../Definition.h"
 #include <string>
 #include <vector>
 #include <memory>
 #include <functional>
-#include <fstream>
 
 class StatementBlock;
+
+
+
+/*
+@name Interpreter
+@func parse check and execute sql sentences
+@ATTENTION before using the interpreter, PLEASE setRecordBuffer
+@exception Quit():which is not derived from std::exception, so when catch this exception, the program must go to end.
+*/
 
 class Interpreter
 {
 public:
 	Interpreter(std::function<void(std::string)> printOut):printOut(printOut) {};
 	~Interpreter() {};
+	void setRecordBuffer(RECORDBUFFER& rb) { this->rb = &rb; }
 	void readInput(const std::string& s);
 	void executeFile(const std::string& fileName);
 	void executeSql(const std::string& sql);
@@ -24,7 +31,7 @@ public:
 	void print();
 	void check();
 	void execute();
-
+	RECORDBUFFER& getRecordBuffer() { return *rb; }
 private:
 	typedef std::string::iterator Iterator;
 	
@@ -40,9 +47,8 @@ private:
 	void execfileParser(Iterator& begin, Iterator end);
 	
 	std::vector<std::shared_ptr<StatementBlock>> vStatementBlock;
-	CatalogManager *ptrCatalogManager;
-	//API api;
 	std::string tmpStoredSql;
 	std::function<void(std::string)> printOut;
+	RECORDBUFFER* rb; 
 };
 #endif
