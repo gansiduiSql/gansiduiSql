@@ -48,7 +48,7 @@ private:
 	void analysisExpression(bound &dstLowerBound, bound &dstUpperBound, bool &dstEqual, list<Expression> &expressions,const int &attributeLength, const TYPE &type);
 	void createIndexFromFile(const string &indexName);
 	void saveIndexToFile(const string &indexName, const TYPE &type);
-	void pushToRecordbuffer(const Table &table, RECORDBUFFER &recordBuffer, const ADDRESS &address, const string &fileName);
+	void pushToRecordbuffer(const list<string> attributes, const Table &table, RECORDBUFFER &recordBuffer, const ADDRESS &address, const string &fileName);
 	string toAlignedInt(string s);
 	string toAlignedFloat(string s);
 public:
@@ -60,7 +60,7 @@ public:
 	void deleteValues(const string &indexName, const list<string> &indexList, list<Expression> expressions, const string &fileName, const int &recordLength);/*delete values specified by expression*/
 	void deleteValues(const string &primaryIndexName, const list<string> &primaryKeyValues, const list<string> &indexList, const string &fileName, const int recordLength);/*delete values specified by list of key*/
 	void deleteValuesAll(const string &indexName);/*delete all the values*/
-	void selectValues(const string &indexName, Table& table, list<Expression> expressions, RECORDBUFFER &recordBuffer, const string &fileName);/*select values specified by expressions*/
+	void selectValues(const string &indexName, const list<string> &attributes, Table& table, list<Expression> expressions, RECORDBUFFER &recordBuffer, const string &fileName);/*select values specified by expressions*/
 	void insertValues(const string &indexName,string indexKey, const ADDRESS &recordOffset);/*insert indexkey to bplus tree after insertion with RM*/
 	void traverseTree(const string &indexName);/*traverse and print the index tree*/
 	bool keyExists(const string &indexName, string keyValue, const int length);/*find if a key exists in index specified by indexName*/

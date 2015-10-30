@@ -363,7 +363,7 @@ void IndexManager::deleteValuesAll(const string &indexName)
 * @throw IndexNotExistException
 * @post Values statisfy the expression is selected
 */
-void IndexManager::selectValues(const string &indexName, Table& table, list<Expression> expressions, RECORDBUFFER &recordBuffer, const string &fileName)
+void IndexManager::selectValues(const string &indexName, const list<string> &attributes,Table& table, list<Expression> expressions, RECORDBUFFER &recordBuffer, const string &fileName)
 {
 	BPlusTreeIndex* currentIndex = indexLibrary[indexName];
 	bound upperbound;
@@ -374,7 +374,7 @@ void IndexManager::selectValues(const string &indexName, Table& table, list<Expr
 	int recordLength = table.getLength();
 	analysisExpression(lowerbound, upperbound, equal, expressions, currentIndex->getAttributeLength(), currentIndex->getAttributeType());
 	if (equal)
-		pushToRecordbuffer(table, recordBuffer, currentIndex->findKey(upperbound.value), fileName);
+		pushToRecordbuffer(attributes, table, recordBuffer, currentIndex->findKey(upperbound.value), fileName);
 	else
 	{
 		if (currentIndex->findKey(lowerbound.value) == -1)/*If lower or upperbound not exist*/
@@ -398,29 +398,29 @@ void IndexManager::selectValues(const string &indexName, Table& table, list<Expr
 			if (upperbound.equal == false || upperFlagAdded)
 				end--;
 			for (int i = start; i <= end; i++)/*Only have to process this node*/
-				pushToRecordbuffer(table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
+				pushToRecordbuffer(attributes,table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
 		}
 		else/*if the start and end go through serveral nodes*/
 		{
 			if (lowerbound.equal&&!lowerFlagAdded)/*The delete the remaining keys from the head node*/
 			for (int i = currentLeaf->indexOf(lowerbound.value); i < currentLeaf->getElementCount(); i++)/*from the key to the last node*/
-				pushToRecordbuffer(table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
+				pushToRecordbuffer(attributes,table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
 			else
 			for (int i = currentLeaf->indexOf(lowerbound.value) + 1; i < currentLeaf->getElementCount(); i++)/*from the next key to the last node*/
-				pushToRecordbuffer(table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
+				pushToRecordbuffer(attributes,table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
 			currentLeaf = currentLeaf->getPtrToSinling();
 			for (; currentLeaf != endLeaf; currentLeaf = currentLeaf->getPtrToSinling())
 			{  /*delete every record except that of the head node and the last node from the file, but not from the tree, instead record every deleted key*/
 				for (int i = 0; i < currentLeaf->getElementCount(); i++)
-					pushToRecordbuffer(table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
+					pushToRecordbuffer(attributes,table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
 			}
 
 			if (upperbound.equal&&!upperFlagAdded)/*The delete the remaining keys from the end node*/
 			for (int i = 0; i <= endLeaf->indexOf(upperbound.value); i++)/*from start to the upperbound key*/
-				pushToRecordbuffer(table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
+				pushToRecordbuffer(attributes,table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
 			else
 			for (int i = 0; i < endLeaf->indexOf(upperbound.value); i++)/*from start to the previous key of upper bound*/
-				pushToRecordbuffer(table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
+				pushToRecordbuffer(attributes,table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
 		}
 		if (lowerFlagAdded)/*If a lowerbound flag is added*/
 			currentIndex->removeKey(lowerbound.value);/*delete it*/
@@ -766,41 +766,53 @@ void IndexManager::traverseTree(const string& indexName)
 * @param recordLength the length of the record
 * @return void
 */
-void IndexManager::pushToRecordbuffer(const Table &table, RECORDBUFFER &recordBuffer, const ADDRESS &address, const string &fileName)
+void IndexManager::pushToRecordbuffer(const list<string> attributes, const Table &table, RECORDBUFFER &recordBuffer, const ADDRESS &address, const string &fileName)
 {
 	vector<Data> dataVec = table.getTableVec();
 	vector<Data>::iterator iter;
 	vector<string> singleRecordVec;
 	for (iter = dataVec.begin(); iter != dataVec.end(); iter++)
 	{
-		BYTE* recordData = bufferManager->fetchARecord(fileName, address + iter->getOffset());/*point to the start of the attribute*/
-		string recordString = "";
-		char* tmpRecordChar = new char[iter->getLength() + 1];
-		int tmpRecordInt = 0;
-		float tmpRecordFloat = 0;
-		stringstream ss;
-		switch (iter->getType())
+		bool hasAttribute = false;
+		for (auto attr : attributes)
 		{
-		case CHAR:
-			memcpy(tmpRecordChar, recordData, iter->getLength());
-			tmpRecordChar[iter->getLength()] = 0;
-			recordString = tmpRecordChar;
-			break;
-		case INT:
-			memcpy(&tmpRecordInt, recordData, sizeof(int));
-			ss << tmpRecordInt;
-			ss >> recordString;
-			break;
-		case FLOAT:
-			memcpy(&tmpRecordFloat, recordData, sizeof(float));
-			ss << tmpRecordFloat;
-			ss >> recordString;
-			break;
-		default:
-			break;
+			if (iter->getAttribute() == attr)
+			{
+				hasAttribute = true;
+				break;
+			}
 		}
-		delete[] tmpRecordChar;
-		singleRecordVec.push_back(recordString);
+		if (hasAttribute)
+		{
+			BYTE* recordData = bufferManager->fetchARecord(fileName, address + iter->getOffset());/*point to the start of the attribute*/
+			string recordString = "";
+			char* tmpRecordChar = new char[iter->getLength() + 1];
+			int tmpRecordInt = 0;
+			float tmpRecordFloat = 0;
+			stringstream ss;
+			switch (iter->getType())
+			{
+			case CHAR:
+				memcpy(tmpRecordChar, recordData, iter->getLength());
+				tmpRecordChar[iter->getLength()] = 0;
+				recordString = tmpRecordChar;
+				break;
+			case INT:
+				memcpy(&tmpRecordInt, recordData, sizeof(int));
+				ss << tmpRecordInt;
+				ss >> recordString;
+				break;
+			case FLOAT:
+				memcpy(&tmpRecordFloat, recordData, sizeof(float));
+				ss << tmpRecordFloat;
+				ss >> recordString;
+				break;
+			default:
+				break;
+			}
+			delete[] tmpRecordChar;
+			singleRecordVec.push_back(recordString);
+		}
 	}
 	recordBuffer.push_back(singleRecordVec);
 }
