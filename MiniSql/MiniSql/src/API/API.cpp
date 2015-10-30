@@ -164,12 +164,12 @@ void API::insertValuesCmd(const list<string>& values, const Table& table)
 				string indexName = "$" + table.getTableName() + "$" + field.getAttribute();
 				imPtr->createIndex(indexName, field, table.getLength(), table.getTableName());
 				cmPtr->createIndexCatalog(indexName, table.getTableName(), field.getAttribute());
-				if (imPtr->keyExists("$" + table.getTableName() + "$" + field.getAttribute(), *it))
+				if (imPtr->keyExists("$" + table.getTableName() + "$" + field.getAttribute(), *it, field.getLength()))
 					throw PriOrUniqExistException(field.getAttribute());
 			}
 			else
 			{
-				if (imPtr->keyExists(cmPtr->getIndexName(field.getAttribute(), table.getTableName()), *it))
+				if (imPtr->keyExists(cmPtr->getIndexName(field.getAttribute(), table.getTableName()), *it, field.getLength()))
 					throw PriOrUniqExistException(field.getAttribute());
 			}
 		}
@@ -259,7 +259,8 @@ void API::selectValuesCmd(const list<string> &attributeName, const string& table
 		rmPtr->selectValues(attributeName, tableName, cmPtr->getTable(tableName), expressions, recordBuff);
 	else
 	{
-		for (auto field : cmPtr->getTable(tableName).getTableVec())
+		vector<Data> vec = cmPtr->getTable(tableName).getTableVec();
+		for (auto &field : vec)
 		{
 			if (field.isPrimary() || field.isUnique())
 			{

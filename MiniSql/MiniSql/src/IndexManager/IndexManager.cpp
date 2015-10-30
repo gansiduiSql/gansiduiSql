@@ -810,8 +810,10 @@ void IndexManager::pushToRecordbuffer(const Table &table, RECORDBUFFER &recordBu
 * @param keyValue key to check
 * @return bool true:Key exists false:Key not exists
 */
-bool IndexManager::keyExists(const string &indexName, const string &keyValue)
+bool IndexManager::keyExists(const string &indexName, string keyValue, const int length)
 {
+	while (keyValue.length() < length)
+		keyValue += " ";
 	if (indexLibrary[indexName]->findKey(keyValue) == -1)
 		return false;
 	else
