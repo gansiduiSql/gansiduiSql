@@ -206,14 +206,18 @@ void IndexManager::saveIndexToFile(const string &indexName, const TYPE &type)
 * @throw IndexNotExistException
 * @post The value is inserted to the B+ tree index
 */
-void IndexManager::insertValues(const string &indexName, const string &indexKey, const ADDRESS &recordOffset)
+void IndexManager::insertValues(const string &indexName, string indexKey, const ADDRESS &recordOffset)
 {
 	if (indexLibrary[indexName]->getAttributeType() == INT)
 		indexLibrary[indexName]->addKey(recordOffset, toAlignedInt(indexKey));
 	else if (indexLibrary[indexName]->getAttributeType() == FLOAT)
 		indexLibrary[indexName]->addKey(recordOffset, toAlignedFloat(indexKey));
 	else
+	{
+		while (indexKey.size() < indexLibrary[indexName]->getAttributeLength())
+			indexKey+=" ";
 		indexLibrary[indexName]->addKey(recordOffset, indexKey);
+	}
 }
 
 /* @brief delete the values specified by expression and indexName
@@ -235,7 +239,7 @@ void IndexManager::deleteValues(const string &indexName, const list<string> &ind
 	bool equal = false;
 	bool lowerFlagAdded = false;
 	bool upperFlagAdded = false;
-	analysisExpression(lowerbound, upperbound, equal, expressions, currentIndex->getAttributeType());
+	analysisExpression(lowerbound, upperbound, equal, expressions, currentIndex->getAttributeLength(),currentIndex->getAttributeType());
 	if (equal)
 	{
 		deleteRecordFromFile(indexName, indexList, fileName, currentIndex->findKey(upperbound.value), recordLength);/*delete the record from data file*/
@@ -368,7 +372,7 @@ void IndexManager::selectValues(const string &indexName, Table& table, list<Expr
 	bool lowerFlagAdded = false;
 	bool upperFlagAdded = false;
 	int recordLength = table.getLength();
-	analysisExpression(lowerbound, upperbound, equal, expressions, currentIndex->getAttributeType());
+	analysisExpression(lowerbound, upperbound, equal, expressions, currentIndex->getAttributeLength(), currentIndex->getAttributeType());
 	if (equal)
 		pushToRecordbuffer(table, recordBuffer, currentIndex->findKey(upperbound.value), fileName);
 	else
@@ -466,7 +470,7 @@ void IndexManager::renewEndOffset(const string &fileName, const int &recordLengt
 * @param expression
 * @return void
 */
-void IndexManager::analysisExpression(bound &dstLowerBound, bound &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const TYPE &type)
+void IndexManager::analysisExpression(bound &dstLowerBound, bound &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const int &attributeLength, const TYPE &type)
 {
 	list<Expression>::iterator expIter;
 	for (expIter = expressions.begin(); expIter != expressions.end(); expIter++)
@@ -477,6 +481,8 @@ void IndexManager::analysisExpression(bound &dstLowerBound, bound &dstUpperBound
 			expIter->rightOperand.operandName = toAlignedInt(expIter->rightOperand.operandName);
 			break;
 		case CHAR:
+			while (expIter->rightOperand.operandName.size() < attributeLength)
+				expIter->rightOperand.operandName += " ";
 			break;
 		case FLOAT:
 			expIter->rightOperand.operandName = toAlignedFloat(expIter->rightOperand.operandName);

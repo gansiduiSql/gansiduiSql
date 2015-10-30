@@ -455,8 +455,8 @@ BPlusPointer BPlusTreeLeaf::addKey(ADDRESS p, ElementType s)
 {
 	if (this->containsKey(s))
 		this->ptrToChild[indexOf(s)] = p;/*If already has the key, updates its pointer*/
-	else insertKey(p, s, LEFT);
-	return this->ptrToParent == NULL ? this : this->ptrToParent;;
+	insertKey(p, s, LEFT);
+	return this->ptrToParent == NULL||this->ptrToParent->isEmpty() ? this : this->ptrToParent;;
 }
 
 void BPlusTreeLeaf::insertKey(ADDRESS p, ElementType s, int direction)
