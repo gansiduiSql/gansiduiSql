@@ -19,6 +19,14 @@ public:
 	virtual const char* what(){ return errlog.c_str(); }
 };
 
+class IndexOnTheSameAttributeException : public exception
+{
+private:
+	std::string errlog;
+public:
+	IndexOnTheSameAttributeException(){ errlog = "There is an index in this attribute in the table!"; }
+	virtual const char* what(){ return errlog.c_str(); }
+};
 class API
 {
 private:

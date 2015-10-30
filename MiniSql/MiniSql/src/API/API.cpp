@@ -98,10 +98,30 @@ void API::createIndexCmd(const string& indexName, const string& tableName, const
 		//the attribute you create index on
 		if (field.getAttribute() == attributeName)
 		{
-			//create the index via index manager
-			imPtr->createIndex(indexName, field, table.getLength(), tableName);
-			//write the index info into catalog
-			cmPtr->createIndexCatalog(indexName, tableName, attributeName);
+			if (cmPtr->isIndexExist(tableName, attributeName))
+			{
+				string name = cmPtr->getIndexName(tableName, attributeName);
+				if (name[0] == '$')
+				{
+					imPtr->dropIndex(name);
+					cmPtr->deleteIndexCatalog(name);
+					//create the index via index manager
+					imPtr->createIndex(indexName, field, table.getLength(), tableName);
+					//write the index info into catalog
+					cmPtr->createIndexCatalog(indexName, tableName, attributeName);
+				}
+				else
+				{
+					throw IndexOnTheSameAttributeException();
+				}
+			}
+			else
+			{
+				//create the index via index manager
+				imPtr->createIndex(indexName, field, table.getLength(), tableName);
+				//write the index info into catalog
+				cmPtr->createIndexCatalog(indexName, tableName, attributeName);
+			}
 		}
 	}
 }
