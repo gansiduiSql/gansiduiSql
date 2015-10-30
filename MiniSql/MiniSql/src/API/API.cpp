@@ -98,10 +98,30 @@ void API::createIndexCmd(const string& indexName, const string& tableName, const
 		//the attribute you create index on
 		if (field.getAttribute() == attributeName)
 		{
-			//create the index via index manager
-			imPtr->createIndex(indexName, field, table.getLength(), tableName);
-			//write the index info into catalog
-			cmPtr->createIndexCatalog(indexName, tableName, attributeName);
+			if (cmPtr->isIndexExist(tableName, attributeName))
+			{
+				string name = cmPtr->getIndexName(tableName, attributeName);
+				if (name[0] == '$')
+				{
+					imPtr->dropIndex(name);
+					cmPtr->deleteIndexCatalog(name);
+					//create the index via index manager
+					imPtr->createIndex(indexName, field, table.getLength(), tableName);
+					//write the index info into catalog
+					cmPtr->createIndexCatalog(indexName, tableName, attributeName);
+				}
+				else
+				{
+					throw IndexOnTheSameAttributeException();
+				}
+			}
+			else
+			{
+				//create the index via index manager
+				imPtr->createIndex(indexName, field, table.getLength(), tableName);
+				//write the index info into catalog
+				cmPtr->createIndexCatalog(indexName, tableName, attributeName);
+			}
 		}
 	}
 }
@@ -144,12 +164,12 @@ void API::insertValuesCmd(const list<string>& values, const Table& table)
 				string indexName = "$" + table.getTableName() + "$" + field.getAttribute();
 				imPtr->createIndex(indexName, field, table.getLength(), table.getTableName());
 				cmPtr->createIndexCatalog(indexName, table.getTableName(), field.getAttribute());
-				if (imPtr->keyExists("$" + table.getTableName() + "$" + field.getAttribute(), *it))
+				if (imPtr->keyExists("$" + table.getTableName() + "$" + field.getAttribute(), *it, field.getLength()))
 					throw PriOrUniqExistException(field.getAttribute());
 			}
 			else
 			{
-				if (imPtr->keyExists(cmPtr->getIndexName(field.getAttribute(), table.getTableName()), *it))
+				if (imPtr->keyExists(cmPtr->getIndexName(field.getAttribute(), table.getTableName()), *it, field.getLength()))
 					throw PriOrUniqExistException(field.getAttribute());
 			}
 		}
@@ -239,7 +259,8 @@ void API::selectValuesCmd(const list<string> &attributeName, const string& table
 		rmPtr->selectValues(attributeName, tableName, cmPtr->getTable(tableName), expressions, recordBuff);
 	else
 	{
-		for (auto field : cmPtr->getTable(tableName).getTableVec())
+		vector<Data> vec = cmPtr->getTable(tableName).getTableVec();
+		for (auto &field : vec)
 		{
 			if (field.isPrimary() || field.isUnique())
 			{
