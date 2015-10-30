@@ -87,6 +87,19 @@ void ArrayList::moveTail(int index)
 		header = next;
 }
 
+OPERATOR reverseOperator(OPERATOR op)
+{
+	switch (op) {
+	case GREATER: return LESS; break;
+	case LESS:return GREATER; break;
+	case EQUAL: return EQUAL; break;
+	case NOTEQUAL:return NOTEQUAL; break;
+	case GREATER_AND_EQUAL:return LESS_AND_EQUAL; break;
+	case LESS_AND_EQUAL:return GREATER_AND_EQUAL; break;
+	default:return UNDEFINED;
+	}
+}
+
 TYPE stringToTYPE(std::string s)
 {
 	if (s == "int")
@@ -114,4 +127,10 @@ OPERATOR stringToOperator(std::string s)
 	else if (s == "<=")
 		return LESS_AND_EQUAL;
 	else return OPERATOR::UNDEFINED;
+}
+
+void Expression::swap()
+{
+	std::swap(this->leftOperand, this->rightOperand);
+	op = reverseOperator(op);
 }

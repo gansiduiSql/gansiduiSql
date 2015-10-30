@@ -28,7 +28,7 @@ class StatementBlock;
 class Interpreter
 {
 public:
-	Interpreter(std::function<void(std::string)> printOut):printOut(printOut) {};
+	Interpreter(){};
 	~Interpreter() {};
 	void setRecordBuffer(RECORDBUFFER& rb) { this->rb = &rb; }
 	void readInput(const std::string& s);
@@ -55,7 +55,6 @@ private:
 	
 	std::vector<std::shared_ptr<StatementBlock>> vStatementBlock;
 	std::string tmpStoredSql;
-	std::function<void(std::string)> printOut;
 	RECORDBUFFER* rb; 
 };
 #endif

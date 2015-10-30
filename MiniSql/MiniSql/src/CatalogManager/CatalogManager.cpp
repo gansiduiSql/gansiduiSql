@@ -159,7 +159,7 @@ vector<std::string> CatalogManager::getIndexVecFromTableName(const std::string &
 {
 	vector<string> vRet;
 	for (auto &content1 : indices) {
-		for (auto& content2 : indices) {
+		for (auto& content2 : content1.second) {
 			if (content2.first == tableName) {
 				vRet.push_back(content1.first);
 				break;

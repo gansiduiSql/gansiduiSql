@@ -6,7 +6,7 @@
 
 class GrammarError :public std::exception{
 public:
-	GrammarError(std::string s):errorInfo(s) {}
+	GrammarError(std::string s):errorInfo("Grammar Error: "+s) {}
 	const char *what()const { return errorInfo.c_str(); }
 private:
 	std::string errorInfo;
@@ -15,7 +15,7 @@ private:
 
 class AttributeError :public std::exception {
 public:
-	AttributeError(std::string s) :errorInfo(s) {}
+	AttributeError(std::string s) :errorInfo("Attribute Error: "+s) {}
 	const char *what()const { return errorInfo.c_str(); }
 private:
 	std::string errorInfo;
@@ -25,7 +25,7 @@ class EndOfString:public std::exception {
 public:
 	EndOfString() {};
 	EndOfString(int state1, int state2) :state1(state1),state2(state2) {}
-	const char *what()const { return ""; }
+	const char *what()const { return "Grammar Error: unexpected end"; }
 	int getState1() { return state1; }
 	int getState2() { return state2; }
 private:
@@ -36,7 +36,7 @@ private:
 
 class CatalogError : public std::exception {
 public:
-	CatalogError(std::string s):errorInfo(s){}
+	CatalogError(std::string s):errorInfo("Catalog Error: " + s){}
 	const char *what()const { return errorInfo.c_str(); }
 private:
 	std::string errorInfo;

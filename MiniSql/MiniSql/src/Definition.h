@@ -28,6 +28,8 @@ enum OPERATOR
 	UNDEFINED
 };
 
+OPERATOR reverseOperator(OPERATOR op);
+
 struct Operand
 {
 	std::string operandName;
@@ -39,6 +41,7 @@ struct Expression
 	Operand leftOperand;
 	Operand rightOperand;
 	OPERATOR op;
+	void swap();
 };
 
 enum TYPE
