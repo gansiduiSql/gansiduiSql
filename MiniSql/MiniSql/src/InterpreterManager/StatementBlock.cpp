@@ -65,7 +65,7 @@ void CreateIndexBlock::execute()
 void CreateIndexBlock::check()
 {
 	auto pcb = CatalogManager::getCatalogManager();
-	if (pcb->isIndexExist(attributeName))
+	if (pcb->isIndexExist(indexName))
 		throw CatalogError("index(" + indexName + ") exists");
 	if (!pcb->isTableExist(tableName))
 		throw CatalogError("table(" + tableName + ") does not exist");

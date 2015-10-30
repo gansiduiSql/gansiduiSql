@@ -143,16 +143,6 @@ std::string	CatalogManager::getFileNameFromIndexName(const std::string& indexNam
 
 void CatalogManager::createIndexCatalog(const std::string & indexName, const std::string & tableName, const std::string & attributeName)
 {
-	if (isIndexExist(indexName))
-		throw CatalogError("this index exists");
-	string s;
-	try {
-		s = this->getIndexName(attributeName, tableName);
-		if (s[0] == '$')
-			deleteIndexCatalog(s);
-	}
-	catch(exception &e){
-	}
 	createIndex(indexName, tableName, attributeName);
 }
 vector<std::string> CatalogManager::getIndexVecFromTableName(const std::string & tableName)
@@ -216,7 +206,7 @@ bool CatalogManager::isIndexExist(const std::string & tableName, const std::stri
 {
 	for (auto& map1 : indices) {
 		for (auto& map2 : map1.second) {
-			if (map1.first[0]!='$'&& map2.first == tableName&& map2.second == attrName) {
+			if (map2.first == tableName&& map2.second == attrName) {
 				return true;
 			}
 		}
