@@ -57,7 +57,7 @@ public:
 	~RecordManager();
 	ADDRESS insertValues(const std::string& tableName, const std::list<std::string>& values, const Table& table);
 	void deleteValues(const std::string& tableName);
-	void deleteValues(const std::string& tableName, const Table& table, std::list<Expression>& expressions);
+	void deleteValues(const std::string& tableName, const Table& table, std::list<Expression>& expressions, std::list<std::string>& primaryValues);
 	void selectValues(const std::list<std::string>& attributeNames, const std::string& tableName, const Table& table, RECORDBUFFER& recordBuffer);
 	void selectValues(const std::list<std::string>& attributeNames, const std::string& tableName, const Table& table, std::list<Expression>& expressions, RECORDBUFFER& recordBuffer);
 	void dropTable(const std::string tableName);

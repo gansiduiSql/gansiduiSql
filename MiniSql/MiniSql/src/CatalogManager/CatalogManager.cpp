@@ -79,12 +79,14 @@ void CatalogManager::createTableCatalog(const Table& table)
 	}
 	*tPtr = 0xff;
 	bm->writeARecord(buffer, BLOCKSIZE, tableName + ".log", 0);
+	tableLoaded[table.getTableName()] = table;
 }
 void CatalogManager::deleteTableCatalog(const std::string& tableName)
 {
-	tableLoaded.erase(tableName);
+	
 	deRegTable(tableName);
 	bm->deleteFile(tableName + ".log");
+	tableLoaded.erase(tableName);
 }
 Table CatalogManager::getTable(const std::string& tableName)
 {
@@ -143,20 +145,26 @@ void CatalogManager::createIndexCatalog(const std::string & indexName, const std
 {
 	if (isIndexExist(indexName))
 		throw CatalogError("this index exists");
-	auto s = this->getIndexName(attributeName, tableName);
-	if (s[0] == '$')
+	string s;
+	try {
+		s = this->getIndexName(attributeName, tableName);
+		if (s[0] == '$')
 			deleteIndexCatalog(s);
-
+	}
+	catch(exception &e){
+	}
 	createIndex(indexName, tableName, attributeName);
 }
 vector<std::string> CatalogManager::getIndexVecFromTableName(const std::string & tableName)
 {
 	vector<string> vRet;
-	if (indices.find(tableName) == indices.end())
-		return vRet;
-	auto mapTables = indices[tableName];
-	for (auto& content : mapTables) {
-		vRet.push_back(content.first);
+	for (auto &content1 : indices) {
+		for (auto& content2 : content1.second) {
+			if (content2.first == tableName) {
+				vRet.push_back(content1.first);
+				break;
+			}
+		}
 	}
 	return vRet;
 }

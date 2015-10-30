@@ -224,6 +224,8 @@ void DeleteBlock::check()
 				exp.leftOperand.operandName = string(leftName.begin() + 1, leftName.end() - 1);
 			if (b2&&typeRight == CHAR)
 				exp.rightOperand.operandName = string(rightName.begin() + 1, rightName.end() - 1);
+			if (b1&&!b2)
+				exp.swap();
 			tmpExps.push_back(exp);
 		}
 	}
@@ -300,6 +302,8 @@ void SelectBlock::check()
 				exp.leftOperand.operandName = string(leftName.begin() + 1, leftName.end() - 1);
 			if (b2&&typeRight == CHAR)
 				exp.rightOperand.operandName = string(rightName.begin() + 1, rightName.end() - 1);
+			if (b1&&!b2)
+				exp.swap();
 			expTmp.push_back(exp);
 		}
 	}

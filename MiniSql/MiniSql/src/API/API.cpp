@@ -13,7 +13,14 @@ API::API()
 {
 	cmPtr = CatalogManager::getCatalogManager();
 	rmPtr = RecordManager::getRecordMangerPtr();
-	cmPtr = CatalogManager::getCatalogManager();
+	list<string> indexNames;
+	for (auto tableName : cmPtr->getAllTables())
+	{
+		vector<string> indexName = cmPtr->getIndexVecFromTableName(tableName);
+		for (auto name : indexName)
+			indexNames.insert(indexNames.end(), name);
+	}
+	imPtr = IndexManager::getIndexManagerPtr(indexNames);
 }
 
 API::~API(){}
@@ -178,9 +185,29 @@ void API::deleteValuesCmd(const string& tableName)
 }
 
 
-void deleteValuesCmd(const std::string tableName, std::list<Expression>& expressions)
+void API::deleteValuesCmd(const std::string tableName, std::list<Expression>& expressions)
 {
+	list<string> primaryValues;
+	rmPtr->deleteValues(tableName, cmPtr->getTable(tableName), expressions, primaryValues);
 
+	string primaryName;
+	//get the primary attributeName
+	for (auto field : cmPtr->getTable(tableName).getTableVec())
+	{
+		if (field.isPrimary())
+		{
+			primaryName = field.getAttribute();
+			break;
+		}
+	}
+	list<string> indexNames;
+	for (auto tableName : cmPtr->getAllTables())
+	{
+		vector<string> indexName = cmPtr->getIndexVecFromTableName(tableName);
+		for (auto name : indexName)
+			indexNames.insert(indexNames.end(), name);
+	}
+	imPtr->deleteValues(primaryName, primaryValues, indexNames, tableName, cmPtr->getTable(tableName).getLength());
 }
 
 /*@brief select a specific list attributes from the table(select xxx, yyy from zzz(tableName))
@@ -199,25 +226,28 @@ void API::selectValuesCmd(const list<string> &attributeName, const string& table
 */
 void API::selectValuesCmd(const list<string> &attributeName, const string& tableName, list<Expression> &expressions, RECORDBUFFER& recordBuff)
 {
-	std::set<string> attributeNames;
+	std::set<string> attributeNameSet;
 	bool flag = true;
 	for (auto express : expressions)
 	{
-		if (express.leftOperand.isAttribute && express.rightOperand.isAttribute)
-			flag = false;
-		else
+		if (express.leftOperand.isAttribute)
+			attributeNameSet.insert(express.leftOperand.operandName);
+		if (express.rightOperand.isAttribute)
+			attributeNameSet.insert(express.rightOperand.operandName);
+	}
+	if (attributeNameSet.size() > 1)
+		rmPtr->selectValues(attributeName, tableName, cmPtr->getTable(tableName), expressions, recordBuff);
+	else
+	{
+		for (auto field : cmPtr->getTable(tableName).getTableVec())
 		{
-			try
+			if (field.isPrimary() || field.isUnique())
 			{
-				cmPtr->getIndexName(express.leftOperand.operandName, tableName);
-			}
-			catch (exception)
-			{
-				flag = false;
+				if (*(attributeNameSet.begin()) == field.getAttribute())
+					imPtr->selectValues(cmPtr->getIndexName(field.getAttribute(), tableName), cmPtr->getTable(tableName), expressions, recordBuff, tableName);
 			}
 		}
-			
-		
+		rmPtr->selectValues(attributeName, tableName, cmPtr->getTable(tableName), expressions, recordBuff);
 	}
 }
 

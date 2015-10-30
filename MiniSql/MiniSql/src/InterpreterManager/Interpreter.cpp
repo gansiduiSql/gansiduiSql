@@ -5,9 +5,9 @@
 #include "StatementBlock.h"
 #include "Functor.h"
 #include <iostream>
-#include <memory>
 #include <algorithm>
 #include <fstream>
+#include <sstream>
 using namespace std;
 typedef std::string::iterator Iterator;
 
@@ -40,7 +40,7 @@ void Interpreter::readInput(const string & s)
 					parse(tmpStoredSql);
 				}
 				catch (exception& e) {
-					printOut(e.what());
+					//printOut(e.what());
 				}
 				check();execute();
 				iter1 = iter2 + 1;
@@ -58,8 +58,12 @@ void Interpreter::executeFile(const std::string & fileName)
 		throw runtime_error("file(" + fileName + ") can not be open");
 	}
 	string s;
+	string errorInfo;
+	int lineCount = 0;
 	bool inQuota = false;
+	bool errorFlag = false;
 	while (getline(is, s)) {
+		lineCount++;
 		auto iter1 = s.begin();
 		auto iter2 = iter1;
 		for (; iter2 != s.end(); iter2++) {
@@ -73,10 +77,14 @@ void Interpreter::executeFile(const std::string & fileName)
 						parse(tmpStoredSql);
 					}
 					catch (exception& e) {
-						printOut(e.what());
-						throw runtime_error("error occur when run the file");
+						stringstream ss;
+						string tmp;
+						ss << lineCount;
+						ss >> tmp;
+						
+						errorInfo += "Line "+ tmp + ":" + e.what() + '\n';
+						errorFlag = true;
 					}
-					check();execute();
 					iter1 = iter2 + 1;
 					tmpStoredSql.clear();
 				}
@@ -84,6 +92,10 @@ void Interpreter::executeFile(const std::string & fileName)
 		}
 		tmpStoredSql += string(iter1, iter2);
 	}
+	if (errorFlag)
+		throw runtime_error(errorInfo.substr(0,errorInfo.size()-1));
+	check();
+	execute();
 }
 
 void Interpreter::executeSql(const std::string & sql) {
@@ -140,17 +152,21 @@ void Interpreter::print()
 void Interpreter::check()
 {
 	bool flag = true;
+	string s;
 	for (auto& vsb : vStatementBlock) {
-		try{
+		try {
 			vsb->check();
 		}
 		catch (exception& e) {
-			printOut(e.what());
+			s += string(e.what())+"\n";
 			flag = false;
 		}
 	}
 
-	if (!flag)vStatementBlock.clear();
+	if (!flag) {
+		vStatementBlock.clear();
+		throw CatalogError(s.substr(0,s.size()-1));
+	}
 }
 
 void Interpreter::execute()
@@ -160,7 +176,8 @@ void Interpreter::execute()
 			vsb->execute();		
 		}
 	}catch(exception& e){
-			printOut(e.what());
+		vStatementBlock.clear();
+		throw runtime_error(e.what());
 	}
 	vStatementBlock.clear();
 }
@@ -389,8 +406,9 @@ void Interpreter::quitParser(Iterator& begin, Iterator end) {
 
 void Interpreter::execfileParser(Iterator & begin, Iterator end)
 {
+	readWord(begin, end, IsString("\'"));
 	string s = readWord(begin, end, IsCharArray());
 	readToEnd(begin, end);
-	shared_ptr<StatementBlock> pSB(new execBlock(s,this));
+	shared_ptr<StatementBlock> pSB(new execBlock(string(s.begin(),s.end()-1),this));
 	vStatementBlock.push_back(pSB);
 }
