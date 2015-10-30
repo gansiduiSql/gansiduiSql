@@ -1,12 +1,13 @@
 #include "Interpreter.h"
 #include "../Exception.h"
 #include "../CatalogManager/CatalogManager.h"
+#include "..\API\API.h"
 #include "StatementBlock.h"
 #include "Functor.h"
-#include <sstream>
 #include <iostream>
 #include <memory>
 #include <algorithm>
+#include <fstream>
 using namespace std;
 typedef std::string::iterator Iterator;
 
@@ -83,6 +84,13 @@ void Interpreter::executeFile(const std::string & fileName)
 		}
 		tmpStoredSql += string(iter1, iter2);
 	}
+}
+
+void Interpreter::executeSql(const std::string & sql) {
+	parse(sql); 
+	check(); 
+	//print(); 
+	execute();
 }
 
 void Interpreter::parse(const string& sql){
@@ -165,7 +173,7 @@ void Interpreter::createTableParser(Iterator& begin, Iterator end){
 	s = readWord(begin, end, IsVariableName()); //read tableName
 	table.setTableName(s);
 
-	s = readWord(begin, end, IsString("{"));
+	s = readWord(begin, end, IsString("("));
 
 	int state = 0;
 	for (;;){
@@ -213,8 +221,8 @@ void Interpreter::createTableParser(Iterator& begin, Iterator end){
 			table.pushData(tmpData);
 		}
 		//check if the end is comming
-		s = readWord(begin, end, IsChar('}'));
-		if (s == "}") {
+		s = readWord(begin, end, IsChar(')'));
+		if (s == ")") {
 			break;
 		}else {
 			s = readWord(begin, end, IsString(","));
@@ -274,7 +282,7 @@ format select [ATTRIBUTES] from [TABLE] (where [EXPRESSIONS])
 void Interpreter::selectParser(Iterator& begin, Iterator end) {
 	list<string> attributeList;
 	
-	SelectBlock sb;
+	SelectBlock sb(this);
 
 	string s = readWord(begin, end, IsChar('*')); //read *
 	if (s.length() != 0) {

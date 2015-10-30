@@ -6,6 +6,8 @@
 #include <iostream>
 #include <set>
 #include <algorithm>
+#include <sstream>
+#include <regex>
 
 using namespace std;
 
@@ -28,6 +30,8 @@ void CreateTableBlock::check()
 	if (iter == tableVec.end())
 		throw GrammarError("The name of primary key attribute does not exist");
 	iter->setPrimary(true);
+	table.setPrimaryKeyIndex(iter - tableVec.begin());
+	table.setTableVec(tableVec);
 }
 
 void CreateTableBlock::execute()
@@ -45,6 +49,8 @@ void CreateTableBlock::print()
 			<< c.getType() << " length:" << c.getLength();
 		if (c.isUnique() == true)
 			cout << " UNIQUE";
+		if (c.isPrimary() == true)
+			cout << " PRIMARY";
 			cout << endl;
 	}
 	cout <<" Primary Key Name:"<< primaryKeyName << endl;
@@ -52,6 +58,8 @@ void CreateTableBlock::print()
 
 void CreateIndexBlock::execute()
 {
+	auto api = API::getAPIPtr();
+	api->createIndexCmd(indexName, tableName, attributeName);
 }
 
 void CreateIndexBlock::check()
@@ -59,6 +67,16 @@ void CreateIndexBlock::check()
 	auto pcb = CatalogManager::getCatalogManager();
 	if (pcb->isIndexExist(attributeName))
 		throw CatalogError("index(" + indexName + ") exists");
+	if (!pcb->isTableExist(tableName))
+		throw CatalogError("table(" + tableName + ") does not exist");
+	auto table = pcb->getTable(tableName);
+	if (!table.isAttribute(attributeName))
+		throw CatalogError("attribute("+ attributeName +") does not exist");
+	auto d = table.getData(attributeName);
+	if (d.isUnique() || d.isPrimary())
+		return;
+	else throw CatalogError("attribute(" + attributeName + ") is not unique or primary key");
+
 }
 
 void CreateIndexBlock::print()
@@ -71,6 +89,13 @@ void CreateIndexBlock::print()
 
 void InsertTableBlock::execute()
 {
+	auto api = API::getAPIPtr();
+	auto cp = CatalogManager::getCatalogManager();
+	list<string> v;
+	for (auto& content : values) {
+		v.push_back(content);
+	}
+	api->insertValuesCmd(v, cp->getTable(tableName));
 }
 
 void InsertTableBlock::check()
@@ -87,13 +112,16 @@ void InsertTableBlock::check()
 	int size = tableVec.size();
 	for (int i = 0; i < size; i++) {
 		TYPE type = tableVec[i].getType();
-		if (!ct.isType(values[i], type)) {
+		if (!ct.isType(values[i], type)) 
 			throw CatalogError("The type does not match");
-			if (type == CHAR && values[i].length() == tableVec[i].getLength() + 2) {
+		if (type == CHAR) {
+			if (values[i].length() <= tableVec[i].getLength() + 2)
 				values[i] = string(values[i].begin() + 1, values[i].end() - 1);
-			}throw CatalogError("The length of string does not match");
+			else
+				throw CatalogError("The length of string does not match");
 		}
 	}
+	
 }
 
 void InsertTableBlock::print()
@@ -107,6 +135,7 @@ void InsertTableBlock::print()
 
 void QuitBlock::execute()
 {
+	throw Quit();
 }
 
 void QuitBlock::check()
@@ -121,6 +150,8 @@ void QuitBlock::print()
 
 void DropTableBlock::execute()
 {
+	auto api = API::getAPIPtr();
+	api->dropTableCmd(tableName);
 }
 
 void DropTableBlock::check()
@@ -137,6 +168,8 @@ void DropTableBlock::print()
 
 void DropIndexBlock::execute()
 {
+	auto api = API::getAPIPtr();
+	api->dropIndexCmd(indexName);
 }
 
 void DropIndexBlock::check()
@@ -153,7 +186,11 @@ void DropIndexBlock::print()
 
 void DeleteBlock::execute()
 {
-	
+	if (doNothingFlag)return;
+	auto api = API::getAPIPtr();
+	if (flag)
+		api->deleteValuesCmd(tableName);
+	//else api->deleteValuesCmd(tableName, exps);
 }
 
 void DeleteBlock::check()
@@ -174,6 +211,8 @@ void DeleteBlock::check()
 		if (typeLeft != typeRight)throw CatalogError("unmatched type");
 		bool b1 = ct.isType(leftName, typeLeft), b2 = ct.isType(rightName, typeRight);
 		
+		exp.leftOperand.isAttribute = !b1;
+		exp.rightOperand.isAttribute = !b2;
 		//if they are all normal data
 		if (b1&&b2) {
 			if (compareExp(leftName, rightName, typeLeft, exp.op)){
@@ -181,6 +220,10 @@ void DeleteBlock::check()
 			else doNothingFlag = true;
 		}
 		else {
+			if (b1&&typeLeft == CHAR)
+				exp.leftOperand.operandName = string(leftName.begin() + 1, leftName.end() - 1);
+			if (b2&&typeRight == CHAR)
+				exp.rightOperand.operandName = string(rightName.begin() + 1, rightName.end() - 1);
 			tmpExps.push_back(exp);
 		}
 	}
@@ -205,6 +248,12 @@ void DeleteBlock::print()
 
 void SelectBlock::execute()
 {
+	if (doNothingFlag)return;
+	auto api = API::getAPIPtr();
+	if (exps.size() == 0)
+		api->selectValuesCmd(attributes, tableName, ip->getRecordBuffer());
+	else
+		api->selectValuesCmd(attributes, tableName, exps, ip->getRecordBuffer());
 }
 
 void SelectBlock::check()
@@ -238,6 +287,8 @@ void SelectBlock::check()
 		if (typeLeft != typeRight)throw CatalogError("unmatched type");
 		bool b1 = ct.isType(leftName, typeLeft), b2 = ct.isType(rightName, typeRight);
 
+		exp.leftOperand.isAttribute = !b1;
+		exp.rightOperand.isAttribute = !b2;
 		//if they are all normal data
 		if (b1&&b2) {
 			if (compareExp(leftName, rightName, typeLeft, exp.op)) {
@@ -245,6 +296,10 @@ void SelectBlock::check()
 			else doNothingFlag = true;
 		}
 		else {
+			if (b1&&typeLeft == CHAR)
+				exp.leftOperand.operandName = string(leftName.begin() + 1, leftName.end() - 1);
+			if (b2&&typeRight == CHAR)
+				exp.rightOperand.operandName = string(rightName.begin() + 1, rightName.end() - 1);
 			expTmp.push_back(exp);
 		}
 	}
@@ -289,21 +344,15 @@ bool CheckType::isString(const std::string & s) {
 }
 
 bool CheckType::isFloat(const std::string & s) {
-	try {
-		stof(s);
-	}
-	catch (exception& e) {
-		return false;
-	}return true;
+	if (std::regex_match(s, std::regex("^-?([1-9]\\d*\\.\\d*|0\\.\\d*)$")))
+		return true;
+	else return false;
 }
 
 bool CheckType::isInt(const std::string & s) {
-	try {
-		stoi(s);
-	}
-	catch (exception& e) {
-		return false;
-	}return true;
+	if (std::regex_match(s, std::regex("^-?[1-9]\\d*$")))
+		return true;
+	return false;
 }
 
 bool CheckType::isAttribute(const std::string & s)
