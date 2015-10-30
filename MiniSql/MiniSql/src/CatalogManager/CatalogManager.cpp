@@ -185,7 +185,7 @@ void CatalogManager::deleteIndexCatalog(const std::string& indexName)
 			headPtr = tPtr;
 			tPtr += FIX_LENGTH * 3;
 		}
-		if(headPtr==tPtr)
+		if(headPtr==deletedPtr)
 			memcpy(deletedPtr, headPtr, FIX_LENGTH * 3);
 		*headPtr = 0xff;
 		indices.erase(indexName);
