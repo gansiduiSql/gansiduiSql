@@ -262,7 +262,7 @@ void RecordManager::deleteValues(const string& tableName)
 *@param expressions a list of expression in the 'where' field and for simplity, all expression are join with logical and operator
 *@return void
 */
-void RecordManager::deleteValues(const string& tableName, const Table& table, list<Expression>& expressions)
+void RecordManager::deleteValues(const string& tableName, const Table& table, list<Expression>& expressions, list<string>& primaryValues)
 {
 	map<string, int> attributeOffset; //map the attribute name to the offset in the each record
 	map<string, TYPE> attributeType;  //map the attribute name to the type in each record
@@ -270,6 +270,17 @@ void RecordManager::deleteValues(const string& tableName, const Table& table, li
 
 	//construct the three map above
 	constructMap(attributeOffset, attributeType, attributeLength, table);
+
+	string primaryName;
+	//get the primary attributeName
+	for (auto field : table.getTableVec())
+	{
+		if (field.isPrimary())
+		{
+			primaryName = field.getAttribute();
+			break;
+		}
+	}
 
 	//transverse all record in the file
 	int tableLength = table.getLength();
@@ -324,6 +335,7 @@ void RecordManager::deleteValues(const string& tableName, const Table& table, li
 		//if the expression satisfys and move the last record to here and rewrite it
 		if (flag)
 		{
+			/*
 			if (tail%BLOCKSIZE < tableLength)
 				tail -= (BLOCKSIZE%tableLength);
 			tail -= tableLength;
@@ -331,12 +343,41 @@ void RecordManager::deleteValues(const string& tableName, const Table& table, li
 			BYTE *buffer = new BYTE[tableLength];
 			memcpy(buffer, bmPtr->fetchARecord(tableName, tail), tableLength);
 			bmPtr->writeARecord(buffer, tableLength, tableName, it.value());
+			*/
+			int off = attributeOffset[primaryName];
+			TYPE type = attributeType[primaryName];
+			int length = attributeLength[primaryName];
+			stringstream ss;
+			string s;
+			int intNum;
+			char *ch = new char[length + 1];
+			float floatNum;
+			switch (type)
+			{
+			case INT:
+				memcpy(&intNum, buffer + off, length);
+				ss << intNum;
+				break;
+			case CHAR:
+				memcpy(ch, buffer + off, length);
+				ch[length] = '\0';
+				s = string(ch);
+				ss << s;
+				break;
+			case FLOAT:
+				memcpy(&floatNum, buffer + off, length);
+				ss << floatNum;
+				break;
+			default:
+				break;
+			}
+			
+			primaryValues.insert(primaryValues.end(), ss.str());
+			ss.clear();
 		}
 
 		it = it.next();
 	}
-
-	bmPtr->writeARecord((BYTE*)(&tail), sizeof(int), tableName, 0);
 }
 
 /*select the a specific attribute name from the table without the field of 'where'
