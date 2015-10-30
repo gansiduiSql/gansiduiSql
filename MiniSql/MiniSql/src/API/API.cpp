@@ -13,7 +13,14 @@ API::API()
 {
 	cmPtr = CatalogManager::getCatalogManager();
 	rmPtr = RecordManager::getRecordMangerPtr();
-	cmPtr = CatalogManager::getCatalogManager();
+	list<string> indexNames;
+	for (auto tableName : cmPtr->getAllTables())
+	{
+		vector<string> indexName = cmPtr->getIndexVecFromTableName(tableName);
+		for (auto name : indexName)
+			indexNames.insert(indexNames.end(), name);
+	}
+	imPtr = IndexManager::getIndexManagerPtr(indexNames);
 }
 
 API::~API(){}
