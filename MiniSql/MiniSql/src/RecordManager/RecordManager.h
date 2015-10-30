@@ -62,6 +62,7 @@ public:
 	void selectValues(const std::list<std::string>& attributeNames, const std::string& tableName, const Table& table, std::list<Expression>& expressions, RECORDBUFFER& recordBuffer);
 	void dropTable(const std::string tableName);
 	//for test
+	static RecordManager* getRecordMangerPtr(){ static RecordManager rm; return &rm; }
 	BufferManager* getBmPtr(){ return bmPtr; }
 private:
 	BufferManager* bmPtr;
