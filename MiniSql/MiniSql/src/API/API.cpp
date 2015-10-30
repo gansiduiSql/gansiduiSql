@@ -4,7 +4,6 @@
 *@version 1.0
 */
 
-
 #include "API.h"
 
 using namespace std;
@@ -100,7 +99,7 @@ void API::createIndexCmd(const string& indexName, const string& tableName, const
 		{
 			if (cmPtr->isIndexExist(tableName, attributeName))
 			{
-				string name = cmPtr->getIndexName(tableName, attributeName);
+				string name = cmPtr->getIndexName(attributeName, tableName);
 				if (name[0] == '$')
 				{
 					imPtr->dropIndex(name);
@@ -208,7 +207,42 @@ void API::deleteValuesCmd(const string& tableName)
 void API::deleteValuesCmd(const std::string tableName, std::list<Expression>& expressions)
 {
 	list<string> primaryValues;
-	rmPtr->deleteValues(tableName, cmPtr->getTable(tableName), expressions, primaryValues);
+
+	list<string> indexNames;
+	for (auto tableName : cmPtr->getAllTables())
+	{
+		vector<string> indexName = cmPtr->getIndexVecFromTableName(tableName);
+		for (auto name : indexName)
+			indexNames.insert(indexNames.end(), name);
+	}
+
+	std::set<string> attributeNameSet;
+	bool flag = true;
+	for (auto express : expressions)
+	{
+		if (express.leftOperand.isAttribute)
+			attributeNameSet.insert(express.leftOperand.operandName);
+		if (express.rightOperand.isAttribute)
+			attributeNameSet.insert(express.rightOperand.operandName);
+	}
+	if (attributeNameSet.size() > 1)
+		rmPtr->deleteValues(tableName, cmPtr->getTable(tableName), expressions, primaryValues);
+	else
+	{
+		vector<Data> vec = cmPtr->getTable(tableName).getTableVec();
+		for (auto &field : vec)
+		{
+			if (field.isPrimary() || field.isUnique())
+			{
+				if (*(attributeNameSet.begin()) == field.getAttribute())
+				{
+					imPtr->deleteValues(cmPtr->getIndexName(field.getAttribute(), tableName), indexNames, expressions, tableName, cmPtr->getTable(tableName).getLength());
+					return;
+				}
+			}
+		}
+		rmPtr->deleteValues(tableName, cmPtr->getTable(tableName), expressions, primaryValues);
+	}
 
 	string primaryName;
 	//get the primary attributeName
@@ -220,13 +254,7 @@ void API::deleteValuesCmd(const std::string tableName, std::list<Expression>& ex
 			break;
 		}
 	}
-	list<string> indexNames;
-	for (auto tableName : cmPtr->getAllTables())
-	{
-		vector<string> indexName = cmPtr->getIndexVecFromTableName(tableName);
-		for (auto name : indexName)
-			indexNames.insert(indexNames.end(), name);
-	}
+
 	imPtr->deleteValues(primaryName, primaryValues, indexNames, tableName, cmPtr->getTable(tableName).getLength());
 }
 
@@ -265,7 +293,10 @@ void API::selectValuesCmd(const list<string> &attributeName, const string& table
 			if (field.isPrimary() || field.isUnique())
 			{
 				if (*(attributeNameSet.begin()) == field.getAttribute())
+				{
 					imPtr->selectValues(cmPtr->getIndexName(field.getAttribute(), tableName), cmPtr->getTable(tableName), expressions, recordBuff, tableName);
+					return;
+				}
 			}
 		}
 		rmPtr->selectValues(attributeName, tableName, cmPtr->getTable(tableName), expressions, recordBuff);
