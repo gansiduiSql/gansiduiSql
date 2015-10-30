@@ -64,7 +64,7 @@ public:
 	void insertValues(const string &indexName, const string &indexKey, const ADDRESS &recordOffset);/*insert indexkey to bplus tree after insertion with RM*/
 	void traverseTree(const string &indexName);/*traverse and print the index tree*/
 	bool keyExists(const string &indexName, const string &keyValue);/*find if a key exists in index specified by indexName*/
-	static IndexManager* getIndexManagerPtr(){ static IndexManager im; return &im; }/*get an instance of IndexManager*/
+	static IndexManager* getIndexManagerPtr(list<string> indexName){ static IndexManager im(indexName); return &im; }/*get an instance of IndexManager*/
 };
 
 #endif
