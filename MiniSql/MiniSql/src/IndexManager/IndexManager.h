@@ -45,7 +45,7 @@ private:
 	ADDRESS getNextToEndOffset(const string &fileName, const int &recordLength);
 	void renewEndOffset(const string &fileName, const int &recordLength);
 	void deleteRecordFromFile(const string &keyIndexName, const list<string> &indexList, const string &fileName, const ADDRESS &recordOffset, const int &recordLength);
-	void analysisExpression(bound &dstLowerBound, bound &dstUpperBound, bool &dstEqual, list<Expression> &expressions, const TYPE &type);
+	void analysisExpression(bound &dstLowerBound, bound &dstUpperBound, bool &dstEqual, list<Expression> &expressions,const int &attributeLength, const TYPE &type);
 	void createIndexFromFile(const string &indexName);
 	void saveIndexToFile(const string &indexName, const TYPE &type);
 	void pushToRecordbuffer(const Table &table, RECORDBUFFER &recordBuffer, const ADDRESS &address, const string &fileName);
@@ -61,7 +61,7 @@ public:
 	void deleteValues(const string &primaryIndexName, const list<string> &primaryKeyValues, const list<string> &indexList, const string &fileName, const int recordLength);/*delete values specified by list of key*/
 	void deleteValuesAll(const string &indexName);/*delete all the values*/
 	void selectValues(const string &indexName, Table& table, list<Expression> expressions, RECORDBUFFER &recordBuffer, const string &fileName);/*select values specified by expressions*/
-	void insertValues(const string &indexName, const string &indexKey, const ADDRESS &recordOffset);/*insert indexkey to bplus tree after insertion with RM*/
+	void insertValues(const string &indexName,string indexKey, const ADDRESS &recordOffset);/*insert indexkey to bplus tree after insertion with RM*/
 	void traverseTree(const string &indexName);/*traverse and print the index tree*/
 	bool keyExists(const string &indexName, const string &keyValue);/*find if a key exists in index specified by indexName*/
 	static IndexManager* getIndexManagerPtr(list<string> indexName){ static IndexManager im(indexName); return &im; }/*get an instance of IndexManager*/
