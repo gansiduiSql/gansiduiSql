@@ -85,6 +85,13 @@ void Interpreter::executeFile(const std::string & fileName)
 	}
 }
 
+void Interpreter::executeSql(const std::string & sql) {
+	parse(sql); 
+	check(); 
+	//print(); 
+	execute();
+}
+
 void Interpreter::parse(const string& sql){
 	
 	string str = sql + ' ';
@@ -165,7 +172,7 @@ void Interpreter::createTableParser(Iterator& begin, Iterator end){
 	s = readWord(begin, end, IsVariableName()); //read tableName
 	table.setTableName(s);
 
-	s = readWord(begin, end, IsString("{"));
+	s = readWord(begin, end, IsString("("));
 
 	int state = 0;
 	for (;;){
@@ -213,8 +220,8 @@ void Interpreter::createTableParser(Iterator& begin, Iterator end){
 			table.pushData(tmpData);
 		}
 		//check if the end is comming
-		s = readWord(begin, end, IsChar('}'));
-		if (s == "}") {
+		s = readWord(begin, end, IsChar(')'));
+		if (s == ")") {
 			break;
 		}else {
 			s = readWord(begin, end, IsString(","));

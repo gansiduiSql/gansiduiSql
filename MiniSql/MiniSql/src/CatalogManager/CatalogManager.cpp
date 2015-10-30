@@ -90,9 +90,11 @@ Table CatalogManager::getTable(const std::string& tableName)
 {
 	if (tableLoaded.find(tableName) != tableLoaded.end()) 
 		return tableLoaded[tableName];
+	if (!isTableExist(tableName))
+		throw CatalogError("The table(" + tableName + ") does not exist");
 	BYTE* buffer = bm->fetchARecord(tableName + ".log", 0);
 	if (buffer == NULL)
-		throw runtime_error("The table does not exist!");
+		throw CatalogError("The table does not exist!");
 	BYTE* tPtr = buffer;
 	tPtr += FIX_LENGTH;
 

@@ -66,6 +66,7 @@ public:
 	int getLength()const{return length;}
 	void pushData(Data& data) { tableVec.push_back(data); }
 	bool isAttribute(const std::string& s);
+	Data getData(const std::string& s);
 	~Table(){}
 private:
 	std::string tableName;
