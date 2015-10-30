@@ -153,6 +153,9 @@ void API::dropIndexCmd(const string& indexName)
 void API::insertValuesCmd(const list<string>& values, const Table& table)
 {
 	list<string>::const_iterator it = values.cbegin();
+	cnt++;
+	//if (cnt == 307)
+		//cout << "fuck";
 	for (auto field : table.getTableVec())
 	{
 		if (field.isPrimary() || field.isUnique())
@@ -293,7 +296,7 @@ void API::selectValuesCmd(const list<string> &attributeName, const string& table
 			{
 				if (*(attributeNameSet.begin()) == field.getAttribute())
 				{
-					imPtr->selectValues(cmPtr->getIndexName(field.getAttribute(), tableName), cmPtr->getTable(tableName), expressions, recordBuff, tableName);
+					imPtr->selectValues(cmPtr->getIndexName(field.getAttribute(), tableName), attributeName, cmPtr->getTable(tableName), expressions, recordBuff, tableName);
 					return;
 				}
 			}

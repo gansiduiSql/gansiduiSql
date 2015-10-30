@@ -188,7 +188,7 @@ void DeleteBlock::execute()
 {
 	if (doNothingFlag)return;
 	auto api = API::getAPIPtr();
-	if (flag)
+	if (!flag)
 		api->deleteValuesCmd(tableName);
 	else api->deleteValuesCmd(tableName, exps);
 }
@@ -198,7 +198,7 @@ void DeleteBlock::check()
 	auto pcb = CatalogManager::getCatalogManager();
 	if(!pcb->isTableExist(tableName))
 		throw CatalogError("The table does not exist");
-	if (flag == true)return;
+	if (!flag)return;
 
 	Table table = pcb->getTable(tableName);
 	CheckType ct(&table);

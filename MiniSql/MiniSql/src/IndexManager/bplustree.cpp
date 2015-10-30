@@ -610,7 +610,7 @@ BPlusPointer BPlusTreeLeaf::deleteKey(ADDRESS p)
 
 ADDRESS BPlusTreeLeaf::findKey(ElementType s)
 {
-	for (int i = 0; keyValue[i] != ""; i++)
+	for (int i = 0; keyValue[i] != ""&&i<this->KEYNUM; i++)
 	{
 		if (keyValue[i] == s)
 			return ptrToChild[i];

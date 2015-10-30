@@ -33,6 +33,7 @@ private:
 	CatalogManager* cmPtr;
 	RecordManager* rmPtr;
 	IndexManager* imPtr;
+	int cnt = 0;
 public:
 	API();
 	~API();
