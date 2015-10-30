@@ -7,11 +7,14 @@ Table::Table(const std::string& tableName, std::vector<Data>& tableVec)
 {
 	int i = 0;
 	length = 0;
+	int offset = 0;
 	for (auto &data : this->tableVec)
 	{
 		if (data.isPrimary())
 			this->primaryKeyIndex = i;
 		this->length += data.getLength();
+		data.setOffset(offset);
+		offset += data.getLength();
 		i++;
 	}
 }
@@ -20,9 +23,12 @@ void Table::setTableVec(const std::vector<Data>& tableVec)
 { 
 	this->tableVec = tableVec; 
 	this->length = 0;
+	int offset = 0;
 	for (auto& data : this->tableVec)
 	{
 		this->length += data.getLength();
+		data.setOffset(offset);
+		offset += data.getLength();
 	}
 }
 
