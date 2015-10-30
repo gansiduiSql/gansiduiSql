@@ -317,18 +317,21 @@ void IndexManager::deleteValues(const string &indexName, const list<string> &ind
 }
 
 /* @brief delete the values specified by list of keys
-* @param recordList the list of records to be deleted
+* @param primaryIndexName The name of index on primary key
+* @param primaryKeyValues The primary key value of records to be deleted
+* @param indexList List of index on the table
+* @param recordLength Length of the record
+* @param fileName Name of the file
 * @pre Index exists
 * @return void
 * @throw IndexNotExistException
-* @post Values statisfy the expression is deleted
+* @post Values of the key list is deleted
 */
-void IndexManager::deleteValues(const list<string> &indexList, const list<string> &recordList)
+void IndexManager::deleteValues(const string &primaryIndexName, const list<string> &primaryKeyValues, const list<string> &indexList,
+	const string &fileName, const int recordLength)
 {
-	for (auto keyValue : indexList)
-	{
-
-	}
+	for (auto keyValue : primaryKeyValues)
+		deleteRecordFromFile("", indexList, fileName, indexLibrary[primaryIndexName]->findKey(keyValue), recordLength);
 }
 
 /* @brief delete all the values in Index by deletion of the whole tree
@@ -796,6 +799,11 @@ void IndexManager::pushToRecordbuffer(const Table &table, RECORDBUFFER &recordBu
 	recordBuffer.push_back(singleRecordVec);
 }
 
+/*@brief Check if a key exists in indexFile specified by param indexName
+* @param indexName name of the index
+* @param keyValue key to check
+* @return bool true:Key exists false:Key not exists
+*/
 bool IndexManager::keyExists(const string &indexName, const string &keyValue)
 {
 	if (indexLibrary[indexName]->findKey(keyValue) == -1)
