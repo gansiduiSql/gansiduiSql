@@ -76,7 +76,7 @@ void Interpreter::executeFile(const std::string & fileName)
 						printOut(e.what());
 						throw runtime_error("error occur when run the file");
 					}
-					check();execute();
+					//check();execute();
 					iter1 = iter2 + 1;
 					tmpStoredSql.clear();
 				}
@@ -140,17 +140,21 @@ void Interpreter::print()
 void Interpreter::check()
 {
 	bool flag = true;
+	string s;
 	for (auto& vsb : vStatementBlock) {
-		try{
+		try {
 			vsb->check();
 		}
 		catch (exception& e) {
-			printOut(e.what());
+			s += string(e.what())+" ";
 			flag = false;
 		}
 	}
 
-	if (!flag)vStatementBlock.clear();
+	if (!flag) {
+		vStatementBlock.clear();
+		throw CatalogError(s);
+	}
 }
 
 void Interpreter::execute()
@@ -160,7 +164,8 @@ void Interpreter::execute()
 			vsb->execute();		
 		}
 	}catch(exception& e){
-			printOut(e.what());
+		vStatementBlock.clear();
+		throw runtime_error(e.what());
 	}
 	vStatementBlock.clear();
 }
