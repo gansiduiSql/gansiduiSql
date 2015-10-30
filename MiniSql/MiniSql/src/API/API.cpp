@@ -9,7 +9,12 @@
 
 using namespace std;
 
-API::API(){}
+API::API()
+{
+	cmPtr = CatalogManager::getCatalogManager();
+	rmPtr = RecordManager::getRecordMangerPtr();
+	cmPtr = CatalogManager::getCatalogManager();
+}
 
 API::~API(){}
 
