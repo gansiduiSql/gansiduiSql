@@ -153,7 +153,6 @@ void API::dropIndexCmd(const string& indexName)
 void API::insertValuesCmd(const list<string>& values, const Table& table)
 {
 	list<string>::const_iterator it = values.cbegin();
-
 	for (auto field : table.getTableVec())
 	{
 		if (field.isPrimary() || field.isUnique())
