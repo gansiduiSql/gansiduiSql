@@ -9,13 +9,20 @@
 
 class StatementBlock;
 
-
-
 /*
 @name Interpreter
 @func parse check and execute sql sentences
-@ATTENTION before using the interpreter, PLEASE setRecordBuffer
+@ATTENTION before using the interpreter, PLEASE set RecordBuffer by calling setRecordBuffer
 @exception Quit():which is not derived from std::exception, so when catch this exception, the program must go to end.
+*/
+
+/*
+@puiblic function:
+@executeSql:	[in]sql (string) [out]none : execute Sql sentence
+@parse:		[in]sql (string) [out]none: parse Sql sentence
+@check:		[in]none [out]none : after parse, call this func to check the data by communication with 
+				CatalogManager
+@execute:	[in]none [out]none : after check, call this func to execute by call API
 */
 
 class Interpreter

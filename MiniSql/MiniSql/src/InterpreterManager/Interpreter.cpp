@@ -31,7 +31,7 @@ void Interpreter::readInput(const string & s)
 	auto iter2 = iter1;
 	for (; iter2 != s.end(); iter2++) {
 		if (*iter2 == '\'') {
-			inQuota == ~inQuota;
+			inQuota = !inQuota;
 		}
 		if (!inQuota) {
 			if (*iter2 == ';') {
@@ -64,7 +64,7 @@ void Interpreter::executeFile(const std::string & fileName)
 		auto iter2 = iter1;
 		for (; iter2 != s.end(); iter2++) {
 			if (*iter2 == '\'') {
-				inQuota == ~inQuota;
+				inQuota = !inQuota;
 			}
 			if (!inQuota) {
 				if (*iter2 == ';') {
@@ -304,7 +304,7 @@ void Interpreter::selectParser(Iterator& begin, Iterator end) {
 	sb.setTableName(s);
 	try {
 		s = readWord(begin, end);
-	}catch (EndOfString &e) {
+	}catch (EndOfString) {
 		shared_ptr<StatementBlock> pSB(new SelectBlock(sb));
 		vStatementBlock.push_back(pSB);
 		return;
