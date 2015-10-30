@@ -7,7 +7,7 @@ using namespace std;
 #define FIX_LENGTH 16
 /*
 @name: getCatalogManager
-@function: return a unique ptr to CatalogManager
+@brief: return a unique ptr to CatalogManager
 */
 CatalogManager * CatalogManager::getCatalogManager()
 {
@@ -17,7 +17,7 @@ CatalogManager * CatalogManager::getCatalogManager()
 
 /*
 @name: CatalogManager
-@func: get ptr to bufferManager and load table info and index info
+@brief: get ptr to bufferManager and load table info and index info
 */
 CatalogManager::CatalogManager()
 {
@@ -25,7 +25,12 @@ CatalogManager::CatalogManager()
 	load();
 }
 
-
+/*
+@name:	createIndex
+@brief: create index on tablename and its attribute, and name it indexName
+@in:	indexName tableName attributeName
+@out:	void
+*/
 void CatalogManager::createIndex(const std::string & indexName, const std::string & tableName, const std::string & attributeName)
 {
 	BYTE* buffer = bm->fetchARecord("index.index", 0);
@@ -48,10 +53,22 @@ void CatalogManager::createIndex(const std::string & indexName, const std::strin
 	indices[indexName][tableName] = attributeName;
 }
 
+/*
+@name:	 ~CatalogManager
+@brief:	destructor
+@in:	none
+@out:	none
+*/
 CatalogManager::~CatalogManager()
 {
 }
 
+/*
+@name:	createTableCatalog	
+@brief:	create table and its catalog
+@in:	table
+@out:	void
+*/
 void CatalogManager::createTableCatalog(const Table& table)
 {
 	string tableName = table.getTableName();
@@ -81,6 +98,13 @@ void CatalogManager::createTableCatalog(const Table& table)
 	bm->writeARecord(buffer, BLOCKSIZE, tableName + ".log", 0);
 	tableLoaded[table.getTableName()] = table;
 }
+
+/*
+@name:	deleteTableCatalog
+@brief:	delete table and its catalog
+@in:	tableName
+@out:	void
+*/
 void CatalogManager::deleteTableCatalog(const std::string& tableName)
 {
 	
@@ -112,6 +136,15 @@ Table CatalogManager::getTable(const std::string& tableName)
 	tableLoaded[tableName] = ret;
 	return ret;
 }
+
+
+/*
+@name:	getIndexName
+@brief:	get an index name from attribute and tableName
+@in:	attribute name , table name
+@out:	table name(string)
+@throw:	CatalogError
+*/
 std::string	CatalogManager::getIndexName(const std::string& attribute, const std::string& tableName)
 {
 	for (auto& map1 : indices) {
@@ -140,11 +173,25 @@ std::string	CatalogManager::getFileNameFromIndexName(const std::string& indexNam
 	throw CatalogError("This file does not exist.");
 	return "";
 }
-
+/*
+@name:	createIndexCatalog
+@brief:	create index catalog
+@in:	indexName tableName attributeName
+@out:	void
+@throw:	
+*/
 void CatalogManager::createIndexCatalog(const std::string & indexName, const std::string & tableName, const std::string & attributeName)
 {
 	createIndex(indexName, tableName, attributeName);
 }
+
+/*
+@name:	getIndexVecFromTableName
+@brief:	give a tableName and return a vector involving all indexName on this table
+@in:	tableName
+@out:	container of indexName(std::vector<std::string>)
+@throw:	none
+*/
 vector<std::string> CatalogManager::getIndexVecFromTableName(const std::string & tableName)
 {
 	vector<string> vRet;
@@ -158,6 +205,13 @@ vector<std::string> CatalogManager::getIndexVecFromTableName(const std::string &
 	}
 	return vRet;
 }
+
+/*
+@name:	delete index catalog
+@brief:	delete index catalog
+@in:	indexName
+@out:	void
+*/
 void CatalogManager::deleteIndexCatalog(const std::string& indexName)
 {
 	BYTE* buffer = bm->fetchARecord("index.index", 0);
@@ -196,12 +250,25 @@ void CatalogManager::deleteIndexCatalog(const std::string& indexName)
 	bm->writeARecord(buffer, BLOCKSIZE, "index.index", 0);
 	indices.erase(indexName);
 }
-
+/*
+@name:	isIndexExist
+@brief:	check if a index exists giving an indexName
+@in:	indexName
+@out:	bool
+@throw: none
+*/
 bool CatalogManager::isIndexExist(const std::string & indexName)
 {
 	return indices.find(indexName) != indices.end();
 }
 
+/*
+@name:	isIndexExist
+@brief:	giving a table name and its attribute name and check if the index exists
+@in:	tableName attrName
+@out:	bool
+@throw:	none
+*/
 bool CatalogManager::isIndexExist(const std::string & tableName, const std::string & attrName)
 {
 	for (auto& map1 : indices) {
@@ -213,7 +280,13 @@ bool CatalogManager::isIndexExist(const std::string & tableName, const std::stri
 	}
 	return false;
 }
-
+/*
+@name:	checkIndexTableAttribute
+@brief:	check if an index on an attribute of a table exists
+@in:	indexName tableName attibuteName
+@out:	bool
+@throw:	none
+*/
 bool CatalogManager::checkIndexTableAttribute(const std::string & indexName, const std::string & tableName, const std::string & attributeName)
 {
 	if (indices.find(indexName) != indices.end()) {
@@ -223,7 +296,13 @@ bool CatalogManager::checkIndexTableAttribute(const std::string & indexName, con
 	}
 	return false;
 }
-
+/*
+@name:	saveData
+@brief:	save the data to a buffer
+@in:	data:the data to write ptr:the start ptr to write in the buffer
+@out:	BYTE* (address just after the address written data on)
+@throw:	none
+*/
 BYTE* CatalogManager::saveData(const Data& data, BYTE* ptr)
 {
 	BYTE* tPtr = ptr;
@@ -237,10 +316,16 @@ BYTE* CatalogManager::saveData(const Data& data, BYTE* ptr)
 	*(iPtr++) = data.isPrimary();
 	return (BYTE*)iPtr;
 }
-
+/*
+@name:	readData
+@brief:	read the data to a buffer
+@in:	data:the data to write ptr:the start ptr to read in the buffer
+@out:	BYTE* (address just after the address read data on)
+@throw:	none
+*/
 BYTE* CatalogManager::readData(Data& data, BYTE* ptr)
 {
-	//attributeNameCannotMoreThan64bytes
+	//attributeNameCannotMoreThan16bytes
 	BYTE* tPtr = ptr;
 	data.setAttribute(string((const char *)tPtr));
 	tPtr += FIX_LENGTH;
@@ -251,7 +336,13 @@ BYTE* CatalogManager::readData(Data& data, BYTE* ptr)
 	data.setPrimary((bool)*(iPtr++));
 	return (BYTE*)iPtr;
 }
-
+/*
+@name:	load
+@brief:	load table catalog and index catalog
+@in:	none
+@out:	none
+@throw:	none
+*/
 void CatalogManager::load()
 {
 	BYTE* buffer = bm->fetchARecord("table.table", 0);
@@ -273,7 +364,12 @@ void CatalogManager::load()
 		indices[sIndexName][sTableName] = sAttributeName;
 	}
 }
-
+/*
+@name:	isEnd
+@brief:	check if the ptr point to end flag
+@in:	ptr(the address to check)
+@out:	
+*/
 bool CatalogManager::isEnd(BYTE* ptr)
 {
 	return *ptr == 0xff;
