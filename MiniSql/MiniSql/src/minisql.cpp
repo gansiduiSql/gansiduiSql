@@ -1,3 +1,9 @@
+/*@brief This is the entry of the minisql
+*@CopyRight for the the gansidui@zju
+*Author: gansidui@zju
+*Date:2015/10/31
+*/
+
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -13,30 +19,6 @@ int main()
 
 	Interpreter it;
 
-	/*string sql;
-	ifstream in("student.txt");
-	while (1)
-	{
-		string line;
-		getline(cin, line);
-		if (line == "quit")
-			break;
-		sql += (line + ' ');
-		if (sql.find(';') < sql.length())
-		{
-			sql.erase(sql.end() - 2);
-			cout << "------------------" << endl << sql << endl;
-			try
-			{
-				it.executeSql(sql);
-			}
-			catch (exception e)
-			{
-				cout << e.what() << endl;
-			}
-			sql.clear();
-		}
-	}*/
 	RECORDBUFFER buffer;
 
 	it.setRecordBuffer(buffer);
