@@ -625,7 +625,7 @@ void BPlusTreeLeaf::reDistributePtr(BPlusLeaf sibPtr)
 	int SIBELEMENT = sibPtr->getElementCount();
 	int THISELEMENT = ELEMENTCOUNT;
 	int TOTALELEMENT = SIBELEMENT + THISELEMENT;
-	bool sibBiggerThanThis;
+	bool sibBiggerThanThis=false;
 
 	string st = sibPtr->getKeyValue(0);
 	if (st.compare(keyValue[0]) > 0)
