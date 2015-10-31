@@ -397,6 +397,7 @@ void IndexManager::selectValues(const string &indexName, const list<string> &att
 				start++;
 			if (upperbound.equal == false || upperFlagAdded)
 				end--;
+			if (start!=end)
 			for (int i = start; i <= end; i++)/*Only have to process this node*/
 				pushToRecordbuffer(attributes,table, recordBuffer, currentLeaf->getPtrToChild(i), fileName);
 		}
