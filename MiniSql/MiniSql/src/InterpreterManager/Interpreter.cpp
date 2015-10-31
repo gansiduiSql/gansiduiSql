@@ -24,6 +24,11 @@ std::vector<std::string> Interpreter::split(std::string s, std::string::value_ty
 }
 
 
+Interpreter::Interpreter() 
+{
+	API::getAPIPtr();
+}
+
 void Interpreter::readInput(const string & s)
 {
 	static bool inQuota = false;
