@@ -211,12 +211,9 @@ void API::deleteValuesCmd(const std::string tableName, std::list<Expression>& ex
 	list<string> primaryValues;
 
 	list<string> indexNames;
-	for (auto tableName : cmPtr->getAllTables())
-	{
-		vector<string> indexName = cmPtr->getIndexVecFromTableName(tableName);
-		for (auto name : indexName)
-			indexNames.insert(indexNames.end(), name);
-	}
+	vector<string> indexName = cmPtr->getIndexVecFromTableName(tableName);
+	for (auto &name : indexName)
+		indexNames.insert(indexNames.end(), name);
 
 	std::set<string> attributeNameSet;
 	bool flag = true;

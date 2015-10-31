@@ -28,7 +28,7 @@ class StatementBlock;
 class Interpreter
 {
 public:
-	Interpreter(){};
+	Interpreter();;
 	~Interpreter() {};
 	void setRecordBuffer(RECORDBUFFER& rb) { this->rb = &rb; }
 	void readInput(const std::string& s);
