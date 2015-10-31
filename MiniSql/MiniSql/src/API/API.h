@@ -10,23 +10,24 @@
 #include "..\RecordManager\RecordManager.h"
 #include "..\IndexManager\IndexManager.h"
 
-class PriOrUniqExistException : public exception
+class PriOrUniqExistException : public std::exception
 {
 private:
 	std::string errlog;
 public:
 	PriOrUniqExistException(std::string attributeName){ errlog = "The inserted values conflict in" + attributeName; }
-	virtual const char* what(){ return errlog.c_str(); }
+	virtual const char* what()const{ return errlog.c_str(); }
 };
 
-class IndexOnTheSameAttributeException : public exception
+class IndexOnTheSameAttributeException : public std:: exception
 {
 private:
 	std::string errlog;
 public:
 	IndexOnTheSameAttributeException(){ errlog = "There is an index in this attribute in the table!"; }
-	virtual const char* what(){ return errlog.c_str(); }
+	virtual const char* what()const{ return errlog.c_str(); }
 };
+
 class API
 {
 private:

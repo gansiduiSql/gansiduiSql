@@ -242,10 +242,11 @@ void API::deleteValuesCmd(const std::string tableName, std::list<Expression>& ex
 		}
 		rmPtr->deleteValues(tableName, cmPtr->getTable(tableName), expressions, primaryValues);
 	}
-
+	
 	string primaryName;
 	//get the primary attributeName
-	for (auto field : cmPtr->getTable(tableName).getTableVec())
+	auto tableVec = cmPtr->getTable(tableName).getTableVec();
+	for (auto& field : tableVec)
 	{
 		if (field.isPrimary())
 		{
@@ -254,7 +255,7 @@ void API::deleteValuesCmd(const std::string tableName, std::list<Expression>& ex
 		}
 	}
 
-	imPtr->deleteValues(primaryName, primaryValues, indexNames, tableName, cmPtr->getTable(tableName).getLength());
+	imPtr->deleteValues(cmPtr->getIndexName(primaryName, tableName), primaryValues, indexNames, tableName, cmPtr->getTable(tableName).getLength());
 }
 
 /*@brief select a specific list attributes from the table(select xxx, yyy from zzz(tableName))

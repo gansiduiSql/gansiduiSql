@@ -147,8 +147,8 @@ private:
 
 class CheckType {
 public:
-	CheckType():CheckType(nullptr){}
-	CheckType(Table* table) :pTable(table) {};
+	CheckType(){}
+	CheckType(const Table& table) :table(table) {};
 	bool isType(const std::string& s, TYPE type);
 	bool isString(const std::string& s);
 	bool isFloat(const std::string& s);
@@ -156,7 +156,7 @@ public:
 	bool isAttribute(const std::string& s);
 	TYPE isWhatType(const std::string& s);
 private:
-	Table* pTable;
+	Table table;
 };
 
 template<typename T>

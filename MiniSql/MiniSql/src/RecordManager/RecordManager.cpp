@@ -326,10 +326,7 @@ void RecordManager::deleteValues(const string& tableName, const Table& table, li
 			}
 			//there is a expression that not satisfied
 			if (flag == false)
-			{
-				it = it.next();
 				break;
-			}
 		}
 		
 		//if the expression satisfys and move the last record to here and rewrite it

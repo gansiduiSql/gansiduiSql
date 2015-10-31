@@ -752,7 +752,7 @@ void BPlusTreeIndex::addKey(ADDRESS p, ElementType s)
 	{
 		Root = Root->addKey(p, s);
 	}
-	catch (exception ex)
+	catch (exception &ex)
 	{
 		throw ex;
 	}
@@ -764,7 +764,7 @@ void BPlusTreeIndex::removeKey(ElementType s)
 	{
 		Root = Root->removeKey(s);
 	}
-	catch (exception ex)
+	catch (exception& ex)
 	{
 		throw ex;
 	}

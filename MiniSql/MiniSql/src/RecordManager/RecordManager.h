@@ -23,7 +23,7 @@ private:
 	std::string errlog;
 public:
 	InsertException(const std::string attributeName){ errlog = "Insert error! " + attributeName + " is a primary(unique) key!"; }
-	virtual const char* what(){ return errlog.c_str(); }
+	virtual const char* what()const{ return errlog.c_str(); }
 };
 
 class RecordIterator

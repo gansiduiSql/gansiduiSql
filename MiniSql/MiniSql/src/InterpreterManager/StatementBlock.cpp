@@ -201,7 +201,7 @@ void DeleteBlock::check()
 	if (!flag)return;
 
 	Table table = pcb->getTable(tableName);
-	CheckType ct(&table);
+	CheckType ct(table);
 	list<Expression> tmpExps;
 	for (auto &exp : exps) {
 		string leftName = exp.leftOperand.operandName;
@@ -278,7 +278,7 @@ void SelectBlock::check()
 		}
 	}
 	if (exps.size() == 0)return;
-	CheckType ct(&table);
+	CheckType ct(table);
 	
 	std::list<Expression> expTmp;
 	for (auto &exp : exps) {
@@ -361,7 +361,7 @@ bool CheckType::isInt(const std::string & s) {
 
 bool CheckType::isAttribute(const std::string & s)
 {
-	return pTable->isAttribute(s);
+	return table.isAttribute(s);
 }
 
 TYPE CheckType::isWhatType(const std::string & s)
@@ -372,7 +372,7 @@ TYPE CheckType::isWhatType(const std::string & s)
 		return CHAR;
 	if (isFloat(s))
 		return FLOAT;
-	vector<Data> v = pTable->getTableVec();
+	vector<Data> v = table.getTableVec();
 	auto iter = std::find_if(v.begin(), v.end(), [=](const Data& d) {
 		return d.getAttribute() == s;
 	});
@@ -396,5 +396,10 @@ bool compareExp(const std::string& left, const std::string& right, TYPE type, OP
 }
 void execBlock::execute() 
 {
+	string file = fileName;
+	
+	ip->gettPtr() = ip->getVsb()[0];
+	ip->getVsb().clear();
 	ip->executeFile(fileName);
+	ip->getVsb().push_back(ip->gettPtr());
 }

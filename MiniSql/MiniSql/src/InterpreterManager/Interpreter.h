@@ -38,6 +38,8 @@ public:
 	void print();
 	void check();
 	void execute();
+	std::shared_ptr<StatementBlock>& gettPtr(){ return tptr; }
+	std::vector<std::shared_ptr<StatementBlock>>& getVsb(){return vStatementBlock;}
 	RECORDBUFFER& getRecordBuffer() { return *rb; }
 private:
 	typedef std::string::iterator Iterator;
@@ -56,5 +58,6 @@ private:
 	std::vector<std::shared_ptr<StatementBlock>> vStatementBlock;
 	std::string tmpStoredSql;
 	RECORDBUFFER* rb; 
+	std::shared_ptr<StatementBlock> tptr;
 };
 #endif

@@ -62,6 +62,7 @@ void Interpreter::executeFile(const std::string & fileName)
 	if (!is.is_open()) {
 		throw runtime_error("file(" + fileName + ") can not be open");
 	}
+	vStatementBlock.clear();
 	string s;
 	string errorInfo;
 	int lineCount = 0;
@@ -178,11 +179,14 @@ void Interpreter::execute()
 {
 	try {
 		for (auto& vsb : vStatementBlock) {
-			vsb->execute();		
+			vsb->execute();
+			if (vStatementBlock.size() == 1)
+				break;
 		}
 	}catch(exception& e){
+		//cout << e.what();
 		vStatementBlock.clear();
-		throw runtime_error(e.what());
+		throw runtime_error(e.what()); 
 	}
 	vStatementBlock.clear();
 }
@@ -227,7 +231,7 @@ void Interpreter::createTableParser(Iterator& begin, Iterator end){
 					tmpData.setType(CHAR);
 					tmpData.setLength(i);
 				}
-				catch (invalid_argument e) {
+				catch (invalid_argument& e) {
 					throw GrammarError("The length of a string should be a integer!");
 				}
 				readWord(begin, end, IsString(")"));

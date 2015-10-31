@@ -15,7 +15,7 @@ private:
 public:
 	OpenFileException(){ errLog = "fail to open file"; }
 	OpenFileException(std::string fileName){ errLog = "fail to open " + fileName; }
-	virtual const char* what(){ return errLog.c_str(); }
+	virtual const char* what()const{ return errLog.c_str(); }
 };
 
 //remove a file exception
@@ -27,7 +27,7 @@ public:
 	RemoveFileException(){ errLog = "fail to remove file"; }
 	RemoveFileException(std::string fileName){ errLog = "fail to remove " + fileName; }
 	virtual ~RemoveFileException(){}
-	virtual const char* what(){ return errLog.c_str(); }
+	virtual const char* what()const{ return errLog.c_str(); }
 };
 
 //all block has been pinned
@@ -38,7 +38,7 @@ private:
 public:
 	AllBlockPinned(){ errLog = "All block has been pinned!"; }
 	virtual ~AllBlockPinned(){}
-	virtual const char* what(){ return errLog.c_str(); }
+	virtual const char* what()const{ return errLog.c_str(); }
 };
 
 class BufferManager

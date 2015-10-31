@@ -146,7 +146,7 @@ void IndexManager::createIndexFromFile(const string &indexName)
 			curser += infh.attributeLength + 1 + sizeof(ADDRESS);
 		}
 	}
-	catch (exception ex)
+	catch (exception& ex)
 	{
 		throw ex;
 	}
@@ -334,8 +334,12 @@ void IndexManager::deleteValues(const string &indexName, const list<string> &ind
 void IndexManager::deleteValues(const string &primaryIndexName, const list<string> &primaryKeyValues, const list<string> &indexList,
 	const string &fileName, const int recordLength)
 {
+	int cnt = 0;
 	for (auto keyValue : primaryKeyValues)
+	{
 		deleteRecordFromFile("", indexList, fileName, indexLibrary[primaryIndexName]->findKey(keyValue), recordLength);
+		cout << cnt++;
+	}
 }
 
 /* @brief delete all the values in Index by deletion of the whole tree
