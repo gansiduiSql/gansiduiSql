@@ -32,8 +32,8 @@ protected:
     ElementType* keyValue;//Pointer that points to an array that stores the key value
     int ELEMENTCOUNT;//Count of the element in the node
     bool isFull(){return ELEMENTCOUNT==KEYNUM; }
-    bool containsKey(ElementType s);//If the node contains s, returns true, else, returns false
-    int firstValueBiggerThan(ElementType s); //returns -1 if not found, returns index if found
+    bool containsKey(ElementType &s);//If the node contains &s, returns true, else, returns false
+    int firstValueBiggerThan(ElementType &s); //returns -1 if not found, returns index if found
 
 private:
     BPlusPointer* ptrToChild;//Pointer that points to an array that stores the pointer to childrens
@@ -41,34 +41,34 @@ private:
 
 public:
     BPlusTreeNode(int keyNumber);//constructer, allocate space for a node that contains keyNumber elements
-    virtual ~BPlusTreeNode();//virtual distructor, delete dynamic allocated ptrToChild and keyValue
+    virtual ~BPlusTreeNode();//virtual distructor, delete dynamic allocatedconst ElementType &s ptrToChild and keyValue
 
 	//Insertion
-    virtual BPlusPointer addKey(ADDRESS p, ElementType s);//recursively add key until to the left
-	virtual void insertKey(BPlusPointer p, ElementType s, int direction);//insert element in the node, if direction is LEFT, p lies left of s, if RIGHT p lies right of s also implement spliting nodes and correct pointers
+    virtual BPlusPointer addKey(const ADDRESS &p,ElementType &s);//recursively add key until to the left
+	virtual void insertKey(BPlusPointer p, ElementType &s,const int &direction);//insert element in the node, if direction is LEFT, p lies left of &s, if RIGHT p lies right of &s also implement spliting nodes and correct pointers
 	virtual void insertPtr(BPlusPointer p);//insert pointer to the next NON_NULL positon delete key from node, will recursive goes up
 	//Deletion
-    virtual BPlusPointer removeKey(ElementType s);//recursively remove key until to the left
+    virtual BPlusPointer removeKey(ElementType &s);//recursively remove key until to the left
 	virtual BPlusPointer deleteKey(BPlusPointer p);
 	virtual void reDistributePtr(BPlusPointer sibPtr);//used when deleting, redistrubute the keyvalues
-	BPlusPointer deleteKey(BPlusPointer p, ElementType s);
+	BPlusPointer deleteKey(BPlusPointer p,ElementType &s);
 	//Search
-	virtual ADDRESS findKey(ElementType s);
-	virtual BPlusLeaf returnLeafNode(ElementType s);
+	virtual ADDRESS findKey(ElementType &s);
+	virtual BPlusLeaf returnLeafNode(ElementType &s);
 	virtual BPlusLeaf returnFirstLeafNode();
 	virtual BPlusLeaf returnLastLeafNode();
 	//General function
 	int getKeyNum(){ return KEYNUM; }
 	void setParentNode(BPlusPointer p);//set the ptrToPartent node
-	ElementType getKeyValue(int index);//get the keyvalue of given index
-	void alterKeyValue(int index, ElementType s);//change the key value of the given index
-	BPlusPointer getPtrToChild(int index);//get the keyvalue of given index
+	ElementType getKeyValue(const int &index);//get the keyvalue of given index
+	void alterKeyValue(const int &index,ElementType &s);//change the key value of the given index
+	BPlusPointer getPtrToChild(const int &index);//get the keyvalue of given index
 	int getElementCount();//return Element count
     virtual void traverse(int level);//traverse down the tree
 	bool isEmpty(){ return ELEMENTCOUNT == 0; }
     virtual void makeEmpty();//makes the node empty
     int indexOf(BPlusPointer p);//index of a pointer returns -1 if not found
-    int indexOf(ElementType s);//index of an element returns -1 if not found
+    int indexOf(ElementType &s);//index of an element returns -1 if not found
     BPlusPointer findSibling(BPlusPointer p);//used for nodes connecting non-leaf nodes
     BPlusLeaf findSibling(BPlusLeaf p);//used for nodes connecting leaf nodes  
 };
@@ -82,24 +82,24 @@ private:
 public:
     BPlusTreeLeaf(int keyNumber);
     ~BPlusTreeLeaf();
-    BPlusPointer addKey(ADDRESS p, ElementType s);
-    BPlusPointer removeKey(ElementType s); 
-    BPlusPointer deleteKey(ADDRESS p);
-	BPlusLeaf returnLeafNode(ElementType s);
+    BPlusPointer addKey(const ADDRESS &p, ElementType &s);
+    BPlusPointer removeKey(ElementType &s); 
+    BPlusPointer deleteKey(const ADDRESS &p);
+	BPlusLeaf returnLeafNode(ElementType &s);
 	BPlusLeaf returnFirstLeafNode();
 	BPlusLeaf returnLastLeafNode();
 	BPlusLeaf getPtrToSinling(){ return ptrToSibling; }
-	void insertKey(ADDRESS p, ElementType s, int direction);
-    void deletePtr(ADDRESS p);
+	void insertKey(const ADDRESS &p, ElementType &s, const int &direction);
+    void deletePtr(const ADDRESS &p);
     void reDistributePtr(BPlusLeaf sibPtr);
     void makeEmpty();
 	void traverse(int level);
     void insertPtrToSibling(BPlusLeaf p);
-    int indexOf(ADDRESS s);
-    int indexOf(ElementType s);
+    int indexOf(const ADDRESS &s);
+    int indexOf(ElementType &s);
     
 	ADDRESS getPtrToChild(int index);
-	ADDRESS findKey(ElementType s);
+	ADDRESS findKey(ElementType &s);
 };
 
 class BPlusTreeIndex
@@ -113,10 +113,10 @@ private:
 public:
     BPlusTreeIndex(int maxKeyNum, int attributeLength, int offserInRecord, TYPE type);
     ~BPlusTreeIndex();
-    void addKey(ADDRESS p, ElementType s);
-    void removeKey(ElementType s);
-    ADDRESS findKey(ElementType s);
-	BPlusLeaf returnLeafNode(ElementType s);
+    void addKey(ADDRESS p, ElementType &s);
+    void removeKey(ElementType &s);
+    ADDRESS findKey(ElementType &s);
+	BPlusLeaf returnLeafNode(ElementType &s);
 	BPlusLeaf returnFirstLeafNode();
     void traverseTree();
 	int getMaxKeyNum(){ return MAXKEYNUMBER; }
