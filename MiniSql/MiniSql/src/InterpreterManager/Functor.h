@@ -1,3 +1,10 @@
+/*@brief
+*@author tomstream@qq.com
+*@date 2015/10/28
+*@version 1.0
+*/
+
+
 #ifndef _FUNCTOR_H_
 #define _FUNCTOR_H_
 

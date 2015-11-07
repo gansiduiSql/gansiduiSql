@@ -1,3 +1,24 @@
+/*@brief
+*@author tomstream@qq.com
+*@date 2015/10/28
+*@version 1.0
+*/
+
+
+/*
+As the highest-level module of our MiniSql database system, the interpreter owns its responsibility to interact with users of MiniSql
+and exchange data with lower-level modules, i.e. Catalog Manager, Index Manager, Record Manager, by calling interface provided by API
+module.
+
+When a sql statement is passing, the interpreter takes the following three steps: 1. Examine the correctness of grammars and parse it
+to a specific data structure containing statement information; 2. Check if the catalog information is correspondent to the information
+stored; 3. Call execute function.
+
+
+To be emphasized on, the interpreter is designed in a low-couple way owing to the polymorphism feature of C++ program language, which 
+improves its flexibility.
+
+*/
 #ifndef _INTERPRETER_H_
 #define _INTERPRETER_H_
 

@@ -1,3 +1,20 @@
+/*@brief
+*@author tomstream@qq.com
+*@date 2015/10/28
+*@version 1.0
+*/
+
+
+/*
+Catalog Manager undertakes its responsibility to manage meta table data, involving data about table definitions
+and index reliance. Catalog Manager plays its special role in interacting with both API module and Interpreter 
+module, guaranteeing the consistency between input statement with stored meta data and providing necessary functions
+to help other modules to get catalog information.
+
+All the file operations taken by Catalog Manager is implemented by calling the functions provided by Buffer Manager,
+and Catalog Manager does no direct manipulation on the storage devices such as disks or SSDs.
+
+*/
 #ifndef _CATALOGMANAGER_H_
 #define _CATALOGMANAGER_H_
 

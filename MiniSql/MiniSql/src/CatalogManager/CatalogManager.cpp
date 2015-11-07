@@ -1,3 +1,9 @@
+/*@brief
+*@author tomstream@qq.com
+*@date 2015/10/28
+*@version 1.0
+*/
+
 #include "CatalogManager.h"
 #include "../BufferManager/BufferManager.h"
 #include "../Definition.h"
@@ -375,18 +381,36 @@ bool CatalogManager::isEnd(BYTE* ptr)
 	return *ptr == 0xff;
 }
 
+/*
+@name:	readString
+@brief:	read a string
+@in:	s(the string read), ptr(current position)
+@out:	ptr(next ptr)
+*/
 BYTE* CatalogManager::readString(std::string& s, BYTE* ptr)
 {
 	s = string((char*)ptr);
 	return ptr + FIX_LENGTH;
 }
 
+/*
+@name:	saveString
+@brief:	save a string
+@in:	s(the string to save), ptr(current position)
+@out:	ptr(next ptr)
+*/
 BYTE * CatalogManager::saveString(const std::string & s, BYTE* ptr)
 {
 	strcpy((char*)ptr, s.c_str());
 	return ptr + FIX_LENGTH;
 }
 
+/*
+@name:	regTable
+@brief:	register table
+@in:	s(table name)
+@out:	void
+*/
 void CatalogManager::regTable(const std::string & s)
 {
 	if (isTableExist(s))throw CatalogError(s+":table name does exist");
@@ -402,6 +426,12 @@ void CatalogManager::regTable(const std::string & s)
 	bm->writeARecord(buffer, BLOCKSIZE,  "table.table", 0);
 }
 
+/*
+@name:	deRegTable
+@brief:	deRegister table
+@in:	s(table name)
+@out:	void
+*/
 void CatalogManager::deRegTable(const std::string & s)
 {
 	if (!isTableExist(s))throw CatalogError(s + ":table name does not exist");

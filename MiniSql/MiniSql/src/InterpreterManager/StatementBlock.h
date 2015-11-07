@@ -1,3 +1,16 @@
+/*@brief
+*@author tomstream@qq.com
+*@date 2015/10/28
+*@version 1.0
+*/
+
+
+/*
+StatementBlock is an interface for specific statement block to contain its data. 
+The StatementBlock holds the function check(), print() and execute(). 
+The check function communicates with Catalog Manager and check the correctness of the data by comparing with the meta data information. 
+The print function is used to debug. The execute function calls correspondent API functions.
+*/
 #ifndef _STATEMENTBLOCK_H_
 #define _STATEMENTBLOCK_H_
 

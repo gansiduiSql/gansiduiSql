@@ -1,3 +1,9 @@
+/*@brief
+*@author tomstream@qq.com
+*@date 2015/10/28
+*@version 1.0
+*/
+
 #include "Interpreter.h"
 #include "../Exception.h"
 #include "../CatalogManager/CatalogManager.h"
@@ -23,12 +29,19 @@ std::vector<std::string> Interpreter::split(std::string s, std::string::value_ty
 	return move(ret);
 }
 
-
+/*
+@name: constructor
+@brief: constructor API
+*/
 Interpreter::Interpreter() 
 {
 	API::getAPIPtr();
 }
 
+/*
+@name: readInput
+@brief: read from command line
+*/
 void Interpreter::readInput(const string & s)
 {
 	static bool inQuota = false;
@@ -56,6 +69,11 @@ void Interpreter::readInput(const string & s)
 	tmpStoredSql += string(iter1, iter2);
 }
 
+
+/*
+@name: executeFIle
+@brief: execute the sql statement in a file
+*/
 void Interpreter::executeFile(const std::string & fileName)
 {
 	ifstream is(fileName);
@@ -104,6 +122,10 @@ void Interpreter::executeFile(const std::string & fileName)
 	execute();
 }
 
+/*
+@name: executeSql
+@brief: execute a single sql statement
+*/
 void Interpreter::executeSql(const std::string & sql) {
 	parse(sql); 
 	check(); 
@@ -111,6 +133,10 @@ void Interpreter::executeSql(const std::string & sql) {
 	execute();
 }
 
+/*
+@name: parse
+@brief: parse a single sql statement due to the grammar rules
+*/
 void Interpreter::parse(const string& sql){
 	
 	string str = sql + ' ';
@@ -147,7 +173,10 @@ void Interpreter::parse(const string& sql){
 
 
 }
-
+/*
+@name: print
+@brief: print content
+*/
 void Interpreter::print()
 {
 	for (auto& vsb : vStatementBlock) {
@@ -155,6 +184,10 @@ void Interpreter::print()
 	}
 }
 
+/*
+@name: check
+@brief: check from communicate with catalog
+*/
 void Interpreter::check()
 {
 	bool flag = true;
@@ -174,7 +207,10 @@ void Interpreter::check()
 		throw CatalogError(s.substr(0,s.size()-1));
 	}
 }
-
+/*
+@name: execute
+@brief: execute all statemnt in vStatementBlock
+*/
 void Interpreter::execute()
 {
 	try {
@@ -191,6 +227,11 @@ void Interpreter::execute()
 	vStatementBlock.clear();
 }
 
+
+/*
+@func	createIableParser
+@format create table [TABLENAME]([ATTRIBUTE NAME] [TYPE] (LENGTH));
+*/
 void Interpreter::createTableParser(Iterator& begin, Iterator end){
 	string s;
 	Table table;
